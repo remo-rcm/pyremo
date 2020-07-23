@@ -12,6 +12,7 @@ Welcome to pyremo2's documentation!
    contributing
    authors
    history
+   api
 
 Indices and tables
 ==================

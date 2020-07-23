@@ -47,7 +47,7 @@ setup(
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/larsbuntemeyer/pyremo2',
+    url='https://github.com/remo-rcm/pyremo2',
     version='0.1.0',
     zip_safe=False,
 )

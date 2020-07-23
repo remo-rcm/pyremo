@@ -28,7 +28,7 @@ dump_str = """
 
 import logging
 
-from .Codes import get_dict
+from .codes import get_dict
 
 
 class Variable():

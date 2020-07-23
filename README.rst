@@ -6,8 +6,8 @@ pyremo2
 .. image:: https://img.shields.io/pypi/v/pyremo2.svg
         :target: https://pypi.python.org/pypi/pyremo2
 
-.. image:: https://img.shields.io/travis/larsbuntemeyer/pyremo2.svg
-        :target: https://travis-ci.com/larsbuntemeyer/pyremo2
+.. image:: https://img.shields.io/travis/remo-rcm/pyremo2.svg
+        :target: https://travis-ci.com/remo-rcm/pyremo2
 
 .. image:: https://readthedocs.org/projects/pyremo2/badge/?version=latest
         :target: https://pyremo2.readthedocs.io/en/latest/?badge=latest

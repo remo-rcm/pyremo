@@ -32,7 +32,7 @@ You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/larsbuntemeyer/pyremo2
+    $ git clone git://github.com/remo-rcm/pyremo2
 
 Or download the `tarball`_:
 

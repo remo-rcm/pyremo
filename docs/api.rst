@@ -3,3 +3,7 @@
 API
 ===
 
+
+.. automodule:: variable
+    :members:
+

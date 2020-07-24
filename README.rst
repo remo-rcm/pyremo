@@ -8,6 +8,9 @@ pyremo2
 
 .. image:: https://img.shields.io/travis/remo-rcm/pyremo2.svg
         :target: https://travis-ci.com/remo-rcm/pyremo2
+        
+.. image:: https://coveralls.io/repos/github/remo-rcm/pyremo2/badge.svg?branch=master
+        :target: https://coveralls.io/github/remo-rcm/pyremo2?branch=master
 
 .. image:: https://readthedocs.org/projects/pyremo2/badge/?version=latest
         :target: https://pyremo2.readthedocs.io/en/latest/?badge=latest

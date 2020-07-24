@@ -87,6 +87,9 @@ todo_include_todos = False
 #
 html_theme = 'sphinx_rtd_theme'
 
+# no module names prefix
+add_module_names = False
+
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
 # documentation.

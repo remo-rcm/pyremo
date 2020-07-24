@@ -1,9 +1,8 @@
-
-===
 API
 ===
 
 
-.. automodule:: variable
-    :members:
+.. toctree::
+   :maxdepth: 4
 
+   pyremo2

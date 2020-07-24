@@ -44,7 +44,7 @@ and codes for the REMO2015 version. The table contains right now:
 
 """
 
-from .tables import tables#code_table, read_table
+from ._tables import tables#code_table, read_table
 
 import pandas as pd
 

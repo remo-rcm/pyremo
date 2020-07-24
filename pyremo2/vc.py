@@ -1,6 +1,6 @@
 
 
-from .tables import tables
+from ._tables import tables
 
 _vc_tables = tables['vc']
 table = _vc_tables

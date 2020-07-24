@@ -42,6 +42,9 @@ def fg(tx, b2, b4):
             dampfdruck
         *b4:*
             dampfdruck
+
+    **Returns:**
+        fg: statement function
     """
     return C.B1*np.exp(b2*(tx-C.B3)/(tx-b4))
 
@@ -52,6 +55,9 @@ def fgew(tx):
     **Arguments:**
         *tx:*
             temperature
+
+    **Returns:**
+        fgew: statement function
     """
     return fg(tx, C.B2W, C.B4W)
 
@@ -61,11 +67,25 @@ def fgee(tx):
     **Arguments:**
         *tx:*
             temperature
+
+    **Returns:**
+        fgee: statement function
     """
     return fg(tx, C.B2E, C.B4E)
 
 def fgqd(ge, p):
     """statement function
+
+    Arguments
+    ---------
+    ge : input data, array-like
+        input data for the function
+    p : pressure data, array-like
+        the pressure field
+
+    Returns
+    -------
+    fgqd: statement function result
     """
     return C.RDRd*ge / (p - C.EMRdrd*ge)
 

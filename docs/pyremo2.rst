@@ -28,6 +28,22 @@ pyremo2.codes module
    :undoc-members:
    :show-inheritance:
 
+pyremo2.example\_google module
+------------------------------
+
+.. automodule:: pyremo2.example_google
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo2.example\_numpy module
+-----------------------------
+
+.. automodule:: pyremo2.example_numpy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyremo2.pyremo2 module
 ----------------------
 

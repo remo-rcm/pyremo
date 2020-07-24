@@ -2,6 +2,9 @@
 import argparse
 import sys
 
+def create_parser():
+    """Creates parser for command line tool."""
+    return argparse.ArgumentParser()
 
 def main():
     """Console script for pyremo2."""

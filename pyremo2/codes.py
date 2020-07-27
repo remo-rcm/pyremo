@@ -24,7 +24,7 @@ The table in this module contain some meta information about REMO codes
 and variable names. The tables define variable names
 and codes for the REMO2015 version. The mostly contains:
 
-.. data:: REMO2015
+.. data:: table
 
 **code:**
     integer code.
@@ -41,17 +41,17 @@ and codes for the REMO2015 version. The mostly contains:
 
 
 Example:
-        them to netcdf with some dummy data, you can use ,e.g.,::
+    Work with the code table and retrieve some information ,e.g.,::
 
-            from pyremo2.codes import table, get_dict
+        from pyremo2.codes import table, get_dict
 
-            # print the whole table
-            print(table)
-            # get dicitonary of a single variable
-            t = get_dict('T')
-            print(t)
-            # or use the code...
-            t = get_dict(130)
+        # print the whole table
+        print(table)
+        # get dicitonary of a single variable
+        t = get_dict('T')
+        print(t)
+        # or use the code...
+        t = get_dict(130)
 
 
 """
@@ -64,9 +64,17 @@ table = pd.concat([table for name,table in tables['code'].items()])
 
 
 def get_dict(id):
-    """returns a dictionary with variable info.
+    """Returns a dictionary with variable info.
 
-    nan values will be replaced with None.
+    Searches the code table for a certain variable id.
+
+    Attributes:
+        id (int or str): The variable identifier (might be code or
+            variable name).
+
+    Returns:
+        varinfo (dict): Dictionary with variable information.
+
     """
     # id is expected to be a variable name
     if isinstance(id,(str)):
@@ -77,11 +85,17 @@ def get_dict(id):
     else:
         return None
 
-
 def get_dict_by_name(varname):
-    """returns a dictionary with variable info.
+    """Returns a dictionary with variable info.
 
-    nan values will be replaced with None.
+    Searches the code table for a certain variable name.
+
+    Attributes:
+        varname (str): The variable name.
+
+    Returns:
+        varinfo (dict): Dictionary with variable information.
+
     """
     df = table.loc[table['variable']==varname]
     code = df.index[0]
@@ -92,9 +106,16 @@ def get_dict_by_name(varname):
 
 
 def get_dict_by_code(code):
-    """returns a dictionary with variable info.
+    """Returns a dictionary with variable info.
 
-    nan values will be replaced with None.
+    Searches the code table for a certain variable code.
+
+    Attributes:
+        code (int): The variable code.
+
+    Returns:
+        varinfo (dict): Dictionary with variable information.
+
     """
     series = table.loc[code]
     dict = series.where(pd.notnull(series), None).to_dict()

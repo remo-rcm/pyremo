@@ -68,7 +68,7 @@ def get_dict(id):
 
     Searches the code table for a certain variable id.
 
-    Attributes:
+    Args:
         id (int or str): The variable identifier (might be code or
             variable name).
 
@@ -90,7 +90,7 @@ def get_dict_by_name(varname):
 
     Searches the code table for a certain variable name.
 
-    Attributes:
+    Args:
         varname (str): The variable name.
 
     Returns:
@@ -110,7 +110,7 @@ def get_dict_by_code(code):
 
     Searches the code table for a certain variable code.
 
-    Attributes:
+    Args:
         code (int): The variable code.
 
     Returns:

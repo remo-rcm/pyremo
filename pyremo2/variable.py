@@ -17,7 +17,18 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 
-"""This module is for handling variable meta information
+"""This module is for handling variable meta information.
+
+
+Example:
+    Create an instance of :class:`RemoVariable`::
+
+        from pyremo2.variable import RemoVariable
+
+        t = RemoVariable('T')
+        print(t)
+        print(t.__dict__)
+
 """
 
 dump_str = """
@@ -31,7 +42,7 @@ import logging
 from .codes import get_dict
 
 
-class Variable():
+class _Variable():
 
   def __init__(self, **kwargs):
       self.__dict__.update(kwargs)
@@ -48,15 +59,24 @@ class Variable():
 
 
 
-class RemoVariable(Variable):
+class RemoVariable(_Variable):
   """A Remo Variable meta information container.
 
-  **Arguments:**
-      *id:* A code integer or a variable name which will
-            identify the variable.
+  The attributes of an instance of RemoVariable dependent on the
+  code list content. The attributes will be determined by the
+  entries found for the variable idenfitifer.
+
+  Attributes:
+      variable (str): Variable name.
+      code (int): Code.
 
   """
   def __init__(self, id, **kwargs):
+      """Creates an instance.
+
+      Args:
+          id (int or str): Variable identifier.
+      """
       Variable.__init__(self, **kwargs)
       self._get_info(id)
  

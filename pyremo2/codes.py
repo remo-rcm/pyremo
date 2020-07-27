@@ -20,18 +20,14 @@
 
 """This module is for defining the Remo Code Table
 
-
-.. note::
-    This module is autmatically created from a csv table using.
-
-
 The table in this module contain some meta information about REMO codes
-and variable names. There is only one table right now defining variable names
-and codes for the REMO2015 version. The table contains right now:
-
+and variable names. The tables define variable names
+and codes for the REMO2015 version. The mostly contains:
 
 .. data:: REMO2015
 
+**code:**
+    integer code.
 **name:**
     variable name (REMO standard)
 **cf_name:**
@@ -40,6 +36,22 @@ and codes for the REMO2015 version. The table contains right now:
     description (REMO standard)
 **unit:**
     unit (REMO standard)
+**time_cell_method:**
+    time cell method for standard Remo output (mean or inst)
+
+
+Example:
+        them to netcdf with some dummy data, you can use ,e.g.,::
+
+            from pyremo2.codes import table, get_dict
+
+            # print the whole table
+            print(table)
+            # get dicitonary of a single variable
+            t = get_dict('T')
+            print(t)
+            # or use the code...
+            t = get_dict(130)
 
 
 """

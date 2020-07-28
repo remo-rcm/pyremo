@@ -21,9 +21,6 @@ pyremo2
 
 Common Remo python tools
 
-* Easily access to Remo meta information and data
-* Common analysis tools
-* Includes physics package for pre and postprocessing.
 * Free software: MIT license
 * Documentation: https://pyremo2.readthedocs.io.
 
@@ -31,7 +28,9 @@ Common Remo python tools
 Features
 --------
 
-* TODO
+* Easily access to Remo meta information and data
+* Common analysis tools
+* Includes physics package for pre and postprocessing
 
 Credits
 -------

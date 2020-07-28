@@ -77,7 +77,7 @@ class RemoVariable(_Variable):
       Args:
           id (int or str): Variable identifier.
       """
-      Variable.__init__(self, **kwargs)
+      _Variable.__init__(self, **kwargs)
       self._get_info(id)
  
   def _get_info(self, id):
@@ -87,3 +87,13 @@ class RemoVariable(_Variable):
              setattr(self,prop,value)
       else:
          raise Exception('Undefined Identifier: {}!'.format(id))
+
+
+def variable(id):
+    """Top level function to create a Remo variable.
+
+    Args:
+        id (int or str): Variable identifier.
+
+    """
+    return RemoVariable(id)

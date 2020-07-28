@@ -15,3 +15,5 @@ def test_variable():
     temp1 = var.RemoVariable(130)
     assert (temp.code == temp1.code)
     assert (temp.variable == temp1.variable)
+    temp2 = var.variable('T')
+    assert (temp.variable == temp2.variable)

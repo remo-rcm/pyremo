@@ -13,5 +13,6 @@ pytest-runner==5.1
 
 numpy
 pandas
+pint
 
 sphinx_rtd_theme

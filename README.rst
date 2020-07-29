@@ -15,6 +15,10 @@ pyremo2
 .. image:: https://readthedocs.org/projects/pyremo2/badge/?version=latest
         :target: https://pyremo2.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
+        
+.. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo2/badge
+   :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo2
+   :alt: CodeFactor
 
 
 

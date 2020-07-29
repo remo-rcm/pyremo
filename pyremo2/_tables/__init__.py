@@ -41,8 +41,7 @@ def read_table(table, index_col=None):
 
 
 def tables():
-    """creates main table dictionary
-    """
+    """creates main table dictionary"""
     tables = {}
     tables["domain"] = {}
     tables["vc"] = {}

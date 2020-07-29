@@ -28,6 +28,7 @@ from .codes import get_dict
 from . import physics
 from .physics.units import ureg, Q_
 
+
 class _Variable:
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
@@ -41,7 +42,6 @@ class _Variable:
         for prop in self.properties:
             text += " {:20}: {:20}\n".format(prop, str(getattr(self, prop)))
         return text
-
 
 
 class RemoVariable(_Variable):
@@ -78,30 +78,26 @@ class RemoVariable(_Variable):
 
     def _set_data(self, data):
         if data is not None and not isinstance(data, VariableData):
-            if not hasattr(data, 'units'):
+            if not hasattr(data, "units"):
                 return VariableData(data, self.units)
             else:
                 return VariableData(data)
         return data
 
     def to(self, units):
-        """convert units of data.
-        """
+        """convert units of data."""
         data = self.data.to(units)
         remo_var = RemoVariable(self.id, data)
         remo_var.units = str(units)
         return remo_var
 
 
-
-
 class VariableData:
-    """A Data container for Variables.
-    """
+    """A Data container for Variables."""
 
     def __init__(self, data, units=None, **kwargs):
         self.data = data
-        if units is None and hasattr(self.data, 'units'):
+        if units is None and hasattr(self.data, "units"):
             self._set_units(self.data.units)
         else:
             self._set_units(units)
@@ -116,14 +112,12 @@ class VariableData:
             self.units = physics.units.units(units)
 
     def to(self, units):
-        """convert units of data.
-        """
+        """convert units of data."""
         data = self.data.copy()
         data[:] = Q_(np.array(self.data), self.units).to(units)
-        if hasattr(data, 'units'):
-            data.attrs['units'] = str(units)
+        if hasattr(data, "units"):
+            data.attrs["units"] = str(units)
         return VariableData(data, units)
-
 
 
 def variable(id):

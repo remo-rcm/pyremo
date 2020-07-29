@@ -1,9 +1,15 @@
+"""read tables from github repository (remo-rcm/tables)
+
+tables are read at import time from the remote repository and a tables dictionary will
+be created that contains all tables as pandas dataframes.
+"""
+
 import pkg_resources
 import pandas as pd
 
 from ._address import _table_address_dict
 
-# code_table = 'code-list.csv'
+
 code_table = (
     "https://raw.githubusercontent.com/remo-rcm/tables/master/code-list/code-list.csv"
 )
@@ -23,18 +29,20 @@ domain_tables_external = {
 
 
 def read_pkg_table(table, index_col=None):
-    """reads a csv table from the package resource."""
+    """reads a pandas dataframe from a csv table from the package resource."""
     filename = pkg_resources.resource_stream("PyRemo.tables", table)
     return pd.read_csv(filename, index_col=index_col)
 
 
 def read_table(table, index_col=None):
-    """reads a csv table from the package resource."""
+    """reads a pandas dataframe from a csv file."""
     filename = table
     return pd.read_csv(filename, index_col=index_col)
 
 
 def tables():
+    """creates main table dictionary
+    """
     tables = {}
     tables["domain"] = {}
     tables["vc"] = {}

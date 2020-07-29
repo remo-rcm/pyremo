@@ -5,6 +5,7 @@ import numpy as np
 
 try:
     import xarray as xr
+
     hasXarray = True
 except:
     hasXarray = False
@@ -12,25 +13,24 @@ except:
 from . import constants as C
 
 
-
 # statement function from druint
 def E(tx):
-    """statement function
-    """
-    return C.B1*np.exp(C.B2W(tx-C.B3)/(tx-C.B4W))
+    """statement function"""
+    return C.B1 * np.exp(C.B2W(tx - C.B3) / (tx - C.B4W))
 
 
 # statement function from druint
 def GQD(ex, px):
-    """statement function
-    """
-    return C.R/C.RD * ex/(px-(1.0-C.R/C.RD)*ex)
+    """statement function"""
+    return C.R / C.RD * ex / (px - (1.0 - C.R / C.RD) * ex)
+
 
 # from preprocessor RemapToRemo
 #!     STATEMENTFUNKTION FUER SAETTIGUNGSDAMPFDRUCK
-#FGEW(tx) = B1*EXP(B2W*(tx - B3)/(tx - B4W))
-#FGEE(tx) = B1*EXP(B2E*(tx - B3)/(tx - B4E))
-#FGQD(ge, p) = RDRd*ge/(p - EMRdrd*ge)
+# FGEW(tx) = B1*EXP(B2W*(tx - B3)/(tx - B4W))
+# FGEE(tx) = B1*EXP(B2E*(tx - B3)/(tx - B4E))
+# FGQD(ge, p) = RDRd*ge/(p - EMRdrd*ge)
+
 
 def fg(tx, b2, b4):
     """statement function dummy.
@@ -46,7 +46,7 @@ def fg(tx, b2, b4):
     **Returns:**
         fg: statement function
     """
-    return C.B1*np.exp(b2*(tx-C.B3)/(tx-b4))
+    return C.B1 * np.exp(b2 * (tx - C.B3) / (tx - b4))
 
 
 def fgew(tx):
@@ -61,6 +61,7 @@ def fgew(tx):
     """
     return fg(tx, C.B2W, C.B4W)
 
+
 def fgee(tx):
     """statement function
 
@@ -72,6 +73,7 @@ def fgee(tx):
         fgee: statement function
     """
     return fg(tx, C.B2E, C.B4E)
+
 
 def fgqd(ge, p):
     """statement function
@@ -87,8 +89,7 @@ def fgqd(ge, p):
     -------
     fgqd: statement function result
     """
-    return C.RDRd*ge / (p - C.EMRdrd*ge)
-
+    return C.RDRd * ge / (p - C.EMRdrd * ge)
 
 
 def relative_humidity(t, qd, ps, ak, bk):
@@ -114,7 +115,6 @@ def relative_humidity(t, qd, ps, ak, bk):
     return qd / fgqd(fgew(t), p)
 
 
-
 def vc_full_level(ak, bk):
     """computes hybrid vertical coordinates at full levels (akh, bkh).
 
@@ -125,7 +125,7 @@ def vc_full_level(ak, bk):
             arrays of hybrid coordinates at level interfaces.
 
     """
-    return 0.5*(ak[:-1]+ak[1:]), 0.5*(bk[:-1]+bk[1:])
+    return 0.5 * (ak[:-1] + ak[1:]), 0.5 * (bk[:-1] + bk[1:])
 
 
 def pressure_at_model_level(ps, ak, bk):
@@ -155,7 +155,7 @@ def pressure_at_model_levels(ps, ak, bk):
     """
     p = np.zeros(ps.shape + ak.shape, dtype=ps.dtype)
     for k in range(0, p.shape[2]):
-        p[:,:,k] = pressure_at_model_level(ps, ak[k], bk[k])
+        p[:, :, k] = pressure_at_model_level(ps, ak[k], bk[k])
     return p
 
 
@@ -164,16 +164,18 @@ def pressure_at_model_levels_xarray(ps, ak, bk):
 
     Uses surface pressure and vertical hybrid coordinates.
     """
-    p = xr.DataArray(dims=('lev',)+ps.dims, coords={ **{'lev':range(1,ak.shape[0]+1)}, **ps.coords })
-    for k,p_lev in enumerate(p):
+    p = xr.DataArray(
+        dims=("lev",) + ps.dims,
+        coords={**{"lev": range(1, ak.shape[0] + 1)}, **ps.coords},
+    )
+    for k, p_lev in enumerate(p):
         p_lev[:] = pressure_at_model_level(ps, ak[k], bk[k])
     return p
 
 
-
 # from RemapToRemo addem
 #!     BERECHNUNG DER SPEZIFISCHEN FEUCHTE UND WOLKENWASSER
-#DO k = 1, KEEM
+# DO k = 1, KEEM
 #  DO ij = 1, IJ2EM
 #    phem = 0.5_DP*(AKEm(k) + AKEm(k + 1) + (BKEm(k) + BKEm(k + 1))*PSEm(ij))
 #    IF ( TEM(ij, k)>=B3 ) THEN
@@ -192,16 +194,17 @@ def pressure_at_model_levels_xarray(ps, ak, bk):
 #  END DO
 #!
 
+
 def specific_humidity(t, relhum, ps, ak, bk):
     """computes specific humidity (qd).
 
     implements algorithm from RemapToRemo addem.
     """
     p = pressure_at_model_levels(ps, ak, bk)
-    fge = np.where( t >= C.B3, fgew(t), fgee(t) )
+    fge = np.where(t >= C.B3, fgew(t), fgee(t))
     zgqd = fgqd(fge, p)
     zqdw = relhum * zgqd
-    return np.where( relhum < 1.0, zqdw, zgqd)
+    return np.where(relhum < 1.0, zqdw, zgqd)
 
 
 def liquid_water_content(t, relhum, ps, ak, bk):
@@ -210,7 +213,7 @@ def liquid_water_content(t, relhum, ps, ak, bk):
     implements algorithm from RemapToRemo addem.
     """
     p = pressure_at_model_levels(ps, ak, bk)
-    fge = np.where( t >= C.B3, fgew(t), fgee(t) )
+    fge = np.where(t >= C.B3, fgew(t), fgee(t))
     zgqd = fgqd(fge, p)
     zqdw = relhum * zgqd
-    return np.where( relhum < 1.0, 0.0, zqdw - zgqd)
+    return np.where(relhum < 1.0, 0.0, zqdw - zgqd)

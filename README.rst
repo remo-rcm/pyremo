@@ -15,12 +15,15 @@ pyremo2
 .. image:: https://readthedocs.org/projects/pyremo2/badge/?version=latest
         :target: https://pyremo2.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
+        
+.. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo2/badge
+   :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo2
+   :alt: CodeFactor
 
 
 
 
 Common Remo python tools
-
 
 * Free software: MIT license
 * Documentation: https://pyremo2.readthedocs.io.
@@ -29,7 +32,9 @@ Common Remo python tools
 Features
 --------
 
-* TODO
+* Easily access to Remo meta information and data
+* Common analysis tools
+* Includes physics package for pre and postprocessing
 
 Credits
 -------

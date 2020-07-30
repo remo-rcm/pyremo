@@ -120,6 +120,23 @@ class VariableData:
         return VariableData(data, units)
 
 
+def to(data, units, in_units=None):
+    """convert units of data"""
+    if in_units is None and hasattr(data, "units"):
+        in_units = data.units
+    if in_units:
+        data = data.copy()
+        if hasattr(data, "units"):
+            data.attrs["units"] = str(units)
+        data[:] = Q_(np.array(data), in_units).to(units)
+        return data
+    raise Exception("could not determine unit of data")
+
+
+def remo_variable(data, id):
+    pass
+
+
 def variable(id):
     """Top level function to create a Remo variable.
 

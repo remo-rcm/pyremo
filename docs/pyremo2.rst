@@ -5,9 +5,9 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
    pyremo2.physics
-   pyremo2.tables
 
 Submodules
 ----------
@@ -24,6 +24,14 @@ pyremo2.codes module
 --------------------
 
 .. automodule:: pyremo2.codes
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo2.domain module
+---------------------
+
+.. automodule:: pyremo2.domain
    :members:
    :undoc-members:
    :show-inheritance:

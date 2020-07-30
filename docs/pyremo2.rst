@@ -12,15 +12,8 @@ Subpackages
 Submodules
 ----------
 
-pyremo2.cli module
-------------------
 
-.. automodule:: pyremo2.cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyremo2.codes module
+codes
 --------------------
 
 .. automodule:: pyremo2.codes
@@ -28,7 +21,7 @@ pyremo2.codes module
    :undoc-members:
    :show-inheritance:
 
-pyremo2.domain module
+domain
 ---------------------
 
 .. automodule:: pyremo2.domain
@@ -52,15 +45,8 @@ pyremo2.example\_numpy module
    :undoc-members:
    :show-inheritance:
 
-pyremo2.pyremo2 module
-----------------------
 
-.. automodule:: pyremo2.pyremo2
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyremo2.variable module
+variable
 -----------------------
 
 .. automodule:: pyremo2.variable
@@ -68,7 +54,7 @@ pyremo2.variable module
    :undoc-members:
    :show-inheritance:
 
-pyremo2.vc module
+vc
 -----------------
 
 .. automodule:: pyremo2.vc

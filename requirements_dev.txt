@@ -17,4 +17,4 @@ pint
 
 sphinx_rtd_theme
 
--e git://github.com/euro-cordex/cordex.git
+git+git://github.com/euro-cordex/cordex.git

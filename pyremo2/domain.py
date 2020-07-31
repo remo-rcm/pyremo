@@ -75,8 +75,8 @@ class _DomainFactory(object):
         if short_name in cls.names_from_csv():
             out = cls.create_domain_from_table(short_name)
         if out is None:
-            _logger.error("Unknown domain name: " + short_name)
-            _logger.info("Known domain names: " + str(cls.names()))
+            print("Unknown domain name: " + short_name)
+            print("Known domain names: " + str(cls.names()))
             raise Exception("Unknown domain name: " + short_name)
         else:
             return out

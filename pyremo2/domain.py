@@ -22,10 +22,11 @@ from itertools import chain, product
 from cordex.domain import Domain, domain_from_table
 
 
-from . import _tables
+from . import tables as tbl
 
 
-tables = _tables.tables["domain"]
+#tables = _tables.tables["domain"]
+tables = tbl.domains
 
 
 class _DomainFactory(object):

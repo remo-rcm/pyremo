@@ -40,11 +40,11 @@ Example:
 
 """
 
-from ._tables import tables  # code_table, read_table
+from .tables import codes as code_table # code_table, read_table
 
 import pandas as pd
 
-table = pd.concat([table for name, table in tables["code"].items()])
+table = pd.concat([table for name, table in code_table.items()])
 
 
 def get_dict(id):

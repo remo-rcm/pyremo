@@ -8,6 +8,7 @@ Welcome to pyremo2's documentation!
    readme
    installation
    usage
+   domain
    contributing
    authors
    history

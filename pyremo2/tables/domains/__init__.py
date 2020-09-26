@@ -1,6 +1,6 @@
 
 tables = {
-    "CORDEX": "cordex-domains.csv",
-    "AUX": "aux-domains.csv",
-    "CORDEX-FPS": "cordex-fps.csv",
+    "cordex": "cordex-domains.csv",
+    "aux": "aux-domains.csv",
+    "cordex-fps": "cordex-fps.csv",
 }

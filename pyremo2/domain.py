@@ -116,17 +116,17 @@ def names(table=None):
     return _DomainFactory().names(table)
 
 
-# def table(name):
-#    """Top level function that returns a CORDEX table.
-#
-#    Args:
-#      name (str): name of the CORDEX table.
-#
-#    Returns:
-#      table (DataFrame): Cordex table.
-#
-#    """
-#    return table[name]
+def table(name):
+    """Top level function that returns a CORDEX table.
+
+    Args:
+      name (str): name of the CORDEX table.
+
+    Returns:
+      table (DataFrame): Cordex table.
+
+    """
+    return tables[name]
 
 # def tables():
 #    """Top level function that returns a list of available CORDEX tables.

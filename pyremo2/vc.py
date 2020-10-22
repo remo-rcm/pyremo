@@ -1,18 +1,19 @@
-from .tables import vc
-
-_vc_tables = vc 
-table = _vc_tables
-
+from .tables import vc as _vc_tables
 
 def tables():
+    """Get all available vc tables.
+    """
     return _vc_tables
 
 
 def table(name):
+    """Top level function to get a vertical coordinate table."""
     return _vc_tables[name]
 
 
 def names():
+    """Returns names of all available vc tables.
+    """
     return list(_vc_tables.keys())
 
 
@@ -34,7 +35,7 @@ class VerticalCoordinate:
 
 
 def vc(name):
-    """top level function to create a vertical coordinate object."""
+    """Top level function to create a vertical coordinate object."""
     if name not in names():
         raise Exception("unknown coordinate table name, choose from {}".format(names()))
     return VerticalCoordinate(name)

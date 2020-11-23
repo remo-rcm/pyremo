@@ -95,6 +95,8 @@ def fgqd(ge, p):
 def relative_humidity(t, qd, ps, ak, bk):
     """computes relative humidity from temperature, pressure and specific humidty (qd)
 
+    This might be similar to https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.relative_humidity_from_specific_humidity.html
+
     algorithm from druint.addfeld
 
     **Arguments:**

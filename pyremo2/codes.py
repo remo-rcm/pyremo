@@ -43,6 +43,7 @@ Example:
 from .tables import codes as code_table # code_table, read_table
 
 import pandas as pd
+import numpy as np
 
 table = pd.concat([table for name, table in code_table.items()])
 
@@ -54,7 +55,7 @@ def get_dict(id):
 
     Args:
         id (int or str): The variable identifier (might be code or
-            variable name).
+            variable name or a variable name containing a code).
 
     Returns:
         varinfo (dict): Dictionary with variable information.
@@ -62,9 +63,15 @@ def get_dict(id):
     """
     # id is expected to be a variable name
     if isinstance(id, (str)):
-        return get_dict_by_name(id)
+        try:
+            return get_dict_by_name(id)
+        except:
+            try:
+                return get_dict_by_code(_code_from_varname(id))
+            except:
+                raise Exception('unknown identifier: {}'.format(id))
     # id is expected to be a code number
-    elif isinstance(id, int):
+    elif np.issubdtype(type(id), np.integer):
         return get_dict_by_code(id)
     else:
         return None
@@ -106,3 +113,17 @@ def get_dict_by_code(code):
     dict = series.where(pd.notnull(series), None).to_dict()
     dict["code"] = code
     return dict
+
+
+
+def _code_from_varname(varname):
+    """Returns a code from a varname.
+
+    Used typically for varnames create by a `cdo -f nc copy` command
+    on IEG files.
+    """
+    if 'var' in varname:
+        import re
+        return int(re.findall('[0-9]+', varname)[0])
+    else:
+        return None

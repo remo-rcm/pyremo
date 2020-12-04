@@ -5,15 +5,22 @@ Subpackages
 -----------
 
 .. toctree::
-   :maxdepth: 4
 
    pyremo2.physics
+   pyremo2.tables
 
 Submodules
 ----------
 
+pyremo2.cli module
+------------------
 
-codes
+.. automodule:: pyremo2.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo2.codes module
 --------------------
 
 .. automodule:: pyremo2.codes
@@ -21,7 +28,7 @@ codes
    :undoc-members:
    :show-inheritance:
 
-domain
+pyremo2.domain module
 ---------------------
 
 .. automodule:: pyremo2.domain
@@ -45,8 +52,23 @@ pyremo2.example\_numpy module
    :undoc-members:
    :show-inheritance:
 
+pyremo2.pyremo2 module
+----------------------
 
-variable
+.. automodule:: pyremo2.pyremo2
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo2.remo\_ds module
+-----------------------
+
+.. automodule:: pyremo2.remo_ds
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo2.variable module
 -----------------------
 
 .. automodule:: pyremo2.variable
@@ -54,7 +76,7 @@ variable
    :undoc-members:
    :show-inheritance:
 
-vc
+pyremo2.vc module
 -----------------
 
 .. automodule:: pyremo2.vc

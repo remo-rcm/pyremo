@@ -44,6 +44,7 @@ setup(
     keywords='pyremo2',
     name='pyremo2',
     packages=find_packages(include=['pyremo2', 'pyremo2.*']),
+    package_data={'pyremo2': ['tables/domains/*.csv', 'tables/vc/*.csv', 'tables/code_list/*.csv']},
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,

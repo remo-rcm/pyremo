@@ -27,3 +27,8 @@ deploy:
     tags: true
     repo: remo-rcm/pyremo2
     python: 3.8
+
+after_success:
+  - coveralls
+
+

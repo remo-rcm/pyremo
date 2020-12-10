@@ -6,8 +6,8 @@ pyremo2
 .. image:: https://img.shields.io/pypi/v/pyremo2.svg
         :target: https://pypi.python.org/pypi/pyremo2
 
-.. image:: https://travis-ci.org/remo-rcm/pyremo2.svg?branch=master
-    :target: https://travis-ci.org/remo-rcm/pyremo2
+.. image:: https://travis-ci.com/remo-rcm/pyremo2.svg?branch=master
+    :target: https://travis-ci.com/remo-rcm/pyremo2
         
 .. image:: https://coveralls.io/repos/github/remo-rcm/pyremo2/badge.svg?branch=master
         :target: https://coveralls.io/github/remo-rcm/pyremo2?branch=master

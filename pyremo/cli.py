@@ -1,4 +1,4 @@
-"""Console script for pyremo2."""
+"""Console script for pyremo."""
 import argparse
 import sys
 
@@ -9,13 +9,13 @@ def create_parser():
 
 
 def main():
-    """Console script for pyremo2."""
+    """Console script for pyremo."""
     parser = argparse.ArgumentParser()
     parser.add_argument("_", nargs="*")
     args = parser.parse_args()
 
     print("Arguments: " + str(args._))
-    print("Replace this message by putting your code into pyremo2.cli.main")
+    print("Replace this message by putting your code into pyremo.cli.main")
     return 0
 
 

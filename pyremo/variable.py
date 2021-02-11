@@ -7,7 +7,7 @@
 Example:
     Create an instance of :class:`RemoVariable`::
 
-        from pyremo2.variable import RemoVariable
+        from pyremo.variable import RemoVariable
 
         t = RemoVariable('T')
         print(t)

@@ -1,7 +1,7 @@
-pyremo2
-=======
+pyremo
+======
 
 .. toctree::
    :maxdepth: 4
 
-   pyremo2
+   pyremo

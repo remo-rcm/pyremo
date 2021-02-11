@@ -27,7 +27,7 @@ and codes for the REMO2015 version. The mostly contains:
 Example:
     Work with the code table and retrieve some information ,e.g.,::
 
-        from pyremo2.codes import table, get_dict
+        from pyremo.codes import table, get_dict
 
         # print the whole table
         print(table)

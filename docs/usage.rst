@@ -2,6 +2,6 @@
 Usage
 =====
 
-To use pyremo2 in a project::
+To use pyremo in a project::
 
-    import pyremo2
+    import pyremo

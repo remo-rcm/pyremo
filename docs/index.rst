@@ -1,4 +1,4 @@
-Welcome to pyremo2's documentation!
+Welcome to pyremo's documentation!
 ======================================
 
 .. toctree::

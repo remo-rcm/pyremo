@@ -8,13 +8,13 @@ Installation
 Stable release
 --------------
 
-To install pyremo2, run this command in your terminal:
+To install pyremo, run this command in your terminal:
 
 .. code-block:: console
 
-    $ pip install pyremo2
+    $ pip install pyremo
 
-This is the preferred method to install pyremo2, as it will always install the most recent stable release.
+This is the preferred method to install pyremo, as it will always install the most recent stable release.
 
 If you don't have `pip`_ installed, this `Python installation guide`_ can guide
 you through the process.
@@ -26,19 +26,19 @@ you through the process.
 From sources
 ------------
 
-The sources for pyremo2 can be downloaded from the `Github repo`_.
+The sources for pyremo can be downloaded from the `Github repo`_.
 
 You can either clone the public repository:
 
 .. code-block:: console
 
-    $ git clone git://github.com/remo-rcm/pyremo2
+    $ git clone git://github.com/remo-rcm/pyremo
 
 Or download the `tarball`_:
 
 .. code-block:: console
 
-    $ curl -OJL https://github.com/remo-rcm/pyremo2/tarball/master
+    $ curl -OJL https://github.com/remo-rcm/pyremo/tarball/master
 
 Once you have a copy of the source, you can install it with:
 
@@ -47,5 +47,5 @@ Once you have a copy of the source, you can install it with:
     $ python setup.py install
 
 
-.. _Github repo: https://github.com/remo-rcm/pyremo2
-.. _tarball: https://github.com/remo-rcm/pyremo2/tarball/master
+.. _Github repo: https://github.com/remo-rcm/pyremo
+.. _tarball: https://github.com/remo-rcm/pyremo/tarball/master

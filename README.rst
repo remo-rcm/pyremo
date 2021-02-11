@@ -1,23 +1,23 @@
-=======
-pyremo2
-=======
+======
+pyremo
+======
 
 
-.. image:: https://img.shields.io/pypi/v/pyremo2.svg
-        :target: https://pypi.python.org/pypi/pyremo2
+.. image:: https://img.shields.io/pypi/v/pyremo.svg
+        :target: https://pypi.python.org/pypi/pyremo
 
-.. image:: https://travis-ci.com/remo-rcm/pyremo2.svg?branch=master
-    :target: https://travis-ci.com/remo-rcm/pyremo2
+.. image:: https://travis-ci.com/remo-rcm/pyremo.svg?branch=master
+    :target: https://travis-ci.com/remo-rcm/pyremo
         
-.. image:: https://coveralls.io/repos/github/remo-rcm/pyremo2/badge.svg?branch=master
-        :target: https://coveralls.io/github/remo-rcm/pyremo2?branch=master
+.. image:: https://coveralls.io/repos/github/remo-rcm/pyremo/badge.svg?branch=master
+        :target: https://coveralls.io/github/remo-rcm/pyremo?branch=master
 
-.. image:: https://readthedocs.org/projects/pyremo2/badge/?version=latest
-        :target: https://pyremo2.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/pyremo/badge/?version=latest
+        :target: https://pyremo.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
         
-.. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo2/badge
-   :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo2
+.. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo/badge
+   :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo
    :alt: CodeFactor
 
 
@@ -26,7 +26,7 @@ pyremo2
 Common Remo python tools
 
 * Free software: MIT license
-* Documentation: https://pyremo2.readthedocs.io.
+* Documentation: https://pyremo.readthedocs.io.
 
 
 Features

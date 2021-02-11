@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-"""Tests for `pyremo2` package."""
+"""Tests for `pyremo` package."""
 
 import pytest
 
 
-from pyremo2 import variable as var
+from pyremo import variable as var
 
 
 test_data = './data/e056111t2006010100'

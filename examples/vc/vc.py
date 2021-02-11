@@ -1,6 +1,6 @@
 
 
-from pyremo2 import vc
+from pyremo import vc
 
 
 

@@ -1,4 +1,4 @@
-"""Top-level package for pyremo2."""
+"""Top-level package for pyremo."""
 
 __author__ = """Lars Buntemeyer"""
 __email__ = "lars.buntemeyer@hzg.de"

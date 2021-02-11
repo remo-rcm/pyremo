@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-"""Tests for `pyremo2` package."""
+"""Tests for `pyremo` package."""
 
 import pytest
 
 
-from pyremo2 import pyremo2
+from pyremo import pyremo
 
 
 @pytest.fixture

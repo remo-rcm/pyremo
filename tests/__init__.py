@@ -1,1 +1,1 @@
-"""Unit test package for pyremo2."""
+"""Unit test package for pyremo."""

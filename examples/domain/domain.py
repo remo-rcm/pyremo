@@ -1,4 +1,4 @@
-from pyremo2 import domain as dm
+from pyremo import domain as dm
 
 # available tables
 print(dm.tables)

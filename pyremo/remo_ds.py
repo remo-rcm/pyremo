@@ -1,3 +1,4 @@
+# flake8: noqa
 from . import codes
 
 try:
@@ -15,7 +16,7 @@ def open_remo_dataset(
 
     """
     format = _get_fileformat(filename)
-    print(format)
+    # print(format)
     if "NetCDF" in format and not options:
         ds = read_nc_dataset(filename, returnX=returnX, inplace=inplace, **kwargs)
     elif "IEG" in format:
@@ -62,7 +63,7 @@ def _get_fileformat(filename):
 
         return Cdo().showformat(input=filename)[0]
     except:
-        return None
+        return 'Unknown'
 
 
 def update_meta_info(ds, id=None):
@@ -110,7 +111,7 @@ def _update_attrs(ds, meta):
     for var, info in meta.items():
         if info:
             filter_info = {key: value for key, value in info.items() if value}
-            print(filter_info)
+            # print(filter_info)
             try:  # xarray
                 ds[var].attrs.update(filter_info)
             except:  # netCDF4

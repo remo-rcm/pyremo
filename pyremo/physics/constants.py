@@ -1,3 +1,4 @@
+# flake8: noqa
 """collection of common Remo physics constants.
 """
 

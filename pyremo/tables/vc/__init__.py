@@ -1,5 +1,3 @@
-import pkg_resources
-
 
 tables = {
     "27_standard": "vc_27lev.csv",

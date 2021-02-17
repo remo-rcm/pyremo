@@ -1,6 +1,6 @@
 #! /usr/bin/python
 # coding: utf-8
-#
+# flake8: noqa
 # This file is part of PyRemo. PyRemo is a toolbox to facilitate
 # treatment and plotting of REMO or other rotated and non-rotated
 # data.

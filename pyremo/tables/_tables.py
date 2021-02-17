@@ -1,3 +1,4 @@
+# flake8: noqa
 """This module defines the csv tables for remo.
 """
 

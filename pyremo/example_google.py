@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+# flake8: noqa
 """Example Google style docstrings.
 
 This module demonstrates documentation as specified by the `Google Python

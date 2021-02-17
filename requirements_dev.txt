@@ -12,11 +12,11 @@ pytest==4.6.5
 pytest-runner==5.1
 pytest-cov
 coveralls
-
+xarray
 numpy
 pandas
 pint
-
+cdo
 sphinx_rtd_theme
 
 git+git://github.com/euro-cordex/py-cordex.git

@@ -1,6 +1,6 @@
 #! /usr/bin/python
 # coding: utf-8
-#
+# flake8: noqa
 
 """This module is for defining the Remo Code Table
 

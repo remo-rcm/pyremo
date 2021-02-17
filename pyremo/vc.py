@@ -1,3 +1,4 @@
+# flake8: noqa
 from .tables import vc as _vc_tables
 
 

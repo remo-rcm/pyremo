@@ -1,3 +1,4 @@
+# flake8: noqa
 """physics module that contains some common Remo physics functions.
 """
 

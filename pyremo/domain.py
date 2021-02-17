@@ -25,7 +25,7 @@ from cordex.domain import Domain, domain_from_table
 from . import tables as tbl
 
 
-#tables = _tables.tables["domain"]
+# tables = _tables.tables["domain"]
 tables = tbl.domains
 
 
@@ -127,6 +127,7 @@ def table(name):
 
     """
     return tables[name]
+
 
 # def tables():
 #    """Top level function that returns a list of available CORDEX tables.

@@ -1,4 +1,3 @@
-
 tables = {
     "cordex": "cordex-domains.csv",
     "aux": "aux-domains.csv",

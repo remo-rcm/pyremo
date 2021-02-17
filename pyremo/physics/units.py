@@ -8,8 +8,6 @@ Q_ = ureg.Quantity
 ureg.define("percent = 0.01*count = %")
 
 
-
-
 def units(units):
     if units == "%":
         return ureg.percent

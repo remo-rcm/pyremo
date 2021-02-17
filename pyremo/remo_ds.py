@@ -1,15 +1,14 @@
-
-
 from . import codes
 
 try:
     import cdo
 except:
-    print('no python-cdo binding installed, unable to read IEG')
+    print("no python-cdo binding installed, unable to read IEG")
 
 
-def open_remo_dataset(filename, options='', update_meta=False, returnX=True, 
-        inplace=False, **kwargs):
+def open_remo_dataset(
+    filename, options="", update_meta=False, returnX=True, inplace=False, **kwargs
+):
     """Read a REMO dataset.
 
     Read in a REMO dataset into xarray or netCDF4 dataset.
@@ -17,13 +16,13 @@ def open_remo_dataset(filename, options='', update_meta=False, returnX=True,
     """
     format = _get_fileformat(filename)
     print(format)
-    if 'NetCDF' in format and not options:
+    if "NetCDF" in format and not options:
         ds = read_nc_dataset(filename, returnX=returnX, inplace=inplace, **kwargs)
-    elif 'IEG' in format:
+    elif "IEG" in format:
         if returnX:
             ds = read_with_cdo(filename, options, returnXDataset=True)
         else:
-            ds = read_with_cdo(filename, options, returnCdf= not inplace)
+            ds = read_with_cdo(filename, options, returnCdf=not inplace)
             if inplace:
                 ds = read_nc_dataset(ds, returnX=False, inplace=inplace)
     else:
@@ -33,34 +32,34 @@ def open_remo_dataset(filename, options='', update_meta=False, returnX=True,
     return ds
 
 
-
 def read_nc_dataset(filename, returnX=True, inplace=False, **kwargs):
-    """Use xarray or netCDF4 to read NetCDF.
-    """
+    """Use xarray or netCDF4 to read NetCDF."""
     if returnX:
         import xarray as xr
+
         return xr.open_dataset(filename, **kwargs)
     else:
         from netCDF4 import Dataset
+
         if inplace:
-            mode='a'
+            mode = "a"
         else:
-            mode='r'
-        return Dataset(filename, mode='a')
+            mode = "r"
+        return Dataset(filename, mode="a")
 
 
-def read_with_cdo(filename, options='', **kwargs):
-    """uses cdo to read unknown file format.
-    """
+def read_with_cdo(filename, options="", **kwargs):
+    """uses cdo to read unknown file format."""
     from cdo import Cdo
-    return Cdo().copy(options=options, input = filename, **kwargs )
+
+    return Cdo().copy(options=options, input=filename, **kwargs)
 
 
 def _get_fileformat(filename):
-    """
-    """
+    """"""
     try:
         from cdo import Cdo
+
         return Cdo().showformat(input=filename)[0]
     except:
         return None
@@ -74,15 +73,14 @@ def update_meta_info(ds, id=None):
 
     """
     meta = {var: get_meta_info(ds[var]) for var in ds.variables}
-    renames = {var:info['variable'] for var, info in meta.items() if info if not None}
+    renames = {var: info["variable"] for var, info in meta.items() if info if not None}
     ds = _update_attrs(ds, meta)
     ds = _rename_ds(ds, renames)
     return ds
 
 
 def get_meta_info(da, id=None):
-    """Get meta info for a netcdf variable.
-    """
+    """Get meta info for a netcdf variable."""
     if id:
         attrs = codes.get_dict(id)
     else:
@@ -97,25 +95,24 @@ def get_meta_info(da, id=None):
 
 
 def _rename_ds(ds, renames):
-    """Rename variables in a dataset.
-    """
-    try: # xarray
+    """Rename variables in a dataset."""
+    try:  # xarray
         return ds.rename(renames)
-    except: # netCDF4
+    except:  # netCDF4
         for old, new in renames.items():
-            if old != new: ds.renameVariable(old, new)
+            if old != new:
+                ds.renameVariable(old, new)
         return ds
 
 
 def _update_attrs(ds, meta):
-    """Update variable attributes in a dataset.
-    """
+    """Update variable attributes in a dataset."""
     for var, info in meta.items():
         if info:
             filter_info = {key: value for key, value in info.items() if value}
             print(filter_info)
-            try: # xarray
+            try:  # xarray
                 ds[var].attrs.update(filter_info)
-            except: # netCDF4
+            except:  # netCDF4
                 ds[var].setncatts(filter_info)
     return ds

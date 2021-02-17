@@ -201,13 +201,13 @@ def pressure_at_model_levels_xarray(ps, ak, bk):
 #!
 #!
 #!     STATEMENTFUNKTIONEN
-#E(tx) = B1*EXP(B2W*(tx-B3)/(tx-B4W))
-#GQD(ex,px) = R/RD*ex/(px-(1.0-R/RD)*ex)
+# E(tx) = B1*EXP(B2W*(tx-B3)/(tx-B4W))
+# GQD(ex,px) = R/RD*ex/(px-(1.0-R/RD)*ex)
 #!
 #!     VARIABLEN-TABELLE UEBERPRUEFEN, OB ABGELEITETE GROESSE ANGEFOR-
 #!     DERT WIRD
 #!
-#DO nv = 1 , NVPin
+# DO nv = 1 , NVPin
 #  IF ( YVArpin(nv)=='REL HUM' ) THEN
 #!
 #!     RELATIVE FEUCHTE BERECHNEN
@@ -229,14 +229,14 @@ def pressure_at_model_levels_xarray(ps, ak, bk):
 #        ENDDO
 #     ENDDO
 #  ENDIF
-#ENDDO
+# ENDDO
 
 # from RemapToRemo addgm
 #!
 #!     BERECHNUNG DES DRUCKES AN DEN GM - HAUPTFLAECHEN UND
 #!     BERECHNUNG DER SPEZIFISCHEN FEUCHTE
 #!
-#DO k = 1, KEGM
+# DO k = 1, KEGM
 #!RP
 #  DO ij = 1, IJGM
 #    QWGm(ij, k) = MAX(0.0_DP, QWGm(ij, k))
@@ -265,7 +265,7 @@ def pressure_at_model_levels_xarray(ps, ak, bk):
 #    END IF
 #  END DO
 #!
-#END DO
+# END DO
 def compute_arfgm(t, qd, ps, ak, bk):
     """computes relative humidity from temperature, pressure and specific humidty (qd)
 
@@ -288,12 +288,11 @@ def compute_arfgm(t, qd, ps, ak, bk):
             relative humidity ([%],3d)
     """
     p = pressure_at_model_levels(ps, ak, bk)
-    zgqd = np.where(t >= C.B3, fgqd( fgew(t), p), fgqd( fgee(t), p))
+    zgqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
     arf = qd / zgqd
     return np.where(arf > 1.0, zgqd / zgqd, arf)
 
-    #return qd / fgqd(fgew(t), p)
-
+    # return qd / fgqd(fgew(t), p)
 
 
 def specific_humidity(t, relhum, ps, ak, bk):

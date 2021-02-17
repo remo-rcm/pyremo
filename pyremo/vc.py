@@ -1,8 +1,8 @@
 from .tables import vc as _vc_tables
 
+
 def tables():
-    """Get all available vc tables.
-    """
+    """Get all available vc tables."""
     return _vc_tables
 
 
@@ -12,8 +12,7 @@ def table(name):
 
 
 def names():
-    """Returns names of all available vc tables.
-    """
+    """Returns names of all available vc tables."""
     return list(_vc_tables.keys())
 
 

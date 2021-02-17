@@ -9,7 +9,7 @@ import pytest
 from pyremo import variable as var
 
 
-test_data = './data/e056111t2006010100'
+test_data = './tests/data/e056111t2006010100'
 
 
 def test_variable():

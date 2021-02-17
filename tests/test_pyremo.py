@@ -5,7 +5,7 @@
 import pytest
 
 
-from pyremo import pyremo
+# from pyremo import pyremo
 
 
 @pytest.fixture

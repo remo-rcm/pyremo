@@ -1,6 +1,6 @@
 #! /usr/bin/python
 # coding: utf-8
-#
+# flake8: noqa
 # This file is part of PyRemo. PyRemo is a toolbox to facilitate
 # treatment and plotting of REMO or other rotated and non-rotated
 # data.
@@ -25,7 +25,7 @@ from cordex.domain import Domain, domain_from_table
 from . import tables as tbl
 
 
-#tables = _tables.tables["domain"]
+# tables = _tables.tables["domain"]
 tables = tbl.domains
 
 
@@ -127,6 +127,7 @@ def table(name):
 
     """
     return tables[name]
+
 
 # def tables():
 #    """Top level function that returns a list of available CORDEX tables.

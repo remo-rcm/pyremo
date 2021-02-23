@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# flake8: noqa
 
 """Tests for `pyremo` package."""
 
@@ -8,7 +9,7 @@ import pytest
 from pyremo import variable as var
 
 
-test_data = './data/e056111t2006010100'
+test_data = './tests/data/e056111t2006010100'
 
 
 def test_variable():

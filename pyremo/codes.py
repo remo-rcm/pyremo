@@ -1,6 +1,6 @@
 #! /usr/bin/python
 # coding: utf-8
-#
+# flake8: noqa
 
 """This module is for defining the Remo Code Table
 
@@ -40,7 +40,7 @@ Example:
 
 """
 
-from .tables import codes as code_table # code_table, read_table
+from .tables import codes as code_table  # code_table, read_table
 
 import pandas as pd
 import numpy as np
@@ -69,7 +69,7 @@ def get_dict(id):
             try:
                 return get_dict_by_code(_code_from_varname(id))
             except:
-                raise Exception('unknown identifier: {}'.format(id))
+                raise Exception("unknown identifier: {}".format(id))
     # id is expected to be a code number
     elif np.issubdtype(type(id), np.integer):
         return get_dict_by_code(id)
@@ -115,15 +115,15 @@ def get_dict_by_code(code):
     return dict
 
 
-
 def _code_from_varname(varname):
     """Returns a code from a varname.
 
     Used typically for varnames create by a `cdo -f nc copy` command
     on IEG files.
     """
-    if 'var' in varname:
+    if "var" in varname:
         import re
-        return int(re.findall('[0-9]+', varname)[0])
+
+        return int(re.findall("[0-9]+", varname)[0])
     else:
         return None

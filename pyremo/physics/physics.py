@@ -1,3 +1,4 @@
+# flake8: noqa
 """physics module that contains some common Remo physics functions.
 """
 
@@ -50,7 +51,7 @@ def fg(tx, b2, b4):
 
 
 def fgew(tx):
-    """statement function
+    """statement function water
 
     **Arguments:**
         *tx:*
@@ -63,7 +64,7 @@ def fgew(tx):
 
 
 def fgee(tx):
-    """statement function
+    """statement function ice
 
     **Arguments:**
         *tx:*
@@ -195,6 +196,101 @@ def pressure_at_model_levels_xarray(ps, ak, bk):
 #    END IF
 #  END DO
 #!
+
+# from druint addfeld
+#!     ABGELEITETE FELDER BERECHNEN; FALLS ERFORDERLICH
+#!
+#!
+#!     STATEMENTFUNKTIONEN
+# E(tx) = B1*EXP(B2W*(tx-B3)/(tx-B4W))
+# GQD(ex,px) = R/RD*ex/(px-(1.0-R/RD)*ex)
+#!
+#!     VARIABLEN-TABELLE UEBERPRUEFEN, OB ABGELEITETE GROESSE ANGEFOR-
+#!     DERT WIRD
+#!
+# DO nv = 1 , NVPin
+#  IF ( YVArpin(nv)=='REL HUM' ) THEN
+#!
+#!     RELATIVE FEUCHTE BERECHNEN
+#!     ANZAHL DER FELDER IN DA-FLAECHEN-DATEI ERHOEHEN
+#!
+#     NVF = NVF + 1
+#     IF ( NVF>NVFMAX ) THEN
+#        CALL REMARK('ANZAHL NVF.GT.NVFMAX...STOP')
+#        STOP 'ADDFELD'
+#     ENDIF
+#     YVArfl(NVF) = 'REL HUM'
+#!
+#!     BENOETIGTE FELDER ZUR BERECHNUNG VON 'REL HUM' EINLESEN
+#!
+#     DO k = 1 , KE
+#        DO ij = 1 , IEJe
+#           ph = 0.5*(AK(k+1)+AK(k)+(BK(k+1)+BK(k))*PS(ij))
+#           RH(ij,k) = QD(ij,k)/GQD(E(T(ij,k)),ph)
+#        ENDDO
+#     ENDDO
+#  ENDIF
+# ENDDO
+
+# from RemapToRemo addgm
+#!
+#!     BERECHNUNG DES DRUCKES AN DEN GM - HAUPTFLAECHEN UND
+#!     BERECHNUNG DER SPEZIFISCHEN FEUCHTE
+#!
+# DO k = 1, KEGM
+#!RP
+#  DO ij = 1, IJGM
+#    QWGm(ij, k) = MAX(0.0_DP, QWGm(ij, k))
+#    IF ( QDGm(ij, k)<=0.0_DP ) THEN
+#      QDGm(ij, k) = 0.0_DP
+#      QWGm(ij, k) = 0.0_DP
+#    END IF
+#    IF ( QDGm(ij, k)>1.0_DP .OR. QWGm(ij, k)>1.0_DP ) THEN
+#      QDGm(ij, k) = 0.0_DP
+#      QWGm(ij, k) = 0.0_DP
+#    END IF
+#  END DO
+#!RP
+#  DO ij = 1, IJGM
+#    ph(ij) = 0.5*(AKGm(k) + AKGm(k + 1) + (BKGm(k) + BKGm(k + 1))*PSGm(ij))
+#    IF ( TGM(ij, k)>=B3 ) THEN
+#      zgqd = FGQD(FGEW(TGM(ij, k)), ph(ij))
+#    ELSE
+#      zgqd = FGQD(FGEE(TGM(ij, k)), ph(ij))
+#    END IF
+#    ARFgm(ij, k) = QDGm(ij, k)/zgqd
+#    IF ( ARFgm(ij, k)>1.0_DP ) THEN
+#      ARFgm(ij, k) = (zgqd + QWGm(ij, k))/zgqd
+#    ELSE
+#      ARFgm(ij, k) = (QDGm(ij, k) + QWGm(ij, k))/zgqd
+#    END IF
+#  END DO
+#!
+# END DO
+def compute_arfgm(t, qd, p, qw=0.0):
+    """computes relative humidity from temperature, pressure and specific humidty (qd)
+
+    This might be similar to https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.relative_humidity_from_specific_humidity.html
+
+    algorithm from RemapToRemo addgm
+
+    **Arguments:**
+        *p:*
+            atmospheric pressure ([Pa], 3d)
+        *t:*
+            temperature fields ([K], 3d)
+        *qd:*
+            specific humidity fields ([kg/kg], 3d)
+        *qw:*
+            liquid water content ([kg/kg], 3d)
+
+    **Returns:**
+        *relhum:*
+            relative humidity ([%],3d)
+    """
+    gqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
+    relhum = qd / gqd
+    return np.where(relhum > 1.0, (gqd + qw) / gqd, (qd + qw) / gqd)
 
 
 def specific_humidity(t, relhum, ps, ak, bk):

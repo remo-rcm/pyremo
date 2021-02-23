@@ -51,7 +51,7 @@ def fg(tx, b2, b4):
 
 
 def fgew(tx):
-    """statement function
+    """statement function water
 
     **Arguments:**
         *tx:*
@@ -64,7 +64,7 @@ def fgew(tx):
 
 
 def fgee(tx):
-    """statement function
+    """statement function ice
 
     **Arguments:**
         *tx:*
@@ -267,7 +267,7 @@ def pressure_at_model_levels_xarray(ps, ak, bk):
 #  END DO
 #!
 # END DO
-def compute_arfgm(t, qd, ps, ak, bk):
+def compute_arfgm(t, qd, p, qw=0.0):
     """computes relative humidity from temperature, pressure and specific humidty (qd)
 
     This might be similar to https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.relative_humidity_from_specific_humidity.html
@@ -275,25 +275,22 @@ def compute_arfgm(t, qd, ps, ak, bk):
     algorithm from RemapToRemo addgm
 
     **Arguments:**
-        *ps:*
-            surface pressure field ([Pa], 2d)
+        *p:*
+            atmospheric pressure ([Pa], 3d)
         *t:*
             temperature fields ([K], 3d)
         *qd:*
             specific humidity fields ([kg/kg], 3d)
-        *ak, bk:*
-            hybrid coordinates (1d)
+        *qw:*
+            liquid water content ([kg/kg], 3d)
 
     **Returns:**
         *relhum:*
             relative humidity ([%],3d)
     """
-    p = pressure_at_model_levels(ps, ak, bk)
-    zgqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
-    arf = qd / zgqd
-    return np.where(arf > 1.0, zgqd / zgqd, arf)
-
-    # return qd / fgqd(fgew(t), p)
+    gqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
+    relhum = qd / gqd
+    return np.where(relhum > 1.0, (gqd + qw) / gqd, (qd + qw) / gqd)
 
 
 def specific_humidity(t, relhum, ps, ak, bk):

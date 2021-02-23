@@ -21,8 +21,6 @@ pyremo
    :alt: CodeFactor
 
 
-
-
 Common Remo python tools
 
 * Free software: MIT license

@@ -29,7 +29,8 @@ print(ds.hybm)
 print(10*'-')
 
 #relhum = relative_humidity(ds.T[0].T, ds.QD[0].T, ds.PS[0].T, ak, bk)
-relhum = compute_arfgm(ds.T[0].T, ds.QD[0].T, ds.PS[0].T, ds.hyam, ds.hybm)
+p = pressure_at_model_levels(ds.PS[0].T, ds.hyam, ds.hybm)
+relhum = compute_arfgm(ds.T[0].T, ds.QD[0].T, p)
 relhum_f = pyintorg.relative_humidity(ds.QD[0].T, ds.T[0].T, ds.PS[0].T, ds.hyai.values, ds.hybi.values, qwgm=None)
 
 ph = pressure_at_model_levels(ds.PS[0].T, ds.hyam, ds.hybm)

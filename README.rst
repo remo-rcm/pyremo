@@ -8,14 +8,14 @@ pyremo
 
 .. image:: https://travis-ci.com/remo-rcm/pyremo.svg?branch=master
     :target: https://travis-ci.com/remo-rcm/pyremo
-        
+
 .. image:: https://coveralls.io/repos/github/remo-rcm/pyremo/badge.svg?branch=master
         :target: https://coveralls.io/github/remo-rcm/pyremo?branch=master
 
 .. image:: https://readthedocs.org/projects/pyremo/badge/?version=latest
         :target: https://pyremo.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
-        
+
 .. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo/badge
    :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo
    :alt: CodeFactor

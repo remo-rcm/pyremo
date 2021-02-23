@@ -12,7 +12,24 @@ def open_remo_dataset(
 ):
     """Read a REMO dataset.
 
-    Read in a REMO dataset into xarray or netCDF4 dataset.
+    Read in a REMO dataset into xarray.Dataset or netCDF4.Dataset from IEG or NetCDF and
+    provide meta data.
+
+    Parameters
+    ----------
+    filename : str
+        Filename of IEG or NetCDF file.
+    update_meta: boolean
+        Update variable meta information of the dataset from REMO tables.
+    returnX : boolean
+        Return an xarray.Dataset. If False, use netCDF4 Dataset.
+    inplace: boolean
+        Update meta info on disk, only useful for netCDF4 Datasets.
+
+    Returns
+    -------
+    dataset
+        Returns an xarray.Dataset or netCDF4.Dataset.
 
     """
     format = _get_fileformat(filename)

@@ -17,6 +17,7 @@ numpy
 pandas
 pint
 cdo
-sphinx_rtd_theme
+sphinx-rtd-theme
+sphinxcontrib-mockautodoc
 
 git+git://github.com/euro-cordex/py-cordex.git

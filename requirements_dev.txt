@@ -19,5 +19,6 @@ pint
 cdo
 sphinx-rtd-theme
 sphinxcontrib-mockautodoc
+numpydoc
 
 git+git://github.com/euro-cordex/py-cordex.git

@@ -44,6 +44,8 @@ extensions = [
         "numpydoc"
 ]
 
+autodoc_mock_imports = ["cordex", "pint"]
+
 autosummary_generate = True
 
 napoleon_use_param = True

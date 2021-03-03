@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+# flake8: noqa
+"""Remo dataset module.
+
+This module contains functions to work with REMO datasets.
+
+"""
+
 # flake8: noqa
 from . import codes
 
@@ -19,11 +27,11 @@ def open_remo_dataset(
     ----------
     filename : str
         Filename of IEG or NetCDF file.
-    update_meta: boolean
+    update_meta: bool
         Update variable meta information of the dataset from REMO tables.
-    returnX : boolean
+    returnX : bool
         Return an xarray.Dataset. If False, use netCDF4 Dataset.
-    inplace: boolean
+    inplace: bool
         Update meta info on disk, only useful for netCDF4 Datasets.
 
     Returns
@@ -35,22 +43,22 @@ def open_remo_dataset(
     format = _get_fileformat(filename)
     # print(format)
     if "NetCDF" in format and not options:
-        ds = read_nc_dataset(filename, returnX=returnX, inplace=inplace, **kwargs)
+        ds = _read_nc_dataset(filename, returnX=returnX, inplace=inplace, **kwargs)
     elif "IEG" in format:
         if returnX:
-            ds = read_with_cdo(filename, options, returnXDataset=True)
+            ds = _read_with_cdo(filename, options, returnXDataset=True)
         else:
-            ds = read_with_cdo(filename, options, returnCdf=not inplace)
+            ds = _read_with_cdo(filename, options, returnCdf=not inplace)
             if inplace:
-                ds = read_nc_dataset(ds, returnX=False, inplace=inplace)
+                ds = _read_nc_dataset(ds, returnX=False, inplace=inplace)
     else:
-        ds = read_nc_dataset(filename, returnX, **kwargs)
+        ds = _read_nc_dataset(filename, returnX, **kwargs)
     if update_meta:
         return update_meta_info(ds)
     return ds
 
 
-def read_nc_dataset(filename, returnX=True, inplace=False, **kwargs):
+def _read_nc_dataset(filename, returnX=True, inplace=False, **kwargs):
     """Use xarray or netCDF4 to read NetCDF."""
     if returnX:
         import xarray as xr
@@ -66,7 +74,7 @@ def read_nc_dataset(filename, returnX=True, inplace=False, **kwargs):
         return Dataset(filename, mode="a")
 
 
-def read_with_cdo(filename, options="", **kwargs):
+def _read_with_cdo(filename, options="", **kwargs):
     """uses cdo to read unknown file format."""
     from cdo import Cdo
 
@@ -89,15 +97,25 @@ def update_meta_info(ds, id=None):
     Updates variable names and attributes in a xarray or netCDF4 dataset
     based on Remo table.
 
+    Parameters
+    ----------
+    ds : dataset
+        The dataset in which meta info should be updated.
+
+    Returns
+    -------
+    dataset
+        The dataset with updated meta information.
+
     """
-    meta = {var: get_meta_info(ds[var]) for var in ds.variables}
+    meta = {var: _get_meta_info(ds[var]) for var in ds.variables}
     renames = {var: info["variable"] for var, info in meta.items() if info if not None}
     ds = _update_attrs(ds, meta)
     ds = _rename_ds(ds, renames)
     return ds
 
 
-def get_meta_info(da, id=None):
+def _get_meta_info(da, id=None):
     """Get meta info for a netcdf variable."""
     if id:
         attrs = codes.get_dict(id)

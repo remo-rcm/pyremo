@@ -6,7 +6,7 @@ import math
 
 # roundTime from here:
 # https://stackoverflow.com/questions/3463930/how-to-round-the-minute-of-a-datetime-object-python
-def roundTime(datetime=None, roundTo=1):
+def roundTime(datetime=None, roundTo=60):
    """Round a datetime object to any time lapse in seconds
    dt : datetime.datetime object, default now.
    roundTo : Closest number of seconds to round to, default 1 minute.
@@ -51,7 +51,6 @@ class AbsoluteCalendar():
         """
         frac, whole = math.modf(num)
         date_str = str(int(whole))
-        print(date_str)
         #date = pd.to_datetime(date_str, format=self.fmt) #dt.datetime.strptime(date_str, self.fmt)
         date = dt.datetime.strptime(date_str, self.fmt)
         return roundTime(date + dt.timedelta(seconds = dt.timedelta(days=1).total_seconds() * frac))

@@ -8,6 +8,7 @@ This module contains functions to work with REMO datasets.
 
 # flake8: noqa
 from . import codes
+from . import calendar as cal
 
 try:
     import cdo
@@ -15,9 +16,20 @@ except:
     print("no python-cdo binding installed, unable to read IEG")
 
 
+
+def open_remo_mfdataset(filenames, update_meta=False, parse_dates=False):
+    import xarray as xr
+    ds = xr.open_mfdataset(filenames)
+    if update_meta:
+        ds = _update_meta_infos(ds)
+    if parse_dates:
+        ds = _parse_dates(ds)
+    return ds
+
+
 def open_remo_dataset(
-    filename, options="", update_meta=False, returnX=True, inplace=False, **kwargs
-):
+    filename, options="", update_meta=False, returnX=True, inplace=False,
+    parse_dates=False, **kwargs):
     """Read a REMO dataset.
 
     Read in a REMO dataset into xarray.Dataset or netCDF4.Dataset from IEG or NetCDF and
@@ -33,6 +45,8 @@ def open_remo_dataset(
         Return an xarray.Dataset. If False, use netCDF4 Dataset.
     inplace: bool
         Update meta info on disk, only useful for netCDF4 Datasets.
+    parse_dates: bool
+        Parse absolute time axis into datetime objects.
 
     Returns
     -------
@@ -54,7 +68,15 @@ def open_remo_dataset(
     else:
         ds = _read_nc_dataset(filename, returnX, **kwargs)
     if update_meta:
-        return update_meta_info(ds)
+        ds = update_meta_info(ds)
+    if parse_dates:
+        ds = _parse_dates(ds)
+    return ds
+
+  
+def _parse_dates(ds):
+    parser = cal.AbsoluteCalendar()
+    ds['time'] = [parser.num2date(date) for date in ds.time]
     return ds
 
 
@@ -62,15 +84,18 @@ def _read_nc_dataset(filename, returnX=True, inplace=False, **kwargs):
     """Use xarray or netCDF4 to read NetCDF."""
     if returnX:
         import xarray as xr
-
+        if type(filename) is list:
+            return xr.open_mfdataset(filename, **kwargs)
         return xr.open_dataset(filename, **kwargs)
     else:
-        from netCDF4 import Dataset
+        from netCDF4 import Dataset, MFDataset
 
         if inplace:
             mode = "a"
         else:
             mode = "r"
+        if type(filename) is list:
+            return MFDataset(filename, mode="r")
         return Dataset(filename, mode="a")
 
 

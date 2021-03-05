@@ -20,16 +20,16 @@ __all__ = [
 def ftp_call(server, ftp_command, ignore_errors=False):
     """Performs an ftp-command on a ftp-server.
 
-    **Arguments:**
-	*server:*
+    Args:
+	server:
 	    ftp-server to use the command on
-        *ftp_command:*
+        ftp_command:
             Command that is to run on the tape archive
-        *ignore_errors:*
+        ignore_errors:
             Ignore ftp-errors
 
-    **Returns:**
-        *ftp_output:*
+    Returns:
+        ftp_output:
             The output message of the ftp-server
 
     Written by Claas Teichmann
@@ -47,14 +47,14 @@ def ftp_call(server, ftp_command, ignore_errors=False):
 def ftp_tape(ftp_command, ignore_errors=False):
     """Performes an ftp-command on the dkrz tape archive.
 
-    **Arguments:**
-        *ftp_command:*
+    Args:
+        ftp_command:
             Command that is to run on the tape archive.
-        *ignore_errors:*
+        ignore_errors:
             Ignore ftp-errors.
 
-    **Returns:**
-        *ftp_output:*
+    Returns:
+        ftp_output:
             The output message of the ftp-server.
 
     Written by Claas Teichmann
@@ -73,10 +73,10 @@ def ftp_tape(ftp_command, ignore_errors=False):
 
 
 def log_ftp_output(ftp_output, logging_function=logging.debug):
-    """Passes *ftp_output* to the logging-function.
+    """Passes ftp_output to the logging-function.
 
-    **Arguments:**
-        *ftp_output:*
+    Args:
+        ftp_output:
             output from an ftp-command
     """
     logging_function('ftp_output (stdout)')
@@ -88,18 +88,18 @@ def log_ftp_output(ftp_output, logging_function=logging.debug):
 
 
 def check_ftp_path(server, ftp_path):
-    """Returns *True* if path exists.
+    """Returns True if path exists.
 
     Logs into an ftp-server and checks whether the given path exists.
 
-    **Arguments:**
-        *server:*
+    Args:
+        server:
             Name of the server
-        *ftp_path:*
+        ftp_path:
             Path on the server to check
 
-    **Returns:**
-        *path_exists*:
+    Returns:
+        path_exists:
             True if path exits
     """
     ftp_command = ' ls {0} \n quit \n'.format(ftp_path)
@@ -116,18 +116,18 @@ def check_ftp_path(server, ftp_path):
 
 
 def check_ftp_path_list(server, ftp_path_list):
-    """Returns *True* if path exists.
+    """Returns True if path exists.
 
     Logs into an ftp-server and checks whether the given list of pathes exists.
 
-    **Arguments:**
-        *server:*
+    Args:
+        server:
             Name of the server
-        *ftp_path_list:*
+        ftp_path_list:
             List of Paths on the server to check
 
-    **Returns:**
-        *path_exists*:
+    Returns:
+        path_exists:
             List of True/False if path exits
     """
     ftp_commands = ''
@@ -156,14 +156,14 @@ def make_ftp_path(server, ftp_path,
     ftp-server. If the directory exits, it raises an Exception.
     The existing diretory can also be renamed (in case rename_if_exits == True).
 
-    **Arguments:**
-        *server:*
+    Args:
+        server:
             Name of the server
-        *ftp_path:*
+        ftp_path:
             Path on the server to check
-        *rename_if_path_exists:*
+        rename_if_path_exists:
             Move the directory if it exists
-        *path_suffix:*
+        path_suffix:
             Adding this suffix when renaming the directory [default: '_backup']
 
     Written by Claas Teichmann
@@ -188,12 +188,12 @@ def rename_ftp_path(server, ftp_path, new_ftp_path):
     A directory on the ftp-server is renamed. If the new path already exists
     or the original path not, an exception is raised.
 
-    **Arguments:**
-        *server:*
+    Args:
+        server:
             Name of the server.
-        *ftp_path:*
+        ftp_path:
             Path on the server to be renamed.
-        *new_ftp_path:*
+        new_ftp_path:
             New Path name.
 
     Written by Claas Teichmann
@@ -219,16 +219,16 @@ def upload_file(server, sourcepath, datafile, destdir,
                 remove_source=False):
     """Upload a file to an ftp-server.
 
-    **Arguments:**
-        *server:*
+    Args:
+        server:
             Name of the server.
-        *sourcepath:*
+        sourcepath:
             Source path where of the file to be uploaded
-        *datafile:*
+        datafile:
             Name of the source file to be uploaded
-        *destdir:*
+        destdir:
             Destination path on the ftp-server where the file will be stored
-        *remove_source:*
+        remove_source:
             Remove the source file after uploading
 
     Written by Claas Teichmann
@@ -255,14 +255,14 @@ def download_file(server, sourcepath, datafile, destdir):
 
     If the file exists locally, the download is skipped.
 
-    **Arguments:**
-        *server:*
+    Args:
+        server:
             Name of the server
-        *sourcepath:*
+        sourcepath:
             Source path of the file in the achive
-        *datafile:*
+        datafile:
             Name of the source file in the archive
-        *destdir:*
+        destdir:
             Destination path where the file will be stored locally
 
     Written by Claas Teichmann
@@ -289,12 +289,12 @@ def download_file(server, sourcepath, datafile, destdir):
 def delete_file(server, ftp_path, datafile):
     """Deletes a file on an ftp-server.
 
-    **Arguments:**
-        *server:*
+    Args:
+        server:
             Name of the server
-        *ftp_path:*
+        ftp_path:
             Path on the server to the file
-        *datafile:*
+        datafile:
             Name of the source file in the archive
 
     Written by Kevin Sieck
@@ -316,14 +316,14 @@ def delete_file(server, ftp_path, datafile):
 def ftp_chmod(server, ftp_path, chmod_arg, datafile=None):
     """Changes access rights of a file/directory on an ftp-server.
 
-    **Arguments:**
-        *server:*
+    Args:
+        server:
             Name of the server
-        *ftp_path:*
+        ftp_path:
             Path on the server to a directory
-        *chmod_arg:*
+        chmod_arg:
             argument for chmod.
-        *datafile:*
+        datafile:
             Optional name of a file in the archive
 
     Written by Kevin Sieck

@@ -28,6 +28,22 @@ pyremo.codes module
    :undoc-members:
    :show-inheritance:
 
+pyremo.data module
+------------------
+
+.. automodule:: pyremo.data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo.data\_handler module
+---------------------------
+
+.. automodule:: pyremo.data_handler
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyremo.domain module
 --------------------
 
@@ -48,6 +64,22 @@ pyremo.example\_numpy module
 ----------------------------
 
 .. automodule:: pyremo.example_numpy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo.file\_conventions module
+-------------------------------
+
+.. automodule:: pyremo.file_conventions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo.ftp module
+-----------------
+
+.. automodule:: pyremo.ftp
    :members:
    :undoc-members:
    :show-inheritance:

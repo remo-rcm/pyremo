@@ -30,16 +30,17 @@ END
 class DataHandler():
   """Handles REMO disk and archive data
 
-  **Attributes**
-      *sys:* 
+  Attributes
+  ----------
+      sys: 
           The description of the scheduler used for parallel processing. 
-      *parallel:* 
+      parallel: 
           True if parallel processing should be used. 
-      *header_dict:* 
+      header_dict: 
           a dictionory containing template replacements for the jobfile header.
-      *job_dir:*
+      job_dir:
           Directory where job scripts should be written.
-      *log_dir:* 
+      log_dir: 
           Directory where log files   should be written.
 
   Written by Lars Buntemeyer
@@ -214,30 +215,31 @@ class DataHandler():
                           loc='', conv=REMO_2015_TAPE_ARCHIVE(), logfile=''):
       """Checks for yearly archived data either on tape or disk.
   
-      **Arguments:**
-          *expid:*
+      Parameters
+      ----------
+          expid:
               String containgin the experiment id. 
-          *datapath*
+          datapath:
               Path to the data in the archive (without the yearly subdirectory). 
-              (default: *None*) 
-          *years*
+              (default: None) 
+          years:
               List of years to check
               (default: [1979]) 
-          *months*
+          months:
               List of months to check
               (default: range(1,13)) 
-          *types*
+          types:
               List of strings denoting filetypes
-              (default: *None*) 
-          *loc*
+              (default: None) 
+          loc:
               String defining the location of data (tape, disk)
-              (default: *None*) 
-          *conv*
+              (default: None) 
+          conv:
               File naming convention 
               (default: REMO_2015_TAPE_ARCHIVE) 
   
-      **Returns:**
-          *missing:*
+      Returns:
+          missing:
               Boolean flag to indicate if all files have been found. 
       """
   
@@ -279,27 +281,27 @@ class DataHandler():
                     conv=REMO_2015_TAPE_ARCHIVE()):
       """Creates a list of filenames containing the datapath.
   
-      **Arguments:**
-          *expid:*
+      Args:
+          expid:
               String containgin the experiment id. 
-          *datapath*
+          datapath:
               Path to the data in the archive (without the yearly subdirectory). 
-              (default: *None*) 
-          *years*
+              (default: None) 
+          years:
               List of years to check
               (default: [1979]) 
-          *months*
+          months:
               List of months to check
               (default: range(1,13)) 
-          *types*
+          types:
               List of strings denoting filetypes
-              (default: *None*) 
-          *conv*
+              (default: None) 
+          conv:
               File naming convention 
               (default: REMO_2015_TAPE_ARCHIVE) 
   
-      **Returns:**
-          *file_list:*
+      Returns:
+          file_list:
               List of filenames. 
       """
       

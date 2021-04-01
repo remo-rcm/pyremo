@@ -1,4 +1,5 @@
 
+import os
 
 import pandas as pd
 from pathlib import Path
@@ -27,7 +28,7 @@ def _parse_file(file):
 
 
 def get_data_catalog(dir, parse_dates=False, exclude=None):
-    filepathes = _find_files(dir, exclude)
+    filepathes = _find_files(dir, exclude=exclude)
     df_all = pd.DataFrame()
     for path in tqdm(filepathes):
         finfo = _parse_file(path.stem)
@@ -52,8 +53,24 @@ def get_data_catalog(dir, parse_dates=False, exclude=None):
     return df_all
 
 
-def move_output_data(dir):
-    pass
+def move_data(sdir, tdir, **kwargs):
+    """move remo data according to type to different directories"""
+    cat = get_data_catalog(tdir, **kwargs)
+    efiles = list(cat[cat.type.isin(['e','m','n'])].path)
+    tfiles = list(cat[cat.type.isin(['t'])].path)
+    ffiles = list(cat[cat.type.isin(['f','g'])].path)
+
+    efile_dir = os.path.join(tdir, 'xe')
+    tfile_dir = os.path.join(tdir, 'xt')
+    ffile_dir = os.path.join(tdir, 'xf')
+
+    for dir in [efile_dir, tfile_dir, ffile_dir]:
+        try:
+            os.makedirs(dir)
+        except:
+            print('Directory exists: {}'.format(dir))
+
+    return get_data_catalog(tdir)
 
 
 class RemoExpData():

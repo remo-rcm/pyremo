@@ -19,8 +19,8 @@ from hpc_scheduler import Scheduler
 JOB_TEMPLATE = """
 python << END
 #!/usr/bin/env python
-from PyRemo.Ftp import download_file
-from PyRemo.DataHandler import DataHandler
+from pyremo.Ftp import download_file
+from pyremo.DataHandler import DataHandler
 import tarfile
 dh = DataHandler(parallel=False)
 {}

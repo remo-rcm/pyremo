@@ -16,7 +16,6 @@ def get_file(url):
     import fsspec
     import xarray as xr
     with fsspec.open(url) as f:
-        print(f)
         ds = xr.open_dataset(f)
     return ds
 
@@ -26,15 +25,13 @@ def bodlib(domain='EUR-11'):
     import fsspec
     url = bodlib_tpl.format(domain)
     with fsspec.open(url) as f:
-        print(f)
         ds = open_remo_dataset(f)
     return ds
 
 
-def example_eur44):
+def example_eur44():
     import fsspec
     url = bodlib_tpl.format(domain)
     with fsspec.open(url) as f:
-        print(f)
         ds = open_remo_dataset(f)
     return ds

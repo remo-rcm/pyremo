@@ -4,11 +4,6 @@ import pytest
 from pyremo import domain as dm
 
 
-def test_names():
-    # assert domain names
-    for short_name in dm.domains():
-        assert short_name == dm.domain(short_name).short_name
-
 
 def test_refine():
     # check if all 0.11 domains are consistent with the 0.44 domains
@@ -17,9 +12,9 @@ def test_refine():
     #    print(name)
     #    assert(dm.domain(name) * 1.0 == domain)
 
-    eur11 = dm.domain("EUR-11")
-    eur22 = dm.domain("EUR-22")
-    eur44 = dm.domain("EUR-44")
+    eur11 = dm.remo_domain("EUR-11")
+    eur22 = dm.remo_domain("EUR-22")
+    eur44 = dm.remo_domain("EUR-44")
     # assert(eur22 == eur44.refine(2))
     # assert(eur11 == eur44.refine(4))
     ## test simple domain math.
@@ -30,12 +25,9 @@ def test_refine():
 
 
 def test_write():
-    domain = dm.domain("EUR-11")
+    domain = dm.remo_domain("EUR-11")
     domain.to_netcdf("EUR-11.nc")
-    domain.to_netcdf("EUR-11.nc", dummy=True)
 
 
 if __name__ == "__main__":
-    test_names()
-    test_refine()
     test_write()

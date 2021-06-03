@@ -18,8 +18,10 @@
 # GNU General Public License for more details.
 
 
+import pandas as pd
+
 from itertools import chain, product
-from cordex.domain import Domain, domain_from_table
+from cordex.domain import create_dataset 
 
 
 from . import tables as tbl
@@ -29,91 +31,28 @@ from . import tables as tbl
 tables = tbl.domains
 
 
-class _DomainFactory(object):
-    """Factory class for creating a domain instance."""
 
-    @classmethod
-    def names_from_csv(cls, table=None):
-        """Returns a list of names of csv domains."""
-        if table:
-            return list(tables[table].index.values)
-        else:
-            return list(
-                chain.from_iterable(
-                    [[sn for sn in t.index.values] for n, t in tables.items()]
-                )
-            )
+def remo_domain(short_name, dummy=False, **kwargs):
+    """Creates an xarray dataset containg the domain grid definitions.
 
-    @classmethod
-    def create_domain_from_table(cls, short_name):
-        """Returns a list of names of csv domains."""
-        for table_name, table in tables.items():
-            if short_name in table.index.values:
-                return domain_from_table(short_name, table)
+    Parameters
+    ----------
+    short_name:
+        Name of the Cordex Domain.
+    dummy : str or logical
+        Name of dummy field, if dummy=topo, the cdo topo operator will be
+        used to create some dummy topography data. dummy data is useful for
+        looking at the domain with ncview.
 
-    @classmethod
-    def names(cls, table=None):
-        """Returns a list of names of available Domains."""
-        return cls.names_from_csv(table)
-
-    @classmethod
-    def domains(cls, table=None):
-        """Returns a dictionary of names and domains."""
-        return {name: cls.get_domain(name) for name in cls.names_from_csv(table)}
-
-    @classmethod
-    def get_domain(cls, short_name):
-        """Returns a Domain instance.
-
-        Args:
-          name (str): standard name of the Domain.
-
-        Returns:
-          Domain (:class:`Domain`) : a Domain instance.
-
-        """
-        out = None
-        if short_name in cls.names_from_csv():
-            out = cls.create_domain_from_table(short_name)
-        if out is None:
-            print("Unknown domain name: " + short_name)
-            print("Known domain names: " + str(cls.names()))
-            raise Exception("Unknown domain name: " + short_name)
-        else:
-            return out
-
-
-def domain(name):
-    """Top level Domain function to get a :class:`Domain` instance.
-
-    Args:
-      name (str): name of the domain instance.
-
-    Returns:
-      :class:`Domain`: preconfigured domain instance.
+    Returns
+    -------
+    Dataset : xarray.core.Dataset
+        Dataset containing the coordinates.
 
     """
-    return _DomainFactory().get_domain(name)
+    config = pd.concat(tables.values()).loc[short_name]
+    return create_dataset(**config, dummy=dummy)
 
-
-def domains(table=None):
-    """Top level function that returns a dictionay of CORDEX domains.
-
-    Returns:
-      domains (dict): dict of available CORDEX domain names.
-
-    """
-    return _DomainFactory().domains(table)
-
-
-def names(table=None):
-    """Top level function that returns the names of available CORDEX domains.
-
-    Returns:
-      names (list): list of available CORDEX domain names.
-
-    """
-    return _DomainFactory().names(table)
 
 
 def table(name):
@@ -127,16 +66,6 @@ def table(name):
 
     """
     return tables[name]
-
-
-# def tables():
-#    """Top level function that returns a list of available CORDEX tables.
-#
-#    Returns:
-#      names (list): list of available CORDEX domains.
-#
-#    """
-#    return list(table.keys())
 
 
 def magic_number(n=1, m=0, o=0):

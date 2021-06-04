@@ -20,7 +20,6 @@ def get_file(url):
     return ds
 
 
-
 def bodlib(domain='EUR-11'):
     import fsspec
     url = bodlib_tpl.format(domain)

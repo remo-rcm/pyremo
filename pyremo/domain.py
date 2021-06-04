@@ -16,12 +16,24 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
+"""Domain module
 
+This module creates and defines cordex domains for remo. It is based on the
+cordex domain module.
+
+
+.. note::
+       A remo domain is usually a little larger than the "official" cordex
+       domain according to the archive specification since the regional model
+       usually accounts for "buffer" zone where the lateral boundary conditions
+       are nudged.
+
+"""
 
 import pandas as pd
 
 from itertools import chain, product
-from cordex.domain import create_dataset 
+from cordex import domain as dm
 
 
 from . import tables as tbl
@@ -32,7 +44,7 @@ tables = tbl.domains
 
 
 
-def remo_domain(short_name, dummy=False, **kwargs):
+def remo_domain(short_name, dummy=False):
     """Creates an xarray dataset containg the domain grid definitions.
 
     Parameters
@@ -50,9 +62,27 @@ def remo_domain(short_name, dummy=False, **kwargs):
         Dataset containing the coordinates.
 
     """
-    config = pd.concat(tables.values()).loc[short_name]
-    return create_dataset(**config, dummy=dummy)
+    return dm.cordex_domain(short_name, dummy, tables=list(tables.values()))
 
+
+def domain_info(short_name):
+    """Returns a dictionary containg the domain grid definitions.
+
+    Returns a dictionary with grid information according to the
+    Cordex archive specifications.
+
+    Parameters
+    ----------
+    short_name:
+        Name of the Cordex Domain.
+
+    Returns
+    -------
+    domain info : dict
+        Dictionary containing the grid information.
+
+    """
+    return dm.domain_info(short_name, tables=list(tables.values()))
 
 
 def table(name):

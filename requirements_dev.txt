@@ -22,5 +22,6 @@ sphinxcontrib-mockautodoc
 numpydoc
 nbsphinx
 nbsphinx-link
+ipython
 
 git+git://github.com/euro-cordex/py-cordex.git

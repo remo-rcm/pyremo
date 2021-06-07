@@ -9,6 +9,7 @@ Welcome to pyremo's documentation!
    installation
    usage
    domain
+   processing
    contributing
    authors
    history

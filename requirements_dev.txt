@@ -20,5 +20,7 @@ cdo
 sphinx-rtd-theme
 sphinxcontrib-mockautodoc
 numpydoc
+nbsphinx
+nbsphinx-link
 
 git+git://github.com/euro-cordex/py-cordex.git

@@ -41,7 +41,10 @@ extensions = [
         "sphinx.ext.mathjax",
         "sphinx.ext.napoleon",
         "sphinxcontrib.mockautodoc",
-        "numpydoc"
+        "numpydoc",
+        "nbsphinx",
+        "nbsphinx_link",
+        "IPython.sphinxext.ipython_console_highlighting"
 ]
 
 autodoc_mock_imports = ["cordex", "pint"]

@@ -150,16 +150,27 @@ def pressure_at_model_levels(ps, ak, bk):
 
     Uses surface pressure and vertical hybrid coordinates.
 
-    **Arguments:**
-        *ps:*
-            surface pressure field
-        *ak, bk:*
-            arrays of hybrid coordinates at level interfaces.
+    Parameters
+    ----------
+    ps : array like
+        Surface pressure field.
+    ak, bk : array like
+        Arrays of hybrid coordinates at level interfaces.
+
+    Returns
+    -------
+    dataset
+        Returns pressure at model levels.
+
     """
     p = np.zeros(ps.shape + ak.shape, dtype=ps.dtype)
     for k in range(0, p.shape[2]):
         p[:, :, k] = pressure_at_model_level(ps, ak[k], bk[k])
     return p
+
+
+def pressure(ps, ak, bk):
+    pass
 
 
 def pressure_at_model_levels_xarray(ps, ak, bk):

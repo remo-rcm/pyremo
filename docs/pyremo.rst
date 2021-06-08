@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
 
    pyremo.physics
+   pyremo.prsint
    pyremo.tables
 
 Submodules
@@ -88,14 +89,6 @@ pyremo.ftp module
 -----------------
 
 .. automodule:: pyremo.ftp
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyremo.pyremo module
---------------------
-
-.. automodule:: pyremo.pyremo
    :members:
    :undoc-members:
    :show-inheritance:

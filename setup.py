@@ -36,7 +36,7 @@ setup(
         "Programming Language :: Python :: 3.8",
     ],
     description="Common Remo python tools",
-    entry_points={"console_scripts": ["pyremo=pyremo.cli:main",],},
+    entry_points={"console_scripts": ["pyremo=pyremo.cli:main", "prsint=pyremo.cli:prsint"],},
     install_requires=requirements,
     license="MIT license",
     long_description=readme + "\n\n" + history,

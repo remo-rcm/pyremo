@@ -12,6 +12,14 @@ Subpackages
 Submodules
 ----------
 
+pyremo.calendar module
+----------------------
+
+.. automodule:: pyremo.calendar
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyremo.cli module
 -----------------
 
@@ -52,18 +60,18 @@ pyremo.domain module
    :undoc-members:
    :show-inheritance:
 
-pyremo.example\_google module
------------------------------
-
-.. automodule:: pyremo.example_google
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyremo.example\_numpy module
 ----------------------------
 
 .. automodule:: pyremo.example_numpy
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyremo.exp module
+-----------------
+
+.. automodule:: pyremo.exp
    :members:
    :undoc-members:
    :show-inheritance:

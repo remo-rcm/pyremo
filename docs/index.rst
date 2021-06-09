@@ -10,6 +10,7 @@ Welcome to pyremo's documentation!
    usage
    domain
    processing
+   remo-dataset
    cmorization 
    contributing
    authors

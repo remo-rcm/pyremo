@@ -47,7 +47,7 @@ extensions = [
         "IPython.sphinxext.ipython_console_highlighting"
 ]
 
-autodoc_mock_imports = ["cordex", "pint"]
+autodoc_mock_imports = ["cordex", "pint", "pydruint"]
 
 autosummary_generate = True
 

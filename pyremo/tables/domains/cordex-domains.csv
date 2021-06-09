@@ -15,7 +15,7 @@ region,short_name,long_name,nlon,nlat,ll_lon,ll_lat,dlon,dlat,pollon,pollat
 7,EAS-22,Remo East Asia,433,271,-47.41,-24.3,0.22,0.22,296.3,61.0
 7,EAS-44,Remo East Asia,201,165,476.74,-60.56,0.44,0.44,296.3,61.0
 4,EUR-11,Remo Europe high-res.,433,433,-28.925,-23.925,0.11,0.11,-162.0,39.25
-4,EUR-22,Remo Europe,241,217,18.22,-39.03,0.22,0.22,-162.0,39.25
+4,EUR-22,Remo Europe,241,217,-31.62,-24.64,0.22,0.22,-162.0,39.25
 4,EUR-44,Remo Europe,129,121,-31.73,-26.73,0.44,0.44,-162.0,39.25
 3,NAM-11,Remo North America,641,541,263.11,-42.39,0.11,0.11,83.0,42.5
 3,NAM-22,Remo North America,321,271,-35.31,-29.83,0.22,0.22,83.0,42.5

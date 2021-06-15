@@ -7,7 +7,7 @@ flake_EUR_11_glcc = os.path.join(DKRZ_URL, 'flake/flake_v3_glcc_defD10.0m_frac_E
 flake_EUR_44_glcc = os.path.join(DKRZ_URL, 'flake/flake_v3_glcc_defD10.0m_frac_EUR-44.nc')
 tutorial_data = os.path.join(DKRZ_URL, 'example/e056111t2006010100.nc')
 
-bodlib_tpl = os.path.join(DKRZ_URL, 'surface-library/lib_{}_frac')
+bodlib_tpl = os.path.join(DKRZ_URL, 'surface-library/lib_{}_frac.nc')
 
 
 from .remo_ds import open_remo_dataset
@@ -21,11 +21,11 @@ def get_file(url):
     return ds
 
 
-def bodlib(domain='EUR-11'):
+def surflib(domain='EUR-11'):
     import fsspec
     url = bodlib_tpl.format(domain)
     with fsspec.open(url) as f:
-        ds = open_remo_dataset(f)
+        ds = open_remo_dataset(f, update_meta=True).squeeze(drop=True)
     return ds
 
 

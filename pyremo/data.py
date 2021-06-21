@@ -69,4 +69,4 @@ def example_output():
     """Returns a dataset containing REMO example output.
     """
     from . import remo_ds as rds
-    return rds.update_meta_info(get_file(tutorial_data))
+    return rds.update_meta_info(_get_file(tutorial_data))

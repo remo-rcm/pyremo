@@ -11,7 +11,7 @@ Welcome to pyremo's documentation!
    domain
    processing
    remo-dataset
-   cmorization 
+   ar
    contributing
    authors
    history

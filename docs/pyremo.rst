@@ -101,6 +101,14 @@ pyremo.remo\_ds module
    :undoc-members:
    :show-inheritance:
 
+pyremo.tutorial module
+----------------------
+
+.. automodule:: pyremo.tutorial
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 pyremo.variable module
 ----------------------
 

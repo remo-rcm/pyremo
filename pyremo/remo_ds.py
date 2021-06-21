@@ -23,7 +23,7 @@ def open_remo_mfdataset(filenames, update_meta=False, parse_dates=False):
     if update_meta:
         ds = _update_meta_infos(ds)
     if parse_dates:
-        ds = _parse_dates(ds)
+        ds = parse_dates(ds)
     return ds
 
 
@@ -70,13 +70,13 @@ def open_remo_dataset(
     if update_meta:
         ds = update_meta_info(ds)
     if parse_dates:
-        ds = _parse_dates(ds)
+        ds = parse_dates(ds)
     return ds
 
-  
-def _parse_dates(ds):
+
+def parse_dates(ds, use_cftime=False):
     parser = cal.AbsoluteCalendar()
-    ds['time'] = [parser.num2date(date) for date in ds.time]
+    ds['time'] = [parser.num2date(date, use_cftime) for date in ds.time]
     return ds
 
 

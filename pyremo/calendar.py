@@ -46,13 +46,17 @@ class AbsoluteCalendar():
         frac = delta.total_seconds()/dt.timedelta(days=1).total_seconds()
         return float(datetime.strftime(self.fmt)) + frac
 
-    def num2date(self, num):
+    def num2date(self, num, use_cftime=False, roundTo=60):
         """convert a numeric absolute date value to a datetime object.
         """
         frac, whole = math.modf(num)
         date_str = str(int(whole))
         #date = pd.to_datetime(date_str, format=self.fmt) #dt.datetime.strptime(date_str, self.fmt)
-        date = dt.datetime.strptime(date_str, self.fmt)
-        return roundTime(date + dt.timedelta(seconds = dt.timedelta(days=1).total_seconds() * frac))
+        date = dt.datetime.strptime(date_str[0:8], self.fmt)
+        datetime = roundTime(date + dt.timedelta(seconds = dt.timedelta(days=1).total_seconds() * frac), roundTo=roundTo)
+        if use_cftime:
+            import cftime
+            datetime = cftime.datetime(datetime.year, datetime.month, datetime.day, datetime.hour, datetime.minute)
+        return datetime
 
 

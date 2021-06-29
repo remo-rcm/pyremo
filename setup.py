@@ -10,7 +10,7 @@ with open("README.rst") as readme_file:
 with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
-requirements = ["pandas", "numpy"]
+requirements = open("requirements.txt").read().strip().split("\n"), 
 
 setup_requirements = [
     "pytest-runner",
@@ -38,6 +38,7 @@ setup(
     description="Common Remo python tools",
     entry_points={"console_scripts": ["pyremo=pyremo.cli:main", "prsint=pyremo.cli:prsint"],},
     install_requires=requirements,
+    extras_require={"docs": ["numpydoc", "jupyter", "nbconvert"]},
     license="MIT license",
     long_description=readme + "\n\n" + history,
     include_package_data=True,

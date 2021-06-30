@@ -30,6 +30,7 @@ import pyremo
 # If your documentation needs a minimal Sphinx version, state it here.
 #
 # needs_sphinx = '1.0'
+autodoc_mock_imports = ["cordex", "pint", "pydruint"]
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
@@ -47,7 +48,6 @@ extensions = [
         "IPython.sphinxext.ipython_console_highlighting"
 ]
 
-autodoc_mock_imports = ["cordex", "pint", "pydruint"]
 
 autosummary_generate = True
 

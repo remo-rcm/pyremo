@@ -18,8 +18,4 @@ build:
 python:
     version: 3.7
     install:
-      - requirements: ci/requirements/docs.txt
-      - method: setuptools
-        path: .
-
-formats: []
+      - requirements: requirements_dev.txt

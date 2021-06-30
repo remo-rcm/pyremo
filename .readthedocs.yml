@@ -16,6 +16,6 @@ build:
 #    environment: ci/requirements/docs.txt
 
 python:
-    version: 3.8
+    version: 3.7
     install:
       - requirements: requirements_dev.txt

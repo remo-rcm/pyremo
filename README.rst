@@ -2,6 +2,8 @@
 pyremo
 ======
 
+.. image:: https://github.com/euro-cordex/pyremo/actions/workflows/ci.yaml/badge.svg
+    :target: https://github.com/euro-cordex/pyremo/actions/workflows/ci.yaml
 
 .. image:: https://img.shields.io/pypi/v/pyremo.svg
         :target: https://pypi.python.org/pypi/pyremo

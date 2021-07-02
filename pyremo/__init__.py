@@ -8,6 +8,7 @@ __version__ = "0.1.0"
 from . import core
 
 from .core.domain import domain_info, remo_domain
-from .core import tutorial 
+from .core.remo_ds import open_remo_dataset 
+from .core import tutorial
 from .tables import domains, codes, vc
 

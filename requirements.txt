@@ -2,3 +2,4 @@ xarray
 numpy
 pandas
 py-cordex
+pooch

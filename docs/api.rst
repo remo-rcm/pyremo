@@ -15,3 +15,6 @@ Top-level functions
 
    remo_domain
    domain_info
+   open_remo_dataset
+   update_meta_info
+   parse_dates

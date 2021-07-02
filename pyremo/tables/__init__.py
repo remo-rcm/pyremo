@@ -17,8 +17,8 @@ class read_cls():
     def table(self):
         return pd.concat(self.tables.values())
     
-    def __getattr__(self, table):
-        return self.tables[table]
+    #def __getattr__(self, table):
+    #    return self.tables[table]
     
     
 domains = read_cls(read_remo_domain_tables)

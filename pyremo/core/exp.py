@@ -1,4 +1,5 @@
-
+"""Module for working and parsing Remo output files.
+"""
 import os
 
 import pandas as pd

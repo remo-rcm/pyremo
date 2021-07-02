@@ -40,12 +40,14 @@ Example:
 
 """
 
-from .tables import codes as code_table  # code_table, read_table
+#from .tables import codes as code_table  # code_table, read_table
 
 import pandas as pd
 import numpy as np
 
-table = pd.concat([table for name, table in code_table.items()])
+#table = pd.concat([table for name, table in code_table.items()])
+
+from ..tables import codes
 
 
 def get_dict(id):
@@ -89,6 +91,7 @@ def get_dict_by_name(varname):
         varinfo (dict): Dictionary with variable information.
 
     """
+    table = pd.concat(codes.tables.values())
     df = table.loc[table["variable"] == varname]
     code = df.index[0]
     dict = df.where(pd.notnull(df), None).to_dict(orient="list")
@@ -109,6 +112,7 @@ def get_dict_by_code(code):
         varinfo (dict): Dictionary with variable information.
 
     """
+    table = pd.concat(codes.tables.values())
     series = table.loc[code]
     dict = series.where(pd.notnull(series), None).to_dict()
     dict["code"] = code

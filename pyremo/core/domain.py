@@ -33,14 +33,9 @@ cordex domain module.
 import pandas as pd
 
 from itertools import chain, product
-from cordex import domain as dm
+import cordex as cx
 
-
-from . import tables as tbl
-
-
-# tables = _tables.tables["domain"]
-tables = tbl.domains
+from ..tables import domains 
 
 
 
@@ -62,7 +57,7 @@ def remo_domain(short_name, dummy=False):
         Dataset containing the coordinates.
 
     """
-    return dm.cordex_domain(short_name, dummy, tables=list(tables.values()))
+    return cx.cordex_domain(short_name, dummy, tables=domains.table)
 
 
 def domain_info(short_name):
@@ -82,7 +77,7 @@ def domain_info(short_name):
         Dictionary containing the grid information.
 
     """
-    return dm.domain_info(short_name, tables=list(tables.values()))
+    return cx.domain_info(short_name, tables=domains.table)
 
 
 def table(name):

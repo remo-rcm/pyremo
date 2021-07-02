@@ -27,5 +27,5 @@ def read_resource_tables(resource, csv_dict, **kwargs):
 domains = read_resource_tables(
     "pyremo.tables.domains", dm.tables, index_col="short_name"
 )
-codes = read_resource_tables("pyremo.tables.code_list", cd.tables, index_col="code")
+codes = read_resource_tables("pyremo.core.tables.code_list", cd.tables, index_col="code")
 vc = read_resource_tables("pyremo.tables.vc", vcoord.tables)

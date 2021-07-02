@@ -5,5 +5,9 @@ __email__ = "lars.buntemeyer@hzg.de"
 __version__ = "0.1.0"
 
 
-from . import domain
+from . import core
+
+from .core.domain import domain_info, remo_domain
+from .core import tutorial 
+from .tables import domains, codes, vc
 

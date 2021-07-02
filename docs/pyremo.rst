@@ -6,20 +6,13 @@ Subpackages
 
 .. toctree::
 
+   pyremo.core
    pyremo.physics
    pyremo.prsint
    pyremo.tables
 
 Submodules
 ----------
-
-pyremo.calendar module
-----------------------
-
-.. automodule:: pyremo.calendar
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 pyremo.cli module
 -----------------
@@ -29,34 +22,10 @@ pyremo.cli module
    :undoc-members:
    :show-inheritance:
 
-pyremo.codes module
--------------------
-
-.. automodule:: pyremo.codes
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyremo.data module
-------------------
-
-.. automodule:: pyremo.data
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyremo.data\_handler module
 ---------------------------
 
 .. automodule:: pyremo.data_handler
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyremo.domain module
---------------------
-
-.. automodule:: pyremo.domain
    :members:
    :undoc-members:
    :show-inheritance:
@@ -89,22 +58,6 @@ pyremo.ftp module
 -----------------
 
 .. automodule:: pyremo.ftp
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyremo.remo\_ds module
-----------------------
-
-.. automodule:: pyremo.remo_ds
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyremo.tutorial module
-----------------------
-
-.. automodule:: pyremo.tutorial
    :members:
    :undoc-members:
    :show-inheritance:

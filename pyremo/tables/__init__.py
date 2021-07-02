@@ -20,20 +20,6 @@ class read_cls():
     def __getattr__(self, table):
         return self.tables[table]
     
-
-class codes_cls():
-
-    @property
-    def tables(self):
-        return read_remo_code_tables()
-
-
-class vc_cls():
-
-    @property
-    def tables(self):
-        return read_remo_vc_tables()
-
     
 domains = read_cls(read_remo_domain_tables)
 codes = read_cls(read_remo_code_tables)

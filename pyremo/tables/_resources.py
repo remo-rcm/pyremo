@@ -13,7 +13,7 @@ DOMAIN_RESOURCE = pooch.create(
     base_url= base_url + "domains/",
     registry={
         "cordex-domains.csv": "8599e88ea84d6f844b9c5a7250325d0d91053d129334c09a508ad30c9a6e6c42",
-        "aux-domains.csv": "6a371cf9937fcc6d18be83ed7a6a2259aece05b63b70cbac23760fe2bdacca72",
+        "aux-domains.csv": "2089d3f8eb9ec3a1abb0eddea40522f0297f4e7c8c0cdf11a6f90167caa7e5b3",
         "cordex-fps.csv": "02390f5255ba9a7b03a30654cc9ffd8944a95d7a076a6e729c35600ebd1cb72d",
     },
 )

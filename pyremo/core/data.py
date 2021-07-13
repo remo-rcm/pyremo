@@ -48,12 +48,13 @@ def surflib(domain, crop=True, update_meta=True):
     import fsspec
     import xarray as xr
     url = bodlib_tpl.format(domain)
-    grid = dm.remo_domain(domain) 
     with fsspec.open(url) as f:
         #ds = open_remo_dataset(f, update_meta=True).squeeze(drop=True)
         ds = xr.open_dataset(f).squeeze(drop=True)
     if update_meta: ds = rds.update_meta_info(ds)
-    if crop: ds = ds.sel(rlon=grid.rlon, rlat=grid.rlat, method='nearest')
+    if crop:
+        grid = dm.remo_domain(domain)
+        ds = ds.sel(rlon=grid.rlon, rlat=grid.rlat, method='nearest')
     return ds
 
 

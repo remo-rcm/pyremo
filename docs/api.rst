@@ -1,8 +1,20 @@
-API
-===
+.. currentmodule:: pyremo 
+
+#############
+API reference
+#############
+
+This page provides an auto-generated summary of the pyremo API.
 
 
-.. toctree::
-   :maxdepth: 4
+Top-level functions
+===================
 
-   pyremo
+.. autosummary::
+   :toctree: generated/
+
+   remo_domain
+   domain_info
+   open_remo_dataset
+   update_meta_info
+   parse_dates

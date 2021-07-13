@@ -8,7 +8,7 @@ This module contains functions to work with REMO datasets.
 
 # flake8: noqa
 from . import codes
-from . import calendar as cal
+from . import cal
 
 try:
     import cdo

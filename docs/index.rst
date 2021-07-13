@@ -15,6 +15,7 @@ Welcome to pyremo's documentation!
    contributing
    authors
    history
+   whats_new
    api
 
 Indices and tables

@@ -42,6 +42,9 @@ VC_RESOURCE = pooch.create(
         "vc_49lev.csv": "d81595c437328b6aeba86c7ed7b35b50b275e0b43f0284f93471f99a5e81e41b",
         "vc_49lev_nh_pt2000.csv": "c5b9969bb1836f06ee87d3f3f80c06a489ff19d74542684bb45490916932541b",
         "vc_60lev_ecmwf.csv": "95afc9873c60d973a980861420cd2effaa4df2a9f913c4d6a7bea1f944a6bd4e",
+        "vc_91lev_ecmwf.csv": "8abe07a0a2f844e0aa2691d03110b8ba2bdf295e2397e93d8267060be8d7a274",
+        "vc_101lev_100m_pt27713.csv": "b345c43cc86e58abe64aedd7d3e88543217c7c9f0ffb85fa166c6c105fb33301",
+        "vc_144lev_equal_pdiff_pt6400.csv": "0e10ceb27cb047f88322f860e6dfd8f77a9b90e431adcf88277996a8d2cbe021",
     },
 )
 

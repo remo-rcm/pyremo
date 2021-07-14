@@ -41,6 +41,7 @@ VC_RESOURCE = pooch.create(
         "vc_40lev.csv": "b2f946ccb9b4fd9a349a16396660efbbb89904fa42b5a1aaab113193a7ee0bad",
         "vc_49lev.csv": "d81595c437328b6aeba86c7ed7b35b50b275e0b43f0284f93471f99a5e81e41b",
         "vc_49lev_nh_pt2000.csv": "c5b9969bb1836f06ee87d3f3f80c06a489ff19d74542684bb45490916932541b",
+        "vc_60lev_ecmwf.csv": "95afc9873c60d973a980861420cd2effaa4df2a9f913c4d6a7bea1f944a6bd4e",
     },
 )
 
@@ -53,11 +54,11 @@ def fetch_remote_table(name, resource):
     return resource.fetch(name)
 
 
-def read_remote_table(name, resource, index_col=None):
+def read_remote_table(name, resource, **kwargs):
 
     fname = fetch_remote_table(name, resource)
 
-    return pd.read_csv(fname, index_col=index_col)
+    return pd.read_csv(fname, **kwargs)
 
 
 def read_domain_table(name):
@@ -82,5 +83,5 @@ def read_remo_code_tables():
 def read_remo_vc_tables():
     
     resource = VC_RESOURCE
-    return {table.split(".")[0]: read_remote_table(table, resource, index_col=None) 
+    return {table.split(".")[0]: read_remote_table(table, resource, comment='#', index_col=None) 
             for table in resource.registry.keys()}

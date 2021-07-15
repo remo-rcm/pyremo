@@ -6,6 +6,7 @@ This module wraps the pyintorg interfaces into xr.apply_ufunc.
 
 import xarray as xr
 import numpy as np
+import warnings
 
 try:
     from pyintorg import interface as intf
@@ -15,13 +16,16 @@ except:
     )
 
 
-lev_gm = "lev_gm"
-
-fak_fib = 1.0 / 0.10197  # = gravitational constant if unit is 'm'
-fak_bla = 0.01  # if unit is '%'
-
 lev_i = "lev_i"
 lev = "lev"
+lev_gm = "lev_gm"
+
+
+class const:
+    """constants used for unit conversion"""
+
+    grav_const = 9.806805923
+    absolute_zero = 273.5
 
 
 def open_mfdataset(
@@ -305,28 +309,83 @@ def get_vc(ds):
     return xr.DataArray(ak, dims="lev_2"), xr.DataArray(bk, dims="lev_2")
 
 
-def gfile(datasets, ref_ds, time_range=None):
+def map_sst(tos, ref_ds, resample="6H", regrid=True):
+    from datetime import timedelta as td
+    import xesmf as xe
+
+    # tos_res = tos
+    attrs = tos.attrs
+    tos_times = (ref_ds.time.min() - td(days=1), ref_ds.time.max() + td(days=1))
+    tos = tos.sel(time=slice(tos_times[0], tos_times[1]))
+    # return tos_res
+    tos = tos.resample(time=resample).interpolate("linear").chunk({"time": 1})
+    tos = tos.sel(time=ref_ds.time)
+    if regrid:
+        regridder = xe.Regridder(tos, ref_ds, "nearest_s2d")
+        tos = regridder(tos)
+        tos.attrs.update(attrs)
+    return tos
+
+
+def convert_units(ds):
+    """convert units for use in the preprocessor"""
+    try:
+        if ds.sftlf.units == "%":
+            print("converting sftlf units to fractional")
+            attrs = ds.sftls.attrs
+            ds["sftlf"] = ds.sftlf * 0.01
+            attrs["units"] = 1
+            ds.sftlf.attrs = attrs
+    except:
+        pass
+    try:
+        if ds.tos.units == "degC":
+            print("converting tos units to K")
+            attrs = ds.tos.attrs
+            ds["tos"] = ds.tos + const.absolute_zero
+            attrs["units"] = "K"
+            ds.sftlf.attrs = attrs
+    except:
+        pass
+    try:
+        if ds.orog.units == "m":
+            print("converting orog units to fractional")
+            attrs = ds.orog.attrs
+            ds["orog"] = ds.orog * const.grav_const
+            attrs["units"] = "1"
+            ds.orog.attrs = attrs
+    except:
+        pass
+    return ds
+
+
+def gfile(datasets, ref_ds, tos=None, time_range=None):
     """Creates a virtual gfile"""
+    lon, lat = horizontal_dims(ref_ds)
     if time_range is None:
-        time_range = slice("1979-01-01T06:00:00", "1979-01-31T18:00:00")
+        time_range = ref_ds.time
     dsets = []
     for var, f in datasets.items():
-        da = open_mfdataset(f)[var].sel(time=time_range)
+        try:
+            da = open_mfdataset(f, chunks={"time": 1})[var]
+            da = da.sel(time=time_range)
+        except:
+            da = open_mfdataset(f, chunks={})[var]
         try:
             if da.lev.positive == "down":
                 da = da.reindex(lev=da.lev[::-1])
         except:
             pass
+        da[lon] = ref_ds[lon]
+        da[lat] = ref_ds[lat]
         dsets.append(da)
-
-    # dsets = [open_mfdataset(f)[var].sel(time=time_range) for var, f in datasets.items()]
-    # dsets.append(orog_ds.orog)
+    # with dask.config.set(**{'array.slicing.split_large_chunks': True}):
     ds = xr.merge(dsets, compat="override")
+    if tos is not None:
+        ds["tos"] = map_sst(tos, ref_ds.sel(time=time_range))
     ds["akgm"], ds["bkgm"] = get_vc(ref_ds)
     ds = ds.rename({"lev": lev_gm})
-    # ds["akgm"], ds["bkgm"] = get_vc(ref_ds)
-    # if ds.lev.positive == "down":
-    #    ds.reindex(lev=ds.lev[::-1])
+    ds = convert_units(ds)
     ds.attrs = ref_ds.attrs
     return ds
 

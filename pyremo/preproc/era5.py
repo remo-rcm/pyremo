@@ -1,154 +1,54 @@
+"""Cmorizer
 
+ERA5 cmorizer is mostly based on the official ECMWF documentation of converting GRIB to NetCDF:
+
+https://confluence.ecmwf.int/display/OIFS/How+to+convert+GRIB+to+netCDF
+
+"""
 import os
 import subprocess
 import tempfile
+import xarray as xr
+import pandas as pd
 
-class ECMWF():
-
-    date_fmt = "%Y-%m-%dT%H:%M:%S"
-    codemap   = {130: 'ta', 134: 'ps', 131: 'ua', 132: 'va',
-                 133: 'hus',  34 : 'tos',  31 :'sic',  129 : 'orog',
-                 172: 'sftlf', 139: 'tsl1', 170: 'tsl2', 183: 'tsl3',
-                 238: 'tsn', 236: 'tsl4', 246: 'clw', 141: 'snw', 198: 'src', 235: 'skt' ,
-                 39: 'swvl1', 40: 'swvl2', 41: 'swvl2'}
+tempdir = None#os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
 
 
-    def __init__(self,df=None, time_axis='time'):
-        self.cdo = Cdo(logging=True, tempdir=os.path.join(ExpVars.scratch,'python-cdo'))
-        self.time_axis = time_axis
-        self.df = df
-        self.df['startdate'] = pd.to_datetime(self.df['startdate'])
-        self.df['enddate'] = pd.to_datetime(self.df['enddate'])
-        self.tmp_ds = {}
-
-    @property
-    def file_list(self):
-        return self.df['path'].values
-
-    def threeD(self, varname):
-        """soil fields are handled as 2D although they have a depth dimension.
-        """
-        return len(self.timestep(varname).shape) == 3 and self.timestep(varname).shape[0] > 1
-
-    @property
-    def positive_down(self):
-        """ERA5 data has the correct layer numbering for REMO.
-        """
-        return False
-
-    @property
-    def code(self):
-        """returns code from dataframe, should be unique
-        """
-        code = self.df['code'].unique()
-        if len(code) == 1:
-            return code[0]
-        else:
-            raise Exception('code is not unique in file list')
-
-    @property
-    def ds(self):
-        return Dataset(self._ref_file())
-
-    def get_vc(self):
-        """Reads the vertical hybrid coordinate from a dataset.
-        """
-        return self.variables['hyai'], self.variables['hybi']
-
-   # @cached
-    def _tmp_file_by_date(self, datetime, nc):
-        filename = self.get_file_by_date(datetime)
-        date_str = datetime.strftime(self.date_fmt)
-        logging.debug('selecting {} from {}'.format(date_str, filename))
-        if nc:
-            return self._nc_convert( self.cdo.seldate(date_str, input=filename ) )
-        else:
-            return self.cdo.seldate(date_str, input=filename )
-
-    def _ref_file(self, filename=None, nc=True):
-        """the reference dataset is used to access dataset attributes.
-
-        This is required to give the preprocessor acces to, e.g., grid
-        and calendar information.
-        """
-        if filename is None:
-            filename = self.file_list[0]
-        logging.info('getting reference dataset from {}'.format(filename))
-        if nc:
-            return self._nc_convert( self._reftimestep( filename ) )
-        else:
-            return self._reftimestep( filename )
-
-        #logging.debug('reference dataset: {}'.format(self.ref_ds.filepath()))
-   # @cached
-    def _reftimestep(self, filename):
-        return self.cdo.seltimestep( 1, input=filename)
-
-  #  @cached
-    def _nc_convert(self, filename):
-        regular = self._to_regular(filename)
-        if self.code in self.codemap:
-            return self.cdo.setname(self.codemap[self.code], input=regular)
-        else:
-            return regular
-
-    def _gridtype(self, filename):
-        griddes = self.cdo.griddes(input=filename)
-        griddes = {entry.split('=')[0].strip():entry.split('=')[1].strip() for entry in griddes if '=' in entry}
-        return griddes['gridtype']
-
-    def _get_code(self, filename):
-        showcode = self.cdo.showcode(input=filename)
-        print(showcode)
-        return showcode
-
-  #  @cached
-    def _to_regular(self, filename):
-        """converts ecmwf spectral grib data to regular gaussian netcdf.
-
-        cdo is used to convert ecmwf grid data to netcdf depending on the gridtype:
-        For 'gaussian_reduced': cdo -R
-            'spectral'        : cdo sp2gpl
-
-        This follows the recommendation from the ECMWF Era5 Documentation.
-        We also invert the latitudes to stick with cmor standard.
-
-        """
-        gridtype = self._gridtype(filename)
-        if gridtype == 'gaussian_reduced':
-            #return self.cdo.copy(options='-R -f nc', input=filename)
-            gaussian = self.cdo.setgridtype('regular', options='-f nc', input=filename)
-        elif gridtype == 'spectral':
-            gaussian = self.cdo.sp2gpl(options='-f nc', input=filename)
-        elif gridtype == 'gaussian':
-            gaussian =  self.cdo.copy(options='-f nc', input=filename)
-        else:
-            raise Exception('unknown grid type for conversion to regular grid: {}'.format(gridtype))
-        return self.cdo.invertlat(input=gaussian)
-
-    def get_file_by_date(self, datetime):
-        """search for a file in the dataframe that should contain the datetime.
-        """
-        df = self.df[ (datetime >= self.df['startdate']) & (datetime <= self.df['enddate']) ]
-        if len(df['path'].values) == 0:
-            raise Exception('no files found for {}'.format(datetime))
-        elif len(df['path'].values) > 1:
-            raise Exception('date selection must be unique')
-        else:
-            return df['path'].values[0]
-
-    def data_by_date(self, variable, datetime, nc=True):
-        return Dataset(self._tmp_file_by_date(datetime, nc)).variables[variable][0]
+def init_tempdir():
+    global tempdir
+    try:
+        tempdir = os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
+        if not os.path.isdir(tempdir):
+            os.makedirs(tempdir)
+    except:
+        tempdir = None
+        
+init_tempdir()
+        
     
+varmap   = {130: 'ta', 134: 'ps', 131: 'ua', 132: 'va',
+             133: 'hus',  34 : 'tos',  31 :'sic',  129 : 'orog',
+             172: 'sftlf', 139: 'tsl1', 170: 'tsl2', 183: 'tsl3',
+             238: 'tsn', 236: 'tsl4', 246: 'clw', 141: 'snw', 198: 'src', 
+             235: 'skt' , 39: 'swvl1', 40: 'swvl2', 41: 'swvl2', 
+             138: 'svo', 155: 'sd'}
+
+codemap = {var : code for code, var in varmap.items()}
+
+show_cdo = True
+
+
+
     
 def _cdo_call(options='', op='', input='', output='temp'):
     if output is None:
         output = ''
     elif output == 'temp':
-        output = tempfile.NamedTemporaryFile().name
-    print(output)
+        output = tempfile.TemporaryDirectory(dir=tempdir).name
+    if isinstance(input, list):
+        input = " ".join(input)
     call = "cdo {} {} {} {}".format(options, op, input, output)
-    print(call)
+    if show_cdo: print(call)
     stdout = subprocess.Popen(call, shell=True, stdout=subprocess.PIPE).stdout.read()
     if output:
         return output
@@ -182,7 +82,7 @@ def _gridtype(filename):
     return _griddes(filename)['gridtype']
 
 
-def _to_regular(filename):
+def _to_regular(filename, table=''):
     """converts ecmwf spectral grib data to regular gaussian netcdf.
 
     cdo is used to convert ecmwf grid data to netcdf depending on the gridtype:
@@ -200,14 +100,14 @@ def _to_regular(filename):
         #return self.cdo.copy(options='-R -f nc', input=filename)
         #gaussian = cdo.setgridtype('regular', options='-f nc', input=filename)
         #gaussian = _cdo_call(op='set')
-        gaussian = _cdo_call(op='setgridtype,regular', options='-f nc -t ecmwf', input=filename)
+        gaussian = _cdo_call(op='setgridtype,regular', options='-f nc '+table, input=filename)
     elif gridtype == 'spectral':
         #gaussian = Cdo(tempdir=scratch).sp2gpl(options='-f nc', input=filename)
         #gaussian = _convert_with_cdo(filename, op='sp2gpl')
-        gaussian = _cdo_call(op='sp2gpl', options='-f nc -t ecmwf', input=filename)
+        gaussian = _cdo_call(op='sp2gpl', options='-f nc '+table, input=filename)
     elif gridtype == 'gaussian':
         #gaussian =  cdo.copy(options='-f nc', input=filename)
-        gaussian = _cdo_call(op='copy', options='-f nc -t ecmwf', input=filename)
+        gaussian = _cdo_call(op='copy', options='-f nc '+table, input=filename)
     else:
         raise Exception('unknown grid type for conversion to regular grid: {}'.format(gridtype))
     return _cdo_call(op='invertlat', input=gaussian)
@@ -226,7 +126,7 @@ def _split_time(filename, scratch=None):
     #_cdo_call(op='splitsel,1', input=filename, output=output)
     #return output
 
-def _sel_date(code, date, df):
+def _seldate(code, date, df):
     filename = _get_file_by_date(code, date, df)
     return _cdo_call(op='seldate,{}'.format(date), input=filename)
 
@@ -266,9 +166,137 @@ def _get_row_by_date(code, date, df):
     sel = sel.loc[date]#.path
     return sel
 
+
 def _get_file_by_date(code, date, df):
     return _get_row_by_date(code, date, df).path
 
-def _get_timestep(code, date, df):
-    filename = _get_file_by_date(code, date, df)
-    return _cdo_call(op='seldate,{}'.format(date), input=filename)
+
+def _get_timestep(code, date, df, gaussian=True):
+    f = _seldate(code, date, df)
+    if gaussian is True:
+        return _to_regular(f)
+    return f
+
+                       
+def _get_timesteps(codes, dates, df, gaussian=True, delayed=False):
+    from itertools import product
+    if not isinstance(dates, list):
+        dates = [dates]
+    if not isinstance(codes, list):
+        codes = [codes]
+    timesteps = {code: [] for code in codes}
+    if delayed is True:
+        from dask import delayed
+    else:
+        def delayed(x):
+            return x
+    for code, date in product(codes, dates):
+        reg = delayed(_get_timestep)(code, date, df, gaussian)
+        timesteps[code].append(reg)
+    return timesteps
+
+
+def _to_dataarray(code, dates, df, parallel=False, use_cftime=True, 
+                  chunks={'time' : 1}, **kwargs):
+    timesteps = _get_timesteps(code, dates, df, delayed=parallel)
+    if parallel:
+        import dask
+        timesteps_ = dask.compute(timesteps)[0]
+    else:
+        timesteps_ = timesteps
+    dsets = [xr.open_mfdataset(files, use_cftime=use_cftime, chunks=chunks, **kwargs)
+             for files in timesteps_.values()]
+    return xr.merge(dsets)
+    
+                       
+def _gfile(date, df):
+    from . import core
+    variables = ['ps']
+    temp_files = [_get_timestep(codemap[var], date, df) for var in variables]
+    return temp_files
+
+
+def _open_catalog(url = "/pool/data/Catalogs/mistral-era5.json"):
+    import intake
+    cat = intake.open_esm_datastore(url)
+    level_types = ['model_level', 'surface']
+    return cat.search(code=list(codemap.values()), level_type=level_types, 
+                      dataType='an', frequency='hourly')
+
+
+def _get_catalog_df(url = "/pool/data/Catalogs/mistral-era5.json"):
+    df = _open_catalog(url).df
+    df['time'] = pd.to_datetime(df.validation_date)
+    df = df.set_index(['time'])
+    return df
+
+
+def _wind(date, df):
+    """compute wind from vorticity and divergence"""
+    vorticity = 'svo'
+    divergence = 'sd'
+    vort_tmp = _get_timestep(codemap[vorticity], date, df, gaussian=False)
+    div_tmp = _get_timestep(codemap[divergence], date, df, gaussian=False)
+    #ds = xr.merge([vort_ds, div_ds])
+    merge = _cdo_call(op='merge', input=[vort_tmp, div_tmp])
+    uv = _cdo_call(op='dv2uvl', options='-f nc', input = merge)
+    uv = _cdo_call(op='invertlat', input=uv)
+    return uv
+    u = self.cdo.selcode(131, input=uv)
+    v = self.cdo.selcode(132, input=uv)
+    return self.cdo.setname('ua', input = u), self.cdo.setname('va', input = v)
+
+def _get_code(ident):
+    if type(ident) == int:
+        return ident
+    elif ident in codemap:
+        return codemap[ident]
+    else:
+        message = 'Unkown code or cf variable name: ' + str(ident) + \
+                      '   I know: ' + str(codemap)
+        raise Exception(message)
+
+        
+def _cf_rename(ds):
+    for da in ds.values():
+        try:
+            print(da.code)
+        except:
+            pass
+
+class ERA5():
+    
+    
+    def __init__(self, catalog_url="/pool/data/Catalogs/mistral-era5.json", 
+                scratch=None):
+        if scratch:
+            tempdir=scratch            
+        self.df = _get_catalog_df(catalog_url)
+        
+        
+    def to_xarray(self, idents, date, parallel=False, cf=True):
+        """Create an xarray dataset"""
+        idents = [_get_code(ident) for ident in idents]
+        return _to_dataarray(idents, date, self.df,
+                            parallel=parallel)
+    
+    
+    def get_timesteps(self, idents, dates, gaussian=True, delayed=False):
+        """Returns a list of cmorized files"""
+        idents = [_get_code(ident) for ident in idents]
+        return _get_timesteps(idents, dates, self.df, 
+                              gaussian=gaussian, 
+                              delayed=delayed)
+    
+    def wind(self, dates):
+        return _wind(dates, self.df)
+    
+    
+    
+def gfile(date, parallel=False, cmorizer=None):
+    if cmorizer is None:
+        cmorizer = ERA5()
+    variables = ['ta', 'hus', 'ps', 'sic']
+    ds = cmorizer.to_xarray(variables, date, 
+                            parallel=parallel)
+    

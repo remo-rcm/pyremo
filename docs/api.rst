@@ -18,3 +18,38 @@ Top-level functions
    open_remo_dataset
    update_meta_info
    parse_dates
+
+Pressure interpolation
+======================
+
+.. autosummary::
+   :toctree: generated/
+
+   prsint.pressure_interpolation
+
+   
+Preprocessor
+============
+
+.. autosummary::
+   :toctree: generated/
+
+   preproc.remap
+   preproc.to_netcdf
+   preproc.to_tar
+
+CF preprocessor (CMIP5/CMPI6)
+-----------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   preproc.gfile
+
+ECMWF preprocessor (ERA5)
+-------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   preproc.ERA5

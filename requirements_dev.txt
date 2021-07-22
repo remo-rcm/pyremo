@@ -23,5 +23,6 @@ numpydoc
 nbsphinx
 nbsphinx-link
 ipython
+pooch
 
 git+git://github.com/euro-cordex/py-cordex.git

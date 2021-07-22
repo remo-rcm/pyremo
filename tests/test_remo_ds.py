@@ -3,7 +3,7 @@ import pyremo as pr
 
 import pytest
 
-test_data = './tests/data/e056111t2006010100'
+test_data = './tests/data/e056111t2006010100.nc'
 
 
 def test_remo_ds():

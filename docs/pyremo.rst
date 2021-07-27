@@ -8,6 +8,7 @@ Subpackages
 
    pyremo.core
    pyremo.physics
+   pyremo.preproc
    pyremo.prsint
    pyremo.tables
 

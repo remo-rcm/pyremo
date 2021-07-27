@@ -13,7 +13,7 @@ pytest-runner==5.1
 pytest-cov
 coveralls
 xarray
-numpy
+numpy==1.19.4
 pandas
 pint
 cdo
@@ -23,5 +23,6 @@ numpydoc
 nbsphinx
 nbsphinx-link
 ipython
+pooch
 
 git+git://github.com/euro-cordex/py-cordex.git

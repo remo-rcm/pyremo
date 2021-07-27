@@ -432,10 +432,10 @@ def convert_units(ds):
             print("converting orography to geopotential")
             attrs = ds.orog.attrs
             ds["orog"] = ds.orog * const.grav_const
-            attrs["units"] = "m^2/s^2"
+            attrs["units"] = "m2 s-2"
             ds.orog.attrs = attrs
     except:
-        warnings.warn("orog has no units attribute, must be m^2/s^2")
+        warnings.warn("orog has no units attribute, must be m2 s-2")
     return ds
 
 

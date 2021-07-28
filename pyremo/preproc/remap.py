@@ -11,21 +11,24 @@ from .core import ( const, geo_coords, geopotential, interpolate_horizontal,
 
 
 
-def get_filename(date, expid='000000'):
-    template = 'a{}a{}.nc'
+def get_filename(date, expid='000000', template=None):
+    if template is None:
+        template = 'x{}x{}.nc'
     return template.format(expid, date.strftime(format='%Y%m%d%H'))
 
 
-def to_netcdf(ads, path='', expid='000000'):
+def to_netcdf(ads, path='', expid='000000', template=None, **kwargs):
     """write dataset to netcdf
     
     by default, each timestep goes into a separate output file
     
     """
+    if template is None:
+        template = 'a{}a{}.nc'
     dates, datasets = zip(*ads.groupby("time"))
-    paths = [os.path.join(path, get_filename(date)) for date in dates]
+    paths = [os.path.join(path, get_filename(date, expid, template)) for date in dates]
     dsets = [dset.expand_dims('time') for dset in datasets]
-    xr.save_mfdataset(dsets, paths)
+    xr.save_mfdataset(dsets, paths, **kwargs)
     return paths
 
 

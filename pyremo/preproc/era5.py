@@ -43,7 +43,7 @@ levelmap = {129: 'surface'}
 
 codemap = {var : code for code, var in varmap.items()}
 
-show_cdo = True
+show_cdo = False
 
 
 def _get_attrs(code):
@@ -86,7 +86,7 @@ def _convert_with_cdo(f,op):
 
 
 def _griddes(filename):
-    griddes = _cdo_call(options='', op='griddes', input=filename, output='').decode('utf-8').split('\n')
+    griddes = _cdo_call(options='', op='griddes', input=filename, output=None).decode('utf-8').split('\n')
     griddes = {entry.split('=')[0].strip():entry.split('=')[1].strip() for entry in griddes if '=' in entry}
     return griddes#['gridtype']
 
@@ -252,16 +252,29 @@ def _to_dataarray(codes, dates, df, parallel=False, cf_meta=True, use_cftime=Tru
     return xr.merge(dsets.values())
 
 
-def _rename_variable(ds, code):
-    attrs = _get_attrs(code)
+def _rename_variable(ds, codes):
+    """change name and attributes of dataarray
+    
+    Trys to identifiy, rename and update attributes
+    of an ERA5 variable in an xarray dataset. Since we don't
+    exactly know how cdo converts the meta data and attributes
+    of an ecmwf grib file, we try several ways to identify
+    a variable, e.g, by name, code, etc...
+    
+    """
+    if not isinstance(codes, list):
+        codes = [codes]
     rename = {}
-    for var, da in ds.items():
-        if attrs['short_name'] == var:
-            rename[var] = varmap[code]
-        elif 'code' in da.attrs:
-            rename[var] = varmap[da.code]
-        if var in rename:
-            da.attrs = _get_attrs(code)
+    for code in codes:
+        print(code)
+        attrs = _get_attrs(code)
+        for var, da in ds.items():
+            if attrs['short_name'] == var:
+                rename[var] = varmap[code]
+            elif 'code' in da.attrs:
+                rename[var] = varmap[da.code]
+            if var in rename:
+                da.attrs = _get_attrs(code)
     return ds.rename(rename)
         
 
@@ -305,7 +318,7 @@ def _wind_by_date(date, df):
     #return self.cdo.setname('ua', input = u), self.cdo.setname('va', input = v)
 
     
-def _wind(dates, df, delayed=False):
+def _wind_timesteps(dates, df, delayed=False):
     if not isinstance(dates, list):
         dates = [dates]
     uv_dates = []
@@ -318,7 +331,21 @@ def _wind(dates, df, delayed=False):
         uv_date = delayed(_wind_by_date)(date, df)
         uv_dates.append(uv_date)
     return uv_dates
-    
+
+
+def _wind(dates, df, parallel=False, cf_meta=True):
+    files = _wind_timesteps(dates, df, delayed=parallel)
+    if parallel:
+        import dask
+        files_ = dask.compute(files)[0]
+    else:
+        files_ = files
+    ds = xr.open_mfdataset(files_, chunks={'time':1}, coords="minimal",
+                             compat="override", data_vars='minimal' )
+    if cf_meta is True:
+        return _rename_variable(ds, [codemap[var] for var in ['ua', 'va']])
+    return ds
+
 def _get_code(ident):
     if type(ident) == int:
         return ident
@@ -348,10 +375,10 @@ class ERA5():
         self.df = _get_catalog_df(catalog_url)
         
         
-    def to_xarray(self, idents, date, parallel=False, cf_meta=True):
+    def to_xarray(self, idents, dates, parallel=False, cf_meta=True):
         """Create an xarray dataset"""
         idents = [_get_code(ident) for ident in idents]
-        ds = _to_dataarray(idents, date, self.df,
+        ds = _to_dataarray(idents, dates, self.df,
                             parallel=parallel, cf_meta=cf_meta)
         return ds
     
@@ -364,13 +391,53 @@ class ERA5():
                               delayed=delayed)
    
 
-    def wind(self, dates, cf_meta=True):
-        return _wind(dates, self.df)
+    def wind(self, dates, parallel=False, cf_meta=True):
+        return _wind(dates, self.df, parallel=parallel, cf_meta=cf_meta)
+    
+    
+    def atmosphere(self, dates, parallel=False, cf_meta=True):
+        variables = ['ta', 'hus', 'ps', 'tos', 'sic']
+        if parallel is True:
+            from dask import delayed
+        else:
+            def delayed(x):
+                return x
+        ds = delayed(self.to_xarray)(variables, dates, 
+                                         parallel=parallel, cf_meta=cf_meta)
+        wind = delayed(self.wind)(dates, parallel=parallel, cf_meta=cf_meta)
+        if parallel is True:
+            import dask
+            res = dask.compute(ds, wind)
+        else:
+            res = (ds, wind)
+        return xr.merge(res)
+    
+    def gfile(self, dates, parallel=False, cf_meta=True):
+        if not isinstance(dates, list):
+            dates = [dates]
+        if parallel is True:
+            from dask import delayed
+        else:
+            def delayed(x):
+                return x
+        res = []
+        for date in dates:
+            res.append(delayed(self.atmosphere)(date))
+        return res
+        if parallel is True:
+            import dask
+            res_ = dask.compute(res)
+        else:
+            res_ = res
+        return xr.merge(res)
+    
     
   
 def gfile(date, parallel=False, cmorizer=None):
     if cmorizer is None:
         cmorizer = ERA5()
-    variables = ['ta', 'hus', 'ps', 'sic']
+    variables = ['ta', 'hus', 'ps', 'tos', 'sic']
     ds = cmorizer.to_xarray(variables, date, 
                             parallel=parallel)
+    
+    return ds

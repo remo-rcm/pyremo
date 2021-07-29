@@ -181,7 +181,13 @@ def _get_row_by_date(code, date, df):
     This subroutine is used to find the ERA5 grib file
     that contains the code and date.
     
+    The search is based on the catalog structure in the dataframe
+    df. Variables on surface levels are stored in monthly files
+    while variables on model leves are stored in daily files.
+    Depending on the model level, the date is croped to find the
+    right file with the right date.
     """
+    # reduce the dataframe to only the code of interest.
     sel = df[df.code == code]#.loc[date]
     level_type = sel.level_type.unique()
     if len(level_type) > 1:
@@ -193,9 +199,12 @@ def _get_row_by_date(code, date, df):
         level_type = level_type[0]
     sel = sel[sel.level_type == level_type]
     if level_type == 'model_level':
+        # here we have year, month and day
         date = "{}-{}-{}".format(date[0:4], date[5:7], date[8:10])
     elif level_type == 'surface':
+        # here we use only year and month to find the 
         date = "{}-{}-01".format(date[0:4], date[5:7])
+    # now locate our date of interest
     sel = sel.loc[date]#.path
     return sel
 
@@ -266,7 +275,6 @@ def _rename_variable(ds, codes):
         codes = [codes]
     rename = {}
     for code in codes:
-        print(code)
         attrs = _get_attrs(code)
         for var, da in ds.items():
             if attrs['short_name'] == var:
@@ -341,7 +349,8 @@ def _wind(dates, df, parallel=False, cf_meta=True):
     else:
         files_ = files
     ds = xr.open_mfdataset(files_, chunks={'time':1}, coords="minimal",
-                             compat="override", data_vars='minimal' )
+                           use_cftime=True, compat="override", 
+                           data_vars='minimal')
     if cf_meta is True:
         return _rename_variable(ds, [codemap[var] for var in ['ua', 'va']])
     return ds
@@ -357,13 +366,15 @@ def _get_code(ident):
         raise Exception(message)
 
         
-def _cf_rename(ds):
-    for da in ds.values():
-        try:
-            print(da.code)
-        except:
-            pass
-
+def _clean_coords(ds, vcs=None):
+    if vcs is None:
+        vcs = ['hyai', 'hybi', 'hyam', 'hybm']
+    for vc in vcs:
+        ds[vc] = ds[vc].isel(time=0).drop('time').squeeze()            
+    ds['akgm'] = ds.hyai
+    ds['bkgm'] = ds.hybi
+    return ds
+        
         
 class ERA5():
     
@@ -377,6 +388,8 @@ class ERA5():
         
     def to_xarray(self, idents, dates, parallel=False, cf_meta=True):
         """Create an xarray dataset"""
+        if not isinstance(idents, list):
+            idents = [idents]
         idents = [_get_code(ident) for ident in idents]
         ds = _to_dataarray(idents, dates, self.df,
                             parallel=parallel, cf_meta=cf_meta)
@@ -396,7 +409,7 @@ class ERA5():
     
     
     def atmosphere(self, dates, parallel=False, cf_meta=True):
-        variables = ['ta', 'hus', 'ps', 'tos', 'sic']
+        variables = ['ta', 'hus', 'ps', 'tos', 'sic', 'clw']
         if parallel is True:
             from dask import delayed
         else:
@@ -412,7 +425,8 @@ class ERA5():
             res = (ds, wind)
         return xr.merge(res)
     
-    def gfile(self, dates, parallel=False, cf_meta=True):
+    
+    def dynamics(self, dates, parallel=False, cf_meta=True):
         if not isinstance(dates, list):
             dates = [dates]
         if parallel is True:
@@ -423,13 +437,35 @@ class ERA5():
         res = []
         for date in dates:
             res.append(delayed(self.atmosphere)(date))
-        return res
         if parallel is True:
             import dask
-            res_ = dask.compute(res)
+            res_ = dask.compute(res)[0]
         else:
             res_ = res
-        return xr.merge(res)
+        return xr.concat(res_, dim='time')
+
+    
+    def fx(self, cf_meta=True):
+        """static variables
+        
+        Static variables are not supposed to be time dependent.
+        
+        """
+        variables = ['orog', 'sftlf']
+        return self.to_xarray(variables, "1979-01-01T00:00:00", 
+                            cf_meta=cf_meta).drop('time').squeeze()
+
+    
+    def gfile(self, dates, parallel=False, cf_meta=True, clean_coords=True,
+             add_fx=True):
+        gds = self.dynamics(dates, parallel=parallel,
+                                 cf_meta=cf_meta)
+        if add_fx is True:
+            gds = xr.merge([gds, self.fx(cf_meta=cf_meta)])
+        if clean_coords is True:
+            gds = _clean_coords(gds)
+        return gds
+        
     
     
   

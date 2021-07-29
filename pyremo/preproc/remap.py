@@ -10,6 +10,8 @@ from .core import ( const, geo_coords, geopotential, interpolate_horizontal,
                    correct_uv )
 
 
+vcs = ['hyai', 'hybi', 'hyam', 'hybm', 'akgm', 'bkgm', 'ak', 'bk']
+
 
 def get_filename(date, expid='000000', template=None):
     if template is None:
@@ -23,11 +25,20 @@ def to_netcdf(ads, path='', expid='000000', template=None, **kwargs):
     by default, each timestep goes into a separate output file
     
     """
+    expand_time = [var for var, da in ads.items() if 'time' in da.dims]
     if template is None:
         template = 'a{}a{}.nc'
     dates, datasets = zip(*ads.groupby("time"))
-    paths = [os.path.join(path, get_filename(date, expid, template)) for date in dates]
-    dsets = [dset.expand_dims('time') for dset in datasets]
+    paths = [os.path.join(path, get_filename(date, expid, template)) 
+             for date in dates]
+    dsets = []
+    # expand time dimension only for variables not coordinates.
+    for ds in datasets:
+        for var, da in ds.items():
+            if var in expand_time:
+                ds[var] = da.expand_dims('time')
+        dsets.append(ds)
+    #dsets = [dset.expand_dims('time') for dset in datasets]
     xr.save_mfdataset(dsets, paths, **kwargs)
     return paths
 
@@ -110,6 +121,7 @@ def remap(gds, domain_info, vc, surflib):
     
     tem = interpolate_vertical(tge, psge, ps1em, akhgm, bkhgm,
                                akbkem.akh, akbkem.bkh, 'T', kpbl)
+    return tem
     arfem = interpolate_vertical(arfge, psge, ps1em, akhgm, bkhgm,
                                  akbkem.akh, akbkem.bkh, 'RF', kpbl)
     

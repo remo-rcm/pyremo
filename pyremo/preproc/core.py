@@ -17,8 +17,6 @@ except:
         "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://git.gerics.de/python/pyintorg.git"
     )
 
-
-pbl_index = None #intf.pbl_index
     
 lev_i = "lev_i"
 lev = "lev"
@@ -30,6 +28,10 @@ class const:
 
     grav_const = 9.806805923
     absolute_zero = 273.5
+
+    
+def pbl_index(akgm, bkgm):
+    return intf.pbl_index(akgm, bkgm)
 
 
 def open_mfdataset(
@@ -289,7 +291,7 @@ def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
         # vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
-        #  dask_gufunc_kwargs = {'allow_rechunk':True},
+        dask_gufunc_kwargs = {'allow_rechunk':True},
         output_dtypes=[fibgm.dtype],
     )
     return result
@@ -325,7 +327,7 @@ def relative_humidity(qdgm, tgm, psgm, akgm, bkgm, qwgm=None):
         vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
-        #  dask_gufunc_kwargs = {'allow_rechunk':True},
+        dask_gufunc_kwargs = {'allow_rechunk':True},
         output_dtypes=[qdgm.dtype],
     )
     return result

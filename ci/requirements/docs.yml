@@ -36,6 +36,6 @@ dependencies:
   - sphinx==2.1.2
 # for regionmask intake example
   - pip:
-    - intake_geopandas>=0.2.4
-    - msgpack
+#    - intake_geopandas>=0.2.4
+#    - msgpack
     - git+git://github.com/euro-cordex/py-cordex.git

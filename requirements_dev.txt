@@ -13,7 +13,7 @@ pytest-runner==5.1
 pytest-cov
 coveralls
 xarray
-numpy==1.19.4
+numpy #==1.19.4
 pandas
 pint
 cdo

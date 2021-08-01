@@ -11,6 +11,11 @@ import tempfile
 import xarray as xr
 import pandas as pd
 
+from cordex import ecmwf as ectable
+eccodes = ectable.table
+
+xr.set_options(keep_attrs = True)
+
 tempdir = None#os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
 
 
@@ -33,11 +38,19 @@ varmap   = {130: 'ta', 134: 'ps', 131: 'ua', 132: 'va',
              235: 'skt' , 39: 'swvl1', 40: 'swvl2', 41: 'swvl2', 
              138: 'svo', 155: 'sd'}
 
+levelmap = {129: 'surface'}
+
+
 codemap = {var : code for code, var in varmap.items()}
 
-show_cdo = True
+show_cdo = False
 
 
+def _get_attrs(code):
+    data = eccodes.loc[code]
+    attrs = data.to_dict()
+    attrs['code'] = code
+    return attrs
 
     
 def _cdo_call(options='', op='', input='', output='temp'):
@@ -73,7 +86,7 @@ def _convert_with_cdo(f,op):
 
 
 def _griddes(filename):
-    griddes = _cdo_call(options='', op='griddes', input=filename, output='').decode('utf-8').split('\n')
+    griddes = _cdo_call(options='', op='griddes', input=filename, output=None).decode('utf-8').split('\n')
     griddes = {entry.split('=')[0].strip():entry.split('=')[1].strip() for entry in griddes if '=' in entry}
     return griddes#['gridtype']
 
@@ -82,7 +95,7 @@ def _gridtype(filename):
     return _griddes(filename)['gridtype']
 
 
-def _to_regular(filename, table=''):
+def _to_regular(filename, table=None):
     """converts ecmwf spectral grib data to regular gaussian netcdf.
 
     cdo is used to convert ecmwf grid data to netcdf depending on the gridtype:
@@ -93,6 +106,8 @@ def _to_regular(filename, table=''):
     We also invert the latitudes to stick with cmor standard.
 
     """
+    if table is None:
+        table = ''
     #from cdo import Cdo
     #cdo = Cdo(tempdir=scratch)
     gridtype = _gridtype(filename)
@@ -126,7 +141,14 @@ def _split_time(filename, scratch=None):
     #_cdo_call(op='splitsel,1', input=filename, output=output)
     #return output
 
+    
 def _seldate(code, date, df):
+    """select a single timestep of ERA5 data
+    
+    Returns the path to a temporay file that contains only
+    a single timestep of ERA5 data.
+    
+    """
     filename = _get_file_by_date(code, date, df)
     return _cdo_call(op='seldate,{}'.format(date), input=filename)
 
@@ -154,20 +176,46 @@ def to_xarray(filename, scratch=None):
     
     
 def _get_row_by_date(code, date, df):
+    """returns a dataframe entry depending on code and data
+    
+    This subroutine is used to find the ERA5 grib file
+    that contains the code and date.
+    
+    The search is based on the catalog structure in the dataframe
+    df. Variables on surface levels are stored in monthly files
+    while variables on model leves are stored in daily files.
+    Depending on the model level, the date is croped to find the
+    right file with the right date.
+    """
+    # reduce the dataframe to only the code of interest.
     sel = df[df.code == code]#.loc[date]
     level_type = sel.level_type.unique()
     if len(level_type) > 1:
-        raise Exception('non unique selection')
-    level_type = level_type[0]
+        if code in levelmap:
+            level_type = levelmap[code]
+        else:
+            raise Exception('non unique selection')
+    else:
+        level_type = level_type[0]
+    sel = sel[sel.level_type == level_type]
     if level_type == 'model_level':
+        # here we have year, month and day
         date = "{}-{}-{}".format(date[0:4], date[5:7], date[8:10])
     elif level_type == 'surface':
+        # here we use only year and month to find the 
         date = "{}-{}-01".format(date[0:4], date[5:7])
+    # now locate our date of interest
     sel = sel.loc[date]#.path
     return sel
 
 
 def _get_file_by_date(code, date, df):
+    """returns a filepath depending on code and data
+    
+    This subroutine is used to find the ERA5 grib file
+    that contains the code and date.
+    
+    """
     return _get_row_by_date(code, date, df).path
 
 
@@ -196,18 +244,49 @@ def _get_timesteps(codes, dates, df, gaussian=True, delayed=False):
     return timesteps
 
 
-def _to_dataarray(code, dates, df, parallel=False, use_cftime=True, 
+def _to_dataarray(codes, dates, df, parallel=False, cf_meta=True, use_cftime=True, 
                   chunks={'time' : 1}, **kwargs):
-    timesteps = _get_timesteps(code, dates, df, delayed=parallel)
+    timesteps = _get_timesteps(codes, dates, df, delayed=parallel)
     if parallel:
         import dask
         timesteps_ = dask.compute(timesteps)[0]
     else:
         timesteps_ = timesteps
-    dsets = [xr.open_mfdataset(files, use_cftime=use_cftime, chunks=chunks, **kwargs)
-             for files in timesteps_.values()]
-    return xr.merge(dsets)
+    dsets = {code: xr.open_mfdataset(files, use_cftime=use_cftime, 
+                                     chunks=chunks, **kwargs)
+             for code, files in timesteps_.items()}
+    if cf_meta is True:
+        for code, ds in dsets.items():
+            dsets[code] = _rename_variable(ds, code)
+    return xr.merge(dsets.values())
+
+
+def _rename_variable(ds, codes):
+    """change name and attributes of dataarray
     
+    Trys to identifiy, rename and update attributes
+    of an ERA5 variable in an xarray dataset. Since we don't
+    exactly know how cdo converts the meta data and attributes
+    of an ecmwf grib file, we try several ways to identify
+    a variable, e.g, by name, code, etc...
+    
+    """
+    if not isinstance(codes, list):
+        codes = [codes]
+    rename = {}
+    for code in codes:
+        attrs = _get_attrs(code)
+        for var, da in ds.items():
+            if attrs['short_name'] == var:
+                rename[var] = varmap[code]
+            elif 'code' in da.attrs:
+                rename[var] = varmap[da.code]
+            if var in rename:
+                da.attrs = _get_attrs(code)
+    return ds.rename(rename)
+        
+
+
                        
 def _gfile(date, df):
     from . import core
@@ -231,7 +310,7 @@ def _get_catalog_df(url = "/pool/data/Catalogs/mistral-era5.json"):
     return df
 
 
-def _wind(date, df):
+def _wind_by_date(date, df):
     """compute wind from vorticity and divergence"""
     vorticity = 'svo'
     divergence = 'sd'
@@ -242,9 +321,39 @@ def _wind(date, df):
     uv = _cdo_call(op='dv2uvl', options='-f nc', input = merge)
     uv = _cdo_call(op='invertlat', input=uv)
     return uv
-    u = self.cdo.selcode(131, input=uv)
-    v = self.cdo.selcode(132, input=uv)
-    return self.cdo.setname('ua', input = u), self.cdo.setname('va', input = v)
+    #u = self.cdo.selcode(131, input=uv)
+    #v = self.cdo.selcode(132, input=uv)
+    #return self.cdo.setname('ua', input = u), self.cdo.setname('va', input = v)
+
+    
+def _wind_timesteps(dates, df, delayed=False):
+    if not isinstance(dates, list):
+        dates = [dates]
+    uv_dates = []
+    if delayed is True:
+        from dask import delayed
+    else:
+        def delayed(x):
+            return x
+    for date in dates:
+        uv_date = delayed(_wind_by_date)(date, df)
+        uv_dates.append(uv_date)
+    return uv_dates
+
+
+def _wind(dates, df, parallel=False, cf_meta=True):
+    files = _wind_timesteps(dates, df, delayed=parallel)
+    if parallel:
+        import dask
+        files_ = dask.compute(files)[0]
+    else:
+        files_ = files
+    ds = xr.open_mfdataset(files_, chunks={'time':1}, coords="minimal",
+                           use_cftime=True, compat="override", 
+                           data_vars='minimal')
+    if cf_meta is True:
+        return _rename_variable(ds, [codemap[var] for var in ['ua', 'va']])
+    return ds
 
 def _get_code(ident):
     if type(ident) == int:
@@ -257,13 +366,16 @@ def _get_code(ident):
         raise Exception(message)
 
         
-def _cf_rename(ds):
-    for da in ds.values():
-        try:
-            print(da.code)
-        except:
-            pass
-
+def _clean_coords(ds, vcs=None):
+    if vcs is None:
+        vcs = ['hyai', 'hybi', 'hyam', 'hybm']
+    for vc in vcs:
+        ds[vc] = ds[vc].isel(time=0).drop('time').squeeze()            
+    ds['akgm'] = ds.hyai
+    ds['bkgm'] = ds.hybi
+    return ds
+        
+        
 class ERA5():
     
     
@@ -274,11 +386,14 @@ class ERA5():
         self.df = _get_catalog_df(catalog_url)
         
         
-    def to_xarray(self, idents, date, parallel=False, cf=True):
+    def to_xarray(self, idents, dates, parallel=False, cf_meta=True):
         """Create an xarray dataset"""
+        if not isinstance(idents, list):
+            idents = [idents]
         idents = [_get_code(ident) for ident in idents]
-        return _to_dataarray(idents, date, self.df,
-                            parallel=parallel)
+        ds = _to_dataarray(idents, dates, self.df,
+                            parallel=parallel, cf_meta=cf_meta)
+        return ds
     
     
     def get_timesteps(self, idents, dates, gaussian=True, delayed=False):
@@ -287,16 +402,78 @@ class ERA5():
         return _get_timesteps(idents, dates, self.df, 
                               gaussian=gaussian, 
                               delayed=delayed)
+   
+
+    def wind(self, dates, parallel=False, cf_meta=True):
+        return _wind(dates, self.df, parallel=parallel, cf_meta=cf_meta)
     
-    def wind(self, dates):
-        return _wind(dates, self.df)
+    
+    def atmosphere(self, dates, parallel=False, cf_meta=True):
+        variables = ['ta', 'hus', 'ps', 'tos', 'sic', 'clw']
+        if parallel is True:
+            from dask import delayed
+        else:
+            def delayed(x):
+                return x
+        ds = delayed(self.to_xarray)(variables, dates, 
+                                         parallel=parallel, cf_meta=cf_meta)
+        wind = delayed(self.wind)(dates, parallel=parallel, cf_meta=cf_meta)
+        if parallel is True:
+            import dask
+            res = dask.compute(ds, wind)
+        else:
+            res = (ds, wind)
+        return xr.merge(res)
     
     
+    def dynamics(self, dates, parallel=False, cf_meta=True):
+        if not isinstance(dates, list):
+            dates = [dates]
+        if parallel is True:
+            from dask import delayed
+        else:
+            def delayed(x):
+                return x
+        res = []
+        for date in dates:
+            res.append(delayed(self.atmosphere)(date))
+        if parallel is True:
+            import dask
+            res_ = dask.compute(res)[0]
+        else:
+            res_ = res
+        return xr.concat(res_, dim='time')
+
     
+    def fx(self, cf_meta=True):
+        """static variables
+        
+        Static variables are not supposed to be time dependent.
+        
+        """
+        variables = ['orog', 'sftlf']
+        return self.to_xarray(variables, "1979-01-01T00:00:00", 
+                            cf_meta=cf_meta).drop('time').squeeze()
+
+    
+    def gfile(self, dates, parallel=False, cf_meta=True, clean_coords=True,
+             add_fx=True):
+        gds = self.dynamics(dates, parallel=parallel,
+                                 cf_meta=cf_meta)
+        if add_fx is True:
+            gds = xr.merge([gds, self.fx(cf_meta=cf_meta)])
+        if clean_coords is True:
+            gds = _clean_coords(gds)
+        return gds
+        
+    
+    
+  
 def gfile(date, parallel=False, cmorizer=None):
     if cmorizer is None:
         cmorizer = ERA5()
-    variables = ['ta', 'hus', 'ps', 'sic']
+    variables = ['ta', 'hus', 'ps', 'tos', 'sic']
     ds = cmorizer.to_xarray(variables, date, 
                             parallel=parallel)
     
+    return ds

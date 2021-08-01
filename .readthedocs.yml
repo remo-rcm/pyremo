@@ -12,10 +12,17 @@ sphinx:
 build:
     image: stable
 
-#conda:
-#    environment: ci/requirements/docs.txt
+conda:
+    environment: ci/requirements/docs.yml
+
+#python:
+#    version: 3.7
+#    install:
+#      - requirements: ci/requirements/docs.txt
 
 python:
     version: 3.7
     install:
-      - requirements: requirements_dev.txt
+      - method: setuptools
+        path: .
+

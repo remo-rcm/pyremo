@@ -13,7 +13,7 @@ build:
     image: stable
 
 conda:
-    environment: ci/requirements/docs.txt
+    environment: ci/requirements/docs.yml
 
 #python:
 #    version: 3.7

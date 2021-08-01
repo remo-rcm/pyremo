@@ -14,15 +14,10 @@ build:
 
 conda:
     environment: ci/requirements/docs.yml
-
-#python:
-#    version: 3.7
-#    install:
-#      - requirements: ci/requirements/docs.txt
-
 python:
     version: 3.7
     install:
       - method: setuptools
         path: .
 
+formats: []

@@ -26,6 +26,7 @@ Physics
 .. autosummary::
    :toctree: generated/
 
+   physics.pressure
    physics.liquid_water_content
    physics.specific_humidity
    physics.relative_humidity

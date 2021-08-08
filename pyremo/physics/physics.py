@@ -28,15 +28,16 @@ def pressure(ps, ak, bk):
 
     Parameters
     ----------
-    ps : array like
+    ps : xarray.DataArray
         Surface pressure field.
-    ak, bk : array like
-        Arrays of hybrid coordinates at level interfaces.
+    ak, bk : xarray.DataArrays
+        Arrays of hybrid coordinates at full levels or
+        level interfaces.
 
     Returns
     -------
-    dataset
-        Returns pressure at model levels.
+    p : xarray.DataArray
+        Returns atmopspheric pressure.
 
     """
     return ak + bk * ps

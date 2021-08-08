@@ -19,6 +19,18 @@ Top-level functions
    update_meta_info
    parse_dates
 
+
+Physics
+=======
+
+.. autosummary::
+   :toctree: generated/
+
+   physics.liquid_water_content
+   physics.specific_humidity
+   physics.relative_humidity
+
+
 Pressure interpolation
 ======================
 

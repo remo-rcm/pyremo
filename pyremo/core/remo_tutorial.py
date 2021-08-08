@@ -82,7 +82,7 @@ def open_dataset(
 
         url = "/".join((data_url, folder, fullname))
         urlretrieve(url, localfile)
-        url = "/".join((data_url, folder,  md5name))
+        url = "/".join((data_url, folder, md5name))
         urlretrieve(url, md5file)
         localmd5 = file_md5_checksum(localfile)
         with open(md5file) as f:

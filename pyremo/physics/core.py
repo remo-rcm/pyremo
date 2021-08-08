@@ -285,7 +285,7 @@ def compute_arfgm(t, qd, p, qw=0.0):
         *relhum:*
             relative humidity ([%],3d)
     """
-    #return fgqd(fgee(t),p)
+    # return fgqd(fgee(t),p)
     gqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
     relhum = qd / gqd
     return np.where(relhum > 1.0, (gqd + qw) / gqd, (qd + qw) / gqd)
@@ -296,7 +296,7 @@ def specific_humidity(t, relhum, p):
 
     implements algorithm from RemapToRemo addem.
     """
-    #p = ak + bk * ps#pressure_at_model_levels(ps, ak, bk)
+    # p = ak + bk * ps#pressure_at_model_levels(ps, ak, bk)
     fge = np.where(t >= C.B3, fgew(t), fgee(t))
     zgqd = fgqd(fge, p)
     zqdw = relhum * zgqd
@@ -308,7 +308,7 @@ def liquid_water_content(t, relhum, p):
 
     implements algorithm from RemapToRemo addem.
     """
-    #p = ak + bk * ps #pressure_at_model_levels(ps, ak, bk)
+    # p = ak + bk * ps #pressure_at_model_levels(ps, ak, bk)
     fge = xr.where(t >= C.B3, fgew(t), fgee(t))
     zgqd = fgqd(fge, p)
     zqdw = relhum * zgqd

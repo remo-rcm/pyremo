@@ -8,9 +8,9 @@ cache_url = "~/.pyremo"
 
 DOMAIN_RESOURCE = pooch.create(
     # Use the default cache folder for the OS
-    path=cache_url, #pooch.os_cache("cordex"),
+    path=cache_url,  # pooch.os_cache("cordex"),
     # The remote data is on Github
-    base_url= base_url + "domains/",
+    base_url=base_url + "domains/",
     registry={
         "cordex-domains.csv": "8599e88ea84d6f844b9c5a7250325d0d91053d129334c09a508ad30c9a6e6c42",
         "aux-domains.csv": "2089d3f8eb9ec3a1abb0eddea40522f0297f4e7c8c0cdf11a6f90167caa7e5b3",
@@ -21,9 +21,9 @@ DOMAIN_RESOURCE = pooch.create(
 
 CODE_RESOURCE = pooch.create(
     # Use the default cache folder for the OS
-    path=cache_url, #pooch.os_cache("cordex"),
+    path=cache_url,  # pooch.os_cache("cordex"),
     # The remote data is on Github
-    base_url= base_url + "code-list/",
+    base_url=base_url + "code-list/",
     registry={
         "code-list.csv": "e252298d78714be9346c27cf2a9048c4ddb1a0397b5cbf273b934f6b495eab01",
         "flake.csv": "eac78921934110d52513c042994186614816aaae373a65383de420c3080ad876",
@@ -33,9 +33,9 @@ CODE_RESOURCE = pooch.create(
 
 VC_RESOURCE = pooch.create(
     # Use the default cache folder for the OS
-    path=cache_url, #pooch.os_cache("cordex"),
+    path=cache_url,  # pooch.os_cache("cordex"),
     # The remote data is on Github
-    base_url= base_url + "vc/",
+    base_url=base_url + "vc/",
     registry={
         "vc_27lev.csv": "ec14492d3cd9449f852ce90edd8aa3e56f37672be5e7e10d7f8672cc84764cb9",
         "vc_40lev.csv": "b2f946ccb9b4fd9a349a16396660efbbb89904fa42b5a1aaab113193a7ee0bad",
@@ -47,6 +47,7 @@ VC_RESOURCE = pooch.create(
         "vc_144lev_equal_pdiff_pt6400.csv": "0e10ceb27cb047f88322f860e6dfd8f77a9b90e431adcf88277996a8d2cbe021",
     },
 )
+
 
 def fetch_remote_table(name, resource):
     """
@@ -65,26 +66,34 @@ def read_remote_table(name, resource, **kwargs):
 
 
 def read_domain_table(name):
-    
+
     return read_remote_table(name, resource=DOMAIN_RESOURCE, index_col="short_name")
-    
+
 
 def read_remo_domain_tables():
-    
+
     resource = DOMAIN_RESOURCE
-    return {table.split(".")[0]: read_remote_table(table, resource, index_col='short_name') 
-            for table in resource.registry.keys()}
+    return {
+        table.split(".")[0]: read_remote_table(table, resource, index_col="short_name")
+        for table in resource.registry.keys()
+    }
 
 
 def read_remo_code_tables():
-    
+
     resource = CODE_RESOURCE
-    return {table.split(".")[0]: read_remote_table(table, resource, index_col='code') 
-            for table in resource.registry.keys()}
+    return {
+        table.split(".")[0]: read_remote_table(table, resource, index_col="code")
+        for table in resource.registry.keys()
+    }
 
 
 def read_remo_vc_tables():
-    
+
     resource = VC_RESOURCE
-    return {table.split(".")[0]: read_remote_table(table, resource, comment='#', index_col=None) 
-            for table in resource.registry.keys()}
+    return {
+        table.split(".")[0]: read_remote_table(
+            table, resource, comment="#", index_col=None
+        )
+        for table in resource.registry.keys()
+    }

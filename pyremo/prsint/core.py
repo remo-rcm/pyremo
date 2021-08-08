@@ -1,17 +1,17 @@
-
-
 import xarray as xr
 
 from . import _defaults as dftl
 
 try:
-    from pydruint import _druint_verip 
-except ModuleNotFoundError: 
-    print('The pressure interpolation requires installation of https://git.gerics.de/REMO/pydruint')
-    raise Exception('Module not found: pydruint')
+    from pydruint import _druint_verip
+except ModuleNotFoundError:
+    print(
+        "The pressure interpolation requires installation of https://git.gerics.de/REMO/pydruint"
+    )
+    raise Exception("Module not found: pydruint")
 
 
-#def prsint(ds, plevs=dftls.plevs, variables=dftl.variables,
+# def prsint(ds, plevs=dftls.plevs, variables=dftl.variables,
 #        t='T', ps='PS', fib='FIB', ak='hyai', bk='hybi', time='time'):
 #    tda = ds[t]
 #    psda = ds[ps]
@@ -25,13 +25,18 @@ def druint(data, t, ps, fib, plev, ak, bk, varname):
 
 
 def plev_coord(plev):
-    plev_attrs = {"units" : "Pa", 
-                  "axis" : "Z",
-                  "positive" : "down",
-                  "long_name" : "pressure",
-                  "standard_name" : "air_pressure"}
+    plev_attrs = {
+        "units": "Pa",
+        "axis": "Z",
+        "positive": "down",
+        "long_name": "pressure",
+        "standard_name": "air_pressure",
+    }
 
-    plev_coord = xr.DataArray([100.*p for p in plev], dims='plev', )
+    plev_coord = xr.DataArray(
+        [100.0 * p for p in plev],
+        dims="plev",
+    )
     plev_coord.attrs = plev_attrs
     plev_coord.name = "plev"
     return plev_coord
@@ -39,14 +44,14 @@ def plev_coord(plev):
 
 def spatial_dims(da):
     for dim in da.dims:
-        if 'lon' in dim:
+        if "lon" in dim:
             lon_dim = dim
-        if 'lat' in dim:
+        if "lat" in dim:
             lat_dim = dim
     return (lon_dim, lat_dim)
 
 
-def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False): 
+def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
     """main interface"""
     srf_dims = list(spatial_dims(da))
     lev_dims = list(spatial_dims(da))
@@ -64,16 +69,25 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
         a,
         b,
         da.name,
-        input_core_dims=[lev_dims, lev_dims, srf_dims, srf_dims ,["plev"] ,[nlev], [nlev], [] ],  # list with one entry per arg
+        input_core_dims=[
+            lev_dims,
+            lev_dims,
+            srf_dims,
+            srf_dims,
+            ["plev"],
+            [nlev],
+            [nlev],
+            [],
+        ],  # list with one entry per arg
         output_core_dims=[plev_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
         exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
-        output_dtypes=[da.dtype]
+        output_dtypes=[da.dtype],
     )
 
     result.name = da.name
-    #result = result.to_dataset()
+    # result = result.to_dataset()
     if keep_attrs:
         result.attrs = da.attrs
     result["plev"] = plev_coord(plev)

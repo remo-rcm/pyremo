@@ -8,7 +8,7 @@ import xarray as xr
 import numpy as np
 import warnings
 
-xr.set_options(keep_attrs = True)
+xr.set_options(keep_attrs=True)
 
 try:
     from pyintorg import interface as intf
@@ -17,7 +17,7 @@ except:
         "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://git.gerics.de/python/pyintorg.git"
     )
 
-    
+
 lev_i = "lev_i"
 lev = "lev"
 lev_gm = "lev_gm"
@@ -29,7 +29,7 @@ class const:
     grav_const = 9.806805923
     absolute_zero = 273.5
 
-    
+
 def pbl_index(akgm, bkgm):
     return intf.pbl_index(akgm, bkgm)
 
@@ -73,20 +73,20 @@ def open_mfdataset(
 
 def get_akbkem(vc):
     """create vertical coordinate dataset"""
-    akbk = vc.to_xarray().drop('index')
-    #bkem = pr.tables.vc.tables['vc_27lev']
-    akem = akbk.ak.swap_dims({'index':lev_i})
-    bkem = akbk.bk.swap_dims({'index':lev_i})
-    akhem = (0.5 * (akbk.ak[:-1] + akbk.ak[1:])).swap_dims({'index':lev})
-    bkhem = (0.5 * (akbk.bk[:-1] + akbk.bk[1:])).swap_dims({'index':lev})
-    akem[lev_i] = xr.DataArray(np.arange(1,akem.size+1), dims=lev_i)
-    bkem[lev_i] = xr.DataArray(np.arange(1,bkem.size+1), dims=lev_i)
-    akhem[lev] = xr.DataArray(np.arange(1,akhem.size+1), dims=lev, name='akh')
-    bkhem[lev] = xr.DataArray(np.arange(1,bkhem.size+1), dims=lev, name='bkh')
-    akhem.name = 'akh'
-    bkhem.name = 'bkh'
+    akbk = vc.to_xarray().drop("index")
+    # bkem = pr.tables.vc.tables['vc_27lev']
+    akem = akbk.ak.swap_dims({"index": lev_i})
+    bkem = akbk.bk.swap_dims({"index": lev_i})
+    akhem = (0.5 * (akbk.ak[:-1] + akbk.ak[1:])).swap_dims({"index": lev})
+    bkhem = (0.5 * (akbk.bk[:-1] + akbk.bk[1:])).swap_dims({"index": lev})
+    akem[lev_i] = xr.DataArray(np.arange(1, akem.size + 1), dims=lev_i)
+    bkem[lev_i] = xr.DataArray(np.arange(1, bkem.size + 1), dims=lev_i)
+    akhem[lev] = xr.DataArray(np.arange(1, akhem.size + 1), dims=lev, name="akh")
+    bkhem[lev] = xr.DataArray(np.arange(1, bkhem.size + 1), dims=lev, name="bkh")
+    akhem.name = "akh"
+    bkhem.name = "bkh"
     return xr.merge([akem, bkem, akhem, bkhem])
-    #return akem, bkem, akhem, bkhem
+    # return akem, bkem, akhem, bkhem
 
 
 def horizontal_dims(da):
@@ -122,8 +122,9 @@ def intersect(lamgm, phigm, lamem, phiem):
     return result
 
 
-def interpolate_horizontal(da, lamem, phiem, lamgm, phigm, 
-                           name=None, igr=0, blagm=None, blaem=None):
+def interpolate_horizontal(
+    da, lamem, phiem, lamgm, phigm, name=None, igr=0, blagm=None, blaem=None
+):
     if name is None:
         name = da.name
     indii, indjj = intersect(lamgm, phigm, lamem, phiem)
@@ -148,7 +149,8 @@ def interpolate_horizontal(da, lamem, phiem, lamgm, phigm,
             indii.isel(pos=igr),
             indjj.isel(pos=igr),
             name,
-            blagm, blaem
+            blagm,
+            blaem,
         )
 
 
@@ -170,8 +172,7 @@ def interpolate_horizontal(da, lamem, phiem, lamgm, phigm,
 #     return intorg.hiobla(field, lamgm, phigm, lamem, phiem, indii, indjj, name)
 
 
-def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, 
-                 indjj, name, keep_attrs=False):
+def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=False):
     """main interface"""
     gcm_dims = list(horizontal_dims(lamgm))
     rcm_dims = list(horizontal_dims(lamem))
@@ -212,7 +213,9 @@ def interp_horiz(da, lamgm, phigm, lamem, phiem, indii,
     return result
 
 
-def interp_horiz_cm(da, lamgm, phigm, lamem, phiem, indii, indjj, name, blagm, blaem, keep_attrs=False):
+def interp_horiz_cm(
+    da, lamgm, phigm, lamem, phiem, indii, indjj, name, blagm, blaem, keep_attrs=False
+):
     """main interface"""
     gcm_dims = list(horizontal_dims(lamgm))
     rcm_dims = list(horizontal_dims(lamem))
@@ -240,7 +243,7 @@ def interp_horiz_cm(da, lamgm, phigm, lamem, phiem, indii, indjj, name, blagm, b
         indii,
         indjj,
         name,
-        #dataset_fill_value=1.e20,
+        # dataset_fill_value=1.e20,
         input_core_dims=input_core_dims,  # list with one entry per arg
         output_core_dims=[rcm_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
@@ -256,7 +259,6 @@ def interp_horiz_cm(da, lamgm, phigm, lamem, phiem, indii, indjj, name, blagm, b
         result.attrs = da.attrs
     # result = result.transpose(..., *spatial_dims(da)[::-1])
     return result
-
 
 
 def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
@@ -291,7 +293,7 @@ def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
         # vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
-        dask_gufunc_kwargs = {'allow_rechunk':True},
+        dask_gufunc_kwargs={"allow_rechunk": True},
         output_dtypes=[fibgm.dtype],
     )
     return result
@@ -327,7 +329,7 @@ def relative_humidity(qdgm, tgm, psgm, akgm, bkgm, qwgm=None):
         vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
-        dask_gufunc_kwargs = {'allow_rechunk':True},
+        dask_gufunc_kwargs={"allow_rechunk": True},
         output_dtypes=[qdgm.dtype],
     )
     return result
@@ -336,14 +338,14 @@ def relative_humidity(qdgm, tgm, psgm, akgm, bkgm, qwgm=None):
 def geo_coords(domain_info, rlon, rlat):
     import numpy as np
 
-    ll_lam = domain_info['ll_lon']  # * 1.0/57.296
-    ll_phi = domain_info['ll_lat']  # * 1.0/57.296
-    dlam = domain_info['dlon']
-    dphi = domain_info['dlat']
-    nlam = domain_info['nlon']
-    nphi = domain_info['nlat']
-    pollam = domain_info['pollon']
-    polphi = domain_info['pollat']
+    ll_lam = domain_info["ll_lon"]  # * 1.0/57.296
+    ll_phi = domain_info["ll_lat"]  # * 1.0/57.296
+    dlam = domain_info["dlon"]
+    dphi = domain_info["dlat"]
+    nlam = domain_info["nlon"]
+    nphi = domain_info["nlat"]
+    pollam = domain_info["pollon"]
+    polphi = domain_info["pollat"]
     lamem, phiem = intf.geo_coords(
         ll_lam, ll_phi, dlam, dphi, pollam, polphi, nlam + 2, nphi + 2
     )
@@ -458,19 +460,19 @@ def gfile(datasets, ref_ds, tos=None, time_range=None):
                 da = da.reindex(lev=da.lev[::-1])
         except:
             pass
-        #print(var)
-        #print(da)
+        # print(var)
+        # print(da)
         da[lon] = ref_ds[lon]
         da[lat] = ref_ds[lat]
         dsets.append(da)
-    
+
     ds = xr.merge(dsets)
     if tos is not None:
         ds["tos"] = map_sst(tos, ref_ds.sel(time=time_range))
     ds["akgm"], ds["bkgm"] = get_vc(ref_ds)
     ds = ds.rename({"lev": lev_gm})
     ds = convert_units(ds)
-    if 'sftlf' in ds:
+    if "sftlf" in ds:
         ds["sftlf"] = np.around(ds.sftlf)
     ds.attrs = ref_ds.attrs
     return ds
@@ -488,7 +490,7 @@ def rotate_uv(uge, vge, uvge, vuge, lamem, phiem, pollam, polphi):
         vge,
         uvge,
         vuge,
-        ulamem * 1.0 / 57.296, # pi/180 (deg2rad)
+        ulamem * 1.0 / 57.296,  # pi/180 (deg2rad)
         uphiem * 1.0 / 57.296,
         vlamem * 1.0 / 57.296,
         vphiem * 1.0 / 57.296,
@@ -500,7 +502,7 @@ def rotate_uv(uge, vge, uvge, vuge, lamem, phiem, pollam, polphi):
         vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
-        dask_gufunc_kwargs = {'allow_rechunk':True},
+        dask_gufunc_kwargs={"allow_rechunk": True},
         output_dtypes=(uge.dtype, vge.dtype),
     )
     return uge_rot, vge_rot
@@ -515,7 +517,7 @@ def pressure_correction_em(psge, tge, arfge, fibge, fibem, akgm, bkgm, kpbl):
         + 2 * [twoD_dims]
         + [[akgm.dims[0]], [bkgm.dims[0]], []]
     )
-    #print(input_core_dims)
+    # print(input_core_dims)
     result = xr.apply_ufunc(
         intf.pressure_correction_em,  # first the function
         psge,  # now arguments in the order expected
@@ -530,7 +532,7 @@ def pressure_correction_em(psge, tge, arfge, fibge, fibem, akgm, bkgm, kpbl):
         output_core_dims=[twoD_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
         dask="parallelized",
-        dask_gufunc_kwargs = {'allow_rechunk':True},
+        dask_gufunc_kwargs={"allow_rechunk": True},
         output_dtypes=[psge.dtype],
     )
     return result
@@ -545,7 +547,7 @@ def interpolate_vertical(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, 
         + [[akhgm.dims[0]], [bkhgm.dims[0]], [akhem.dims[0]], [bkhem.dims[0]], [], []]
     )
     output_core_dims = [twoD_dims + [akhem.dims[0]]]
-    #print(output_core_dims)
+    # print(output_core_dims)
     result = xr.apply_ufunc(
         intf.interp_vert,  # first the function
         xge,  # now arguments in the order expected
@@ -562,7 +564,7 @@ def interpolate_vertical(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, 
         # exclude_dims=set(("index",)),
         vectorize=True,  # loop over non-core dims, in this case: time
         dask="parallelized",
-        dask_gufunc_kwargs = {'allow_rechunk':True},
+        dask_gufunc_kwargs={"allow_rechunk": True},
         output_dtypes=[xge.dtype],
     )
     result.name = varname
@@ -578,7 +580,7 @@ def pressure_correction_ge(ps1em, tem, arfem, ficge, fibem, akem, bkem):
         + 2 * [twoD_dims]
         + [[akem.dims[0]], [bkem.dims[0]]]
     )
-    #print(input_core_dims)
+    # print(input_core_dims)
     result = xr.apply_ufunc(
         intf.pressure_correction_ge,  # first the function
         ps1em,  # now arguments in the order expected
@@ -607,7 +609,7 @@ def correct_uv(uem, vem, psem, akem, bkem, lamem, phiem, ll_lam, dlam, dphi):
         + [[akem.dims[0]], [bkem.dims[0]]]
         + 3 * [[]]
     )
-    #print(input_core_dims)
+    # print(input_core_dims)
     uge_corr, vge_corr = xr.apply_ufunc(
         intf.correct_uv,  # first the function
         uem,  # now arguments in the order expected
@@ -627,6 +629,6 @@ def correct_uv(uem, vem, psem, akem, bkem, lamem, phiem, ll_lam, dlam, dphi):
         #  dask_gufunc_kwargs = {'allow_rechunk':True},
         output_dtypes=(uem.dtype, vem.dtype),
     )
-    uge_corr.name = 'U'
-    vge_corr.name = 'V'
+    uge_corr.name = "U"
+    vge_corr.name = "V"
     return uge_corr, vge_corr

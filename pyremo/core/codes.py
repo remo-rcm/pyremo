@@ -40,12 +40,12 @@ Example:
 
 """
 
-#from .tables import codes as code_table  # code_table, read_table
+# from .tables import codes as code_table  # code_table, read_table
 
 import pandas as pd
 import numpy as np
 
-#table = pd.concat([table for name, table in code_table.items()])
+# table = pd.concat([table for name, table in code_table.items()])
 
 from ..tables import codes
 

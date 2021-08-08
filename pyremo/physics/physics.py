@@ -1,22 +1,22 @@
-
 import xarray as xr
 
 from . import core
 
+
 def _horizontal_dims(da):
     for dim in da.dims:
-        if 'lon' in dim:
+        if "lon" in dim:
             lon_dim = dim
-        if 'lat' in dim:
+        if "lat" in dim:
             lat_dim = dim
     return (lon_dim, lat_dim)
 
 
 def _vertical_dim(da):
     for dim in da.dims:
-        if 'lev' in dim:
+        if "lev" in dim:
             lev_dim = dim
-        if 'nhy' in dim:
+        if "nhy" in dim:
             lev_dim = dim
     return lev_dim
 
@@ -67,7 +67,7 @@ def relative_humidity(t, qd, p, qw=None):
         qw = xr.zeros_like(t)
     t_dims = list(_horizontal_dims(t)) + [_vertical_dim(t)]
     p_dims = list(_horizontal_dims(p)) + [_vertical_dim(p)]
-    input_core_dims = 2*[t_dims] + [p_dims] + [t_dims]
+    input_core_dims = 2 * [t_dims] + [p_dims] + [t_dims]
     output_core_dims = [t_dims]
     result = xr.apply_ufunc(
         core.compute_arfgm,  # first the function
@@ -79,7 +79,7 @@ def relative_humidity(t, qd, p, qw=None):
         output_core_dims=output_core_dims,  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
         dask="parallelized",
-        output_dtypes=[t.dtype]
+        output_dtypes=[t.dtype],
     )
     return result
 
@@ -105,7 +105,7 @@ def specific_humidity(t, relhum, p, set_meta=True):
     """
     t_dims = list(_horizontal_dims(t)) + [_vertical_dim(t)]
     p_dims = list(_horizontal_dims(p)) + [_vertical_dim(p)]
-    input_core_dims = 2*[t_dims] + [p_dims]
+    input_core_dims = 2 * [t_dims] + [p_dims]
     output_core_dims = [t_dims]
     print(input_core_dims)
     result = xr.apply_ufunc(
@@ -117,11 +117,11 @@ def specific_humidity(t, relhum, p, set_meta=True):
         output_core_dims=output_core_dims,  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
         dask="parallelized",
-        output_dtypes=[t.dtype]
+        output_dtypes=[t.dtype],
     )
     if set_meta is True:
-        result.name = 'QD'
-        
+        result.name = "QD"
+
     return result
 
 
@@ -146,7 +146,7 @@ def liquid_water_content(t, relhum, p, set_meta=True):
     """
     t_dims = list(_horizontal_dims(t)) + [_vertical_dim(t)]
     p_dims = list(_horizontal_dims(p)) + [_vertical_dim(p)]
-    input_core_dims = 2*[t_dims] + [p_dims]
+    input_core_dims = 2 * [t_dims] + [p_dims]
     output_core_dims = [t_dims]
     print(input_core_dims)
     result = xr.apply_ufunc(
@@ -158,9 +158,9 @@ def liquid_water_content(t, relhum, p, set_meta=True):
         output_core_dims=output_core_dims,  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
         dask="parallelized",
-        output_dtypes=[t.dtype]
+        output_dtypes=[t.dtype],
     )
     if set_meta is True:
-        result.name = 'QW'
-        
+        result.name = "QW"
+
     return result

@@ -16,9 +16,9 @@ except:
     print("no python-cdo binding installed, unable to read IEG")
 
 
-
 def open_remo_mfdataset(filenames, update_meta=False, parse_dates=False):
     import xarray as xr
+
     ds = xr.open_mfdataset(filenames)
     if update_meta:
         ds = _update_meta_infos(ds)
@@ -28,8 +28,14 @@ def open_remo_mfdataset(filenames, update_meta=False, parse_dates=False):
 
 
 def open_remo_dataset(
-    filename, options="", update_meta=False, returnX=True, inplace=False,
-    parse_dates=False, **kwargs):
+    filename,
+    options="",
+    update_meta=False,
+    returnX=True,
+    inplace=False,
+    parse_dates=False,
+    **kwargs
+):
     """Read a REMO dataset.
 
     Read in a REMO dataset into xarray.Dataset or netCDF4.Dataset from IEG or NetCDF and
@@ -76,7 +82,7 @@ def open_remo_dataset(
 
 def parse_dates(ds, use_cftime=False):
     parser = cal.AbsoluteCalendar()
-    ds['time'] = [parser.num2date(date, use_cftime) for date in ds.time]
+    ds["time"] = [parser.num2date(date, use_cftime) for date in ds.time]
     return ds
 
 
@@ -84,6 +90,7 @@ def _read_nc_dataset(filename, returnX=True, inplace=False, **kwargs):
     """Use xarray or netCDF4 to read NetCDF."""
     if returnX:
         import xarray as xr
+
         if type(filename) is list:
             return xr.open_mfdataset(filename, **kwargs)
         return xr.open_dataset(filename, **kwargs)
@@ -113,7 +120,7 @@ def _get_fileformat(filename):
 
         return Cdo().showformat(input=filename)[0]
     except:
-        return 'Unknown'
+        return "Unknown"
 
 
 def update_meta_info(ds, id=None):

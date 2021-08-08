@@ -35,8 +35,7 @@ import pandas as pd
 from itertools import chain, product
 import cordex as cx
 
-from ..tables import domains 
-
+from ..tables import domains
 
 
 def remo_domain(short_name, dummy=False):

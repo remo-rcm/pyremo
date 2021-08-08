@@ -2,7 +2,6 @@
 import xarray as xr
 
 from . import core
-from .. import codes
 
 def _horizontal_dims(da):
     for dim in da.dims:

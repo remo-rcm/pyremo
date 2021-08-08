@@ -40,7 +40,10 @@ tempfiles = []
 def init_tempdir(dir=None):
     global tempdir
     if dir is None:
-        tempdir = os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
+        try:
+            tempdir = os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
+        except:
+            tempdir = tempfile.mkdtemp()
     else:
         tempdir = dir
     if not os.path.isdir(tempdir):

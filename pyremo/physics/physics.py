@@ -86,6 +86,7 @@ def relative_humidity(t, qd, p, qw=None, set_meta=True):
         output_dtypes=[t.dtype],
     )
     if set_meta:
+        result.name = "RELHUM"
     return result
 
 

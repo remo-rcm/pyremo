@@ -30,8 +30,11 @@ def pressure(ps, ak, bk):
     ----------
     ps : xarray.DataArray
         Surface pressure field.
-    ak, bk : xarray.DataArrays
-        Arrays of hybrid coordinates at full levels or
+    ak : xarray.DataArray
+        Hybrid sigma A coefficient at full levels or
+        level interfaces.
+    bk : xarray.DataArrays
+        Hybrid sigma B coefficient at full levels or
         level interfaces.
 
     Returns
@@ -43,7 +46,7 @@ def pressure(ps, ak, bk):
     return ak + bk * ps
 
 
-def relative_humidity(t, qd, p, qw=None):
+def relative_humidity(t, qd, p, qw=None, set_meta=True):
     """computes relative humidity from temperature, pressure and specific humidty (qd)
 
     algorithm from RemapToRemo addgm
@@ -82,6 +85,7 @@ def relative_humidity(t, qd, p, qw=None):
         dask="parallelized",
         output_dtypes=[t.dtype],
     )
+    if set_meta:
     return result
 
 

@@ -2,6 +2,7 @@
 import os
 import xarray as xr
 
+
 xr.set_options(keep_attrs = True)
 
 from .core import ( const, geo_coords, geopotential, interpolate_horizontal,
@@ -19,12 +20,15 @@ def get_filename(date, expid='000000', template=None):
     return template.format(expid, date.strftime(format='%Y%m%d%H'))
 
 
-def to_netcdf(ads, path='', expid='000000', template=None, **kwargs):
+def to_netcdf(ads, path='', expid='000000', template=None, 
+              tempfiles=None, **kwargs):
     """write dataset to netcdf
     
     by default, each timestep goes into a separate output file
     
     """
+    if not os.path.isdir(path):
+        os.makedirs(path)
     expand_time = [var for var, da in ads.items() if 'time' in da.dims]
     if template is None:
         template = 'a{}a{}.nc'
@@ -40,6 +44,9 @@ def to_netcdf(ads, path='', expid='000000', template=None, **kwargs):
         dsets.append(ds)
     #dsets = [dset.expand_dims('time') for dset in datasets]
     xr.save_mfdataset(dsets, paths, **kwargs)
+    if tempfiles is not None:
+        for f in tempfiles:
+            os.remove(f)
     return paths
 
 
@@ -92,8 +99,21 @@ def remap(gds, domain_info, vc, surflib):
                                    lamgm, phigm,'FIB')
     
     ## geopotential
-    ficgm = geopotential(gds.orog, gds.ta.isel(time=0), gds.hus.isel(time=0),
-                         gds.ps.isel(time=0), gds.akgm, gds.bkgm).squeeze(drop=True)
+    if 'time' in gds.hus.dims:
+        hus = gds.hus.isel(time=0)
+    else:
+        hus = gds.hus
+    if 'time' in gds.ta.dims:
+        ta = gds.ta.isel(time=0)
+    else:
+        ta = gds.ta
+    if 'time' in gds.ps.dims:
+        ps = gds.ps.isel(time=0)
+    else:
+        ps = gds.ps
+        
+    ficgm = geopotential(gds.orog, ta, hus,
+                         ps, gds.akgm, gds.bkgm).squeeze(drop=True)
     ficge = interpolate_horizontal(ficgm, lamem, phiem, 
                                    lamgm, phigm, 'FIC')
 
@@ -121,7 +141,7 @@ def remap(gds, domain_info, vc, surflib):
     
     tem = interpolate_vertical(tge, psge, ps1em, akhgm, bkhgm,
                                akbkem.akh, akbkem.bkh, 'T', kpbl)
-    return tem
+    #return tem
     arfem = interpolate_vertical(arfge, psge, ps1em, akhgm, bkhgm,
                                  akbkem.akh, akbkem.bkh, 'RF', kpbl)
     
@@ -144,4 +164,25 @@ def remap(gds, domain_info, vc, surflib):
                                     dlamem, dphiem)
     
     return xr.merge([tem, uem_corr, vem_corr, psem, arfem])
-    
+
+
+def add_soil(gfile):
+    return None
+
+def add_sst(gfile):
+    return None
+
+
+# variables in a-file required
+#   CALL add(BOUNDARY_TABLE, 'U'     , UR       , code=131, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_RIGHT)
+#   CALL add(BOUNDARY_TABLE, 'V'     , VR       , code=132, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_TOP)
+#   CALL add(BOUNDARY_TABLE, 'T'     , TR       , code=130, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'QD'    , QDR      , code=133, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'QW'    , QWR      , code=153, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'PS'    , PSR      , code=134, adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'QDBL'  , QDBLR    , code=84 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'TSW'   , TSWECHR  , code=55 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+
+#   CALL add(BOUNDARY_TABLE, 'TSI'   , TSIECHR  , code=56 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'SEAICE', SEAICER  , code=210, adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+#   !

@@ -11,22 +11,41 @@ import tempfile
 import xarray as xr
 import pandas as pd
 
+try:
+    from tqdm import tqdm
+except:
+    def tqdm(x):
+        return x
+    
+# try:
+#     from dask.diagnostics import ProgressBar
+#     pbar = ProgressBar()
+#     pbar.register()
+# except:
+#     pass
+
+#
+
 from cordex import ecmwf as ectable
 eccodes = ectable.table
 
 xr.set_options(keep_attrs = True)
 
+cdo_exe = '/sw/rhel6-x64/cdo/cdo-1.9.6-gcc64/bin/cdo'
+
 tempdir = None#os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
 
+tempfiles = []
 
-def init_tempdir():
+def init_tempdir(dir=None):
     global tempdir
-    try:
+    if dir is None:
         tempdir = os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
-        if not os.path.isdir(tempdir):
-            os.makedirs(tempdir)
-    except:
-        tempdir = None
+    else:
+        tempdir = dir
+    if not os.path.isdir(tempdir):
+        os.makedirs(tempdir)
+   
         
 init_tempdir()
         
@@ -34,7 +53,7 @@ init_tempdir()
 varmap   = {130: 'ta', 134: 'ps', 131: 'ua', 132: 'va',
              133: 'hus',  34 : 'tos',  31 :'sic',  129 : 'orog',
              172: 'sftlf', 139: 'tsl1', 170: 'tsl2', 183: 'tsl3',
-             238: 'tsn', 236: 'tsl4', 246: 'clw', 141: 'snw', 198: 'src', 
+             238: 'tsn', 236: 'tsl4', 246: 'clw', 141: 'snd', 198: 'src', 
              235: 'skt' , 39: 'swvl1', 40: 'swvl2', 41: 'swvl2', 
              138: 'svo', 155: 'sd'}
 
@@ -58,9 +77,10 @@ def _cdo_call(options='', op='', input='', output='temp'):
         output = ''
     elif output == 'temp':
         output = tempfile.TemporaryDirectory(dir=tempdir).name
+        tempfiles.append(output)
     if isinstance(input, list):
         input = " ".join(input)
-    call = "cdo {} {} {} {}".format(options, op, input, output)
+    call = "{} {} {} {} {}".format(cdo_exe, options, op, input, output)
     if show_cdo: print(call)
     stdout = subprocess.Popen(call, shell=True, stdout=subprocess.PIPE).stdout.read()
     if output:
@@ -258,7 +278,7 @@ def _to_dataarray(codes, dates, df, parallel=False, cf_meta=True, use_cftime=Tru
     if cf_meta is True:
         for code, ds in dsets.items():
             dsets[code] = _rename_variable(ds, code)
-    return xr.merge(dsets.values())
+    return xr.merge(dsets.values(), compat='override', join='override')
 
 
 def _rename_variable(ds, codes):
@@ -381,8 +401,8 @@ class ERA5():
     
     def __init__(self, catalog_url="/pool/data/Catalogs/mistral-era5.json", 
                 scratch=None):
-        if scratch:
-            tempdir=scratch            
+        if scratch is not None:
+            init_tempdir(scratch)       
         self.df = _get_catalog_df(catalog_url)
         
         
@@ -409,7 +429,7 @@ class ERA5():
     
     
     def atmosphere(self, dates, parallel=False, cf_meta=True):
-        variables = ['ta', 'hus', 'ps', 'tos', 'sic', 'clw']
+        variables = ['ta', 'hus', 'ps', 'tos', 'sic', 'clw', 'snd']
         if parallel is True:
             from dask import delayed
         else:
@@ -423,7 +443,9 @@ class ERA5():
             res = dask.compute(ds, wind)
         else:
             res = (ds, wind)
-        return xr.merge(res)
+        #print(ds)
+        #print(wind)
+        return xr.merge(res, join='override', compat='override')
     
     
     def dynamics(self, dates, parallel=False, cf_meta=True):
@@ -435,7 +457,7 @@ class ERA5():
             def delayed(x):
                 return x
         res = []
-        for date in dates:
+        for date in tqdm(dates):
             res.append(delayed(self.atmosphere)(date))
         if parallel is True:
             import dask
@@ -465,15 +487,3 @@ class ERA5():
         if clean_coords is True:
             gds = _clean_coords(gds)
         return gds
-        
-    
-    
-  
-def gfile(date, parallel=False, cmorizer=None):
-    if cmorizer is None:
-        cmorizer = ERA5()
-    variables = ['ta', 'hus', 'ps', 'tos', 'sic']
-    ds = cmorizer.to_xarray(variables, date, 
-                            parallel=parallel)
-    
-    return ds

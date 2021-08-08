@@ -240,7 +240,7 @@ def interp_horiz_cm(da, lamgm, phigm, lamem, phiem, indii, indjj, name, blagm, b
         indii,
         indjj,
         name,
-        dataset_fill_value=1.e20,
+        #dataset_fill_value=1.e20,
         input_core_dims=input_core_dims,  # list with one entry per arg
         output_core_dims=[rcm_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
@@ -481,7 +481,7 @@ def rotate_uv(uge, vge, uvge, vuge, lamem, phiem, pollam, polphi):
     vlamem, vphiem = lamem.isel(pos=2), phiem.isel(pos=2)
     twoD_dims = list(horizontal_dims(uge))
     input_core_dims = 4 * [twoD_dims + [lev_gm]] + 4 * [twoD_dims] + 2 * [[]]
-    #print(input_core_dims)
+
     uge_rot, vge_rot = xr.apply_ufunc(
         intf.rotate_uv,  # first the function
         uge,  # now arguments in the order expected
@@ -500,8 +500,8 @@ def rotate_uv(uge, vge, uvge, vuge, lamem, phiem, pollam, polphi):
         vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
-        #  dask_gufunc_kwargs = {'allow_rechunk':True},
-        output_dtypes=[uge.dtype, vge.dtype],
+        dask_gufunc_kwargs = {'allow_rechunk':True},
+        output_dtypes=(uge.dtype, vge.dtype),
     )
     return uge_rot, vge_rot
 
@@ -530,6 +530,7 @@ def pressure_correction_em(psge, tge, arfge, fibge, fibem, akgm, bkgm, kpbl):
         output_core_dims=[twoD_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
         dask="parallelized",
+        dask_gufunc_kwargs = {'allow_rechunk':True},
         output_dtypes=[psge.dtype],
     )
     return result
@@ -561,6 +562,7 @@ def interpolate_vertical(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, 
         # exclude_dims=set(("index",)),
         vectorize=True,  # loop over non-core dims, in this case: time
         dask="parallelized",
+        dask_gufunc_kwargs = {'allow_rechunk':True},
         output_dtypes=[xge.dtype],
     )
     result.name = varname
@@ -623,7 +625,7 @@ def correct_uv(uem, vem, psem, akem, bkem, lamem, phiem, ll_lam, dlam, dphi):
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
         #  dask_gufunc_kwargs = {'allow_rechunk':True},
-        output_dtypes=[uem.dtype, vem.dtype],
+        output_dtypes=(uem.dtype, vem.dtype),
     )
     uge_corr.name = 'U'
     vge_corr.name = 'V'

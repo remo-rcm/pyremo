@@ -86,6 +86,7 @@ def relative_humidity(t, qd, p, qw=None, set_meta=True):
         output_dtypes=[t.dtype],
     )
     if set_meta:
+        result.name = "RELHUM"
     return result
 
 
@@ -112,7 +113,6 @@ def specific_humidity(t, relhum, p, set_meta=True):
     p_dims = list(_horizontal_dims(p)) + [_vertical_dim(p)]
     input_core_dims = 2 * [t_dims] + [p_dims]
     output_core_dims = [t_dims]
-    print(input_core_dims)
     result = xr.apply_ufunc(
         core.specific_humidity,  # first the function
         t,  # now arguments in the order expected
@@ -153,7 +153,6 @@ def liquid_water_content(t, relhum, p, set_meta=True):
     p_dims = list(_horizontal_dims(p)) + [_vertical_dim(p)]
     input_core_dims = 2 * [t_dims] + [p_dims]
     output_core_dims = [t_dims]
-    print(input_core_dims)
     result = xr.apply_ufunc(
         core.liquid_water_content,  # first the function
         t,  # now arguments in the order expected

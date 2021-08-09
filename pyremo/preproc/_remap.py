@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import xarray as xr
 
 
@@ -18,6 +19,8 @@ from .core import (
     pressure_correction_ge,
     correct_uv,
 )
+
+from . import physics
 
 
 vcs = ["hyai", "hybi", "hyam", "hybm", "akgm", "bkgm", "ak", "bk"]
@@ -74,6 +77,13 @@ def to_tar(files, tar_file, mode="w"):
     return tar_file
 
 
+def gm_coords(gds):
+    """broadcast 1d global coordinates"""
+    lat2d, lon2d = xr.broadcast(gds.lat, gds.lon)
+    lamgm, phigm = lon2d, lat2d
+    return lamgm, phigm
+
+
 def remap(gds, domain_info, vc, surflib):
     """remapping workflow
 
@@ -87,8 +97,7 @@ def remap(gds, domain_info, vc, surflib):
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
     ## broadcast 1d global coordinates
-    lat2d, lon2d = xr.broadcast(gds.lat, gds.lon)
-    lamgm, phigm = lon2d, lat2d
+    lamgm, phigm = gm_coords(gds)
 
     ## horizontal interpolation
     tge = interpolate_horizontal(gds.ta, lamem, phiem, lamgm, phigm, "T")
@@ -166,15 +175,36 @@ def remap(gds, domain_info, vc, surflib):
         uem, vem, psem, akbkem.ak, akbkem.bk, lamem, phiem, philuem, dlamem, dphiem
     )
 
-    return xr.merge([tem, uem_corr, vem_corr, psem, arfem])
+    tsw = remap_sst(gds.tos, lamem, phiem, lamgm, phigm, 
+                    blagm=np.around(gds.sftlf), 
+                    blaem=surflib.BLA)
+
+    # check if gcm contains seaice, else derive from sst
+    if 'sic' in gds:
+        seaice = remap_seaice(gds.sic, lamem, phiem, lamgm, phigm, 
+                           blagm=np.around(gds.sftlf), 
+                           blaem=surflib.BLA)
+    else:
+        seaice = physics.seaice(tsw)
+    
+    return xr.merge([tem, uem_corr, vem_corr, psem, arfem, tsw, seaice, akbkem])
 
 
-def add_soil(gfile):
+def add_soil(ads):
     return None
 
 
-def add_sst(gfile):
-    return None
+def remap_sst(tos, lamem, phiem, lamgm, phigm, blagm, blaem):
+    return interpolate_horizontal(tos, lamem, phiem, 
+                                  lamgm, phigm, 'TSW', 
+                                  blagm=blagm, blaem=blaem)
+
+def remap_seaice(sic, lamem, phiem, lamgm, phigm, blagm, blaem):
+    seaice = interpolate_horizontal(sic, lamem, phiem, 
+                                  lamgm, phigm, 'SEAICE', 
+                                  blagm=blagm, blaem=blaem)
+    seaice = xr.where(seaice < 0.0, 0.0, seaice)
+    return seaice
 
 
 # variables in a-file required

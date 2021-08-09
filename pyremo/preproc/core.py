@@ -123,10 +123,12 @@ def intersect(lamgm, phigm, lamem, phiem):
 
 
 def interpolate_horizontal(
-    da, lamem, phiem, lamgm, phigm, name=None, igr=0, blagm=None, blaem=None
+    da, lamem, phiem, lamgm, phigm, name=None, igr=None, blagm=None, blaem=None
 ):
     if name is None:
         name = da.name
+    if igr is None:
+        igr = 0
     indii, indjj = intersect(lamgm, phigm, lamem, phiem)
     if blagm is None or blaem is None:
         return interp_horiz(

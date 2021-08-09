@@ -34,8 +34,10 @@ Features
 --------
 
 * Easily access to Remo meta information and data
-* Common analysis tools
-* Includes physics package for pre and postprocessing
+* API based on xarray data structures
+* Pressure interpolation
+* Pre and post processing
+* Includes basic physics package
 
 Credits
 -------

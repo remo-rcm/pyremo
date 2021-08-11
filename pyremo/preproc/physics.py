@@ -72,13 +72,18 @@ def soil_layers(state):
 
     
 
-def water_content(ads):
-    p = prp.pressure(ads.PS, ads.akh, ads.bkh)
-    qwem = prp.liquid_water_content(ads.T, ads.RF, p)
-    qdem = prp.specific_humidity(ads.T, ads.RF, p)
-    ads['QD'] = qdem
-    ads['QW'] = qwem
-    ads['QDBL'] = qdem.isel(lev=-1) # last layer will be used for QDBL
+def water_content(t, rf, ps, ak, bk):
+    p = prp.pressure(ps, ak, bk)
+    qwem = prp.liquid_water_content(t, rf, p)
+    qdem = prp.specific_humidity(t, rf, p)
+    qwem.name = 'QW'
+    qdem.name = 'QD'
+    #ads['QD'] = qdem
+    #ads['QW'] = qwem
+    #ads['QDBL'] = qdem.isel(lev=-1) # last layer will be used for QDBL
+    qdbl = qdem.isel(lev=-1)
+    qdbl.name = 'QDBL'
+    return xr.merge([qwem, qdem, qdbl])
     return ads
 
 
@@ -99,10 +104,54 @@ def seaice(tswem):
 
 
 
-def tsw(tswge):
-    tswem = np.ma.where( tswge < frozen, frozen, tswge)
-    return tswem
+def tsw(tsw):
+    return xr.where( tsw < frozen, frozen, tsw)
 
-def tsi(tswge):
-    tsiem = np.ma.where( tswge > frozen, frozen, tswge)
-    return tsiem
+
+def tsi(tsw):
+    tsi = xr.where( tsw > frozen, frozen, tsw)
+    tsi.name = 'TSI'
+    return tsi
+
+
+
+def _water_content(arfem, tem, psem, akem, bkem):
+    """computes qd (specific humidity) and qw (liquid water) from relative humidty (arfem).
+
+    Python implementation of original Fortran source in `addem`.
+    """
+    # pressure height?!
+    #phem = 0.5*(AKEm(k) + AKEm(k + 1) + (BKEm(k) + BKEm(k + 1))*PSEm(ij))
+    #IF ( TEM(ij, k)>=B3 ) THEN
+    #  zgqd = FGQD(FGEW(TEM(ij, k)), phem)
+    #ELSE
+    #  zgqd = FGQD(FGEE(TEM(ij, k)), phem)
+    #END IF
+    #zqdwem = ARFem(ij, k)*zgqd
+    #IF ( ARFem(ij, k)<1.0_DP ) THEN
+    #  QDEm(ij, k) = zqdwem
+    #  QWEm(ij, k) = 0.
+    #ELSE
+    #  QDEm(ij, k) = zgqd
+    #  QWEm(ij, k) = zqdwem - zgqd
+    #END IF
+    qdem = np.zeros(arfem.shape, dtype=arfem.dtype)
+    qwem = np.zeros(arfem.shape, dtype=arfem.dtype)
+    print_data('arfem', arfem)
+    print_data('qdem', qdem)
+    print_data('qwem', qdem)
+    for k in range(arfem.shape[2]):
+        print(k, B3)
+        phem = 0.5 * (akem[k] + akem[k+1] + (bkem[k]+bkem[k+1]) * psem)
+        print_data('tem',tem[:,:,k])
+        zgqd = np.where(tem[:,:,k] >= B3, fgqd( fgew(tem[:,:,k]), phem ), fgqd( fgee(tem[:,:,k]), phem) )
+        zqdwem = arfem[:,:, k] * zgqd
+        print_data('zqdwem',zqdwem)
+        print_data('arfem',arfem[:,:,k])
+        qdem[:,:,k] = np.where( arfem[:,:,k] < 1.0, zqdwem, zgqd )
+        qwem[:,:,k] = np.where( arfem[:,:,k] < 1.0, 0.0, zqdwem - zgqd )
+
+    print_data('qdem', qdem)
+    print_data('qwem', qwem)
+
+    return qdem, qwem

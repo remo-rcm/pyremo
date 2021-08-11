@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import xarray as xr
+import cordex as cx
+import pyremo as pr
 
 
 xr.set_options(keep_attrs=True)
@@ -22,6 +24,8 @@ from .core import (
 
 from . import physics
 
+# variables that should have a mask with fill values
+fillvars = ['TSW', 'SEAICE', 'TSI']
 
 vcs = ["hyai", "hybi", "hyam", "hybm", "akgm", "bkgm", "ak", "bk"]
 
@@ -32,7 +36,8 @@ def get_filename(date, expid="000000", template=None):
     return template.format(expid, date.strftime(format="%Y%m%d%H"))
 
 
-def to_netcdf(ads, path="", expid="000000", template=None, tempfiles=None, **kwargs):
+def to_netcdf(ads, path="", expid="000000", template=None, tempfiles=None, 
+              missval = 1.e20, **kwargs):
     """write dataset to netcdf
 
     by default, each timestep goes into a separate output file
@@ -51,9 +56,13 @@ def to_netcdf(ads, path="", expid="000000", template=None, tempfiles=None, **kwa
         for var, da in ds.items():
             if var in expand_time:
                 ds[var] = da.expand_dims("time")
+            if var in fillvars:
+                ds[var].encoding['_FillValue'] = missval
+            else:
+                ds[var].encoding['_FillValue'] = None
         dsets.append(ds)
     # dsets = [dset.expand_dims('time') for dset in datasets]
-    xr.save_mfdataset(dsets, paths, **kwargs)
+    writer = xr.save_mfdataset(dsets, paths, **kwargs)
     if tempfiles is not None:
         for f in tempfiles:
             os.remove(f)
@@ -126,8 +135,15 @@ def remap(gds, domain_info, vc, surflib):
     ficgm = geopotential(gds.orog, ta, hus, ps, gds.akgm, gds.bkgm).squeeze(drop=True)
     ficge = interpolate_horizontal(ficgm, lamem, phiem, lamgm, phigm, "FIC")
 
-    arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm)
-    arfge = interpolate_horizontal(arfgm, lamem, phiem, lamgm, phigm, "AREL HUM")
+    if 'clw' in gds:
+    #if False:
+        arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, 
+                                  gds.akgm, gds.bkgm, gds.clw)
+    else:
+        arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, 
+                                  gds.akgm, gds.bkgm)
+    arfge = interpolate_horizontal(arfgm, lamem, phiem, 
+                                   lamgm, phigm, "AREL HUM")
 
     ## wind vector rotation
     uge_rot, vge_rot = rotate_uv(
@@ -187,7 +203,33 @@ def remap(gds, domain_info, vc, surflib):
     else:
         seaice = physics.seaice(tsw)
     
-    return xr.merge([tem, uem_corr, vem_corr, psem, arfem, tsw, seaice, akbkem])
+    water_content = physics.water_content(tem, arfem, psem, akbkem.akh, akbkem.bkh)
+    tsi = physics.tsi(tsw)
+    
+    ads = xr.merge([tem, uem_corr, vem_corr, psem, 
+                     arfem, tsw, seaice, water_content, tsi,
+                     akbkem])
+        
+    grid = get_grid(domain_info)
+    
+    ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method='nearest')
+    ads['rlon'] = grid.rlon
+    ads['rlat'] = grid.rlat
+    
+    ads = xr.merge([ads, grid])
+    
+    # rename for remo to recognize
+    ads = ads.rename({'ak': 'hyai', 'bk': 'hybi', 'akh': 'hyam', 'bkh': 'hybm'})
+   
+    # set global attributes
+    ads.attrs = gds.attrs
+    
+    ads.attrs['history'] = 'preprocessing with pyremo = {}'.format(pr.__version__)
+    
+    ads = update_attrs(ads)
+
+    # transpose to remo convention
+    return ads.transpose(..., 'lev', 'rlat', 'rlon')
 
 
 def add_soil(ads):
@@ -205,6 +247,34 @@ def remap_seaice(sic, lamem, phiem, lamgm, phigm, blagm, blaem):
                                   blagm=blagm, blaem=blaem)
     seaice = xr.where(seaice < 0.0, 0.0, seaice)
     return seaice
+
+
+def get_grid(domain_info):
+    return cx.create_dataset(**domain_info)
+
+
+def encoding(da):
+    if np.isnan(da.values).any():
+        return {'_FillValue': missval}
+    else:
+        return {'_FillValue': None}
+
+
+def update_attrs(ds):
+    for var, da in ds.items():
+        try:
+            attrs = pr.codes.get_dict(var)
+            da.attrs = {}
+            da.attrs['name'] = attrs['variable']
+            da.attrs['code'] = attrs['code']
+            da.attrs['description'] = attrs['description']
+            da.attrs['units'] = attrs['units']
+            #da.attrs['layer'] = attrs['layer']
+            da.attrs['grid_mapping'] = 'rotated_latitude_longitude'
+            da.attrs['coordinates'] = 'lon lat'
+        except:
+            pass
+    return ds
 
 
 # variables in a-file required

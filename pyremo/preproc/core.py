@@ -174,7 +174,8 @@ def interpolate_horizontal(
 #     return intorg.hiobla(field, lamgm, phigm, lamem, phiem, indii, indjj, name)
 
 
-def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=False):
+def interp_horiz(da, lamgm, phigm, lamem, phiem, 
+                 indii, indjj, name, keep_attrs=False):
     """main interface"""
     gcm_dims = list(horizontal_dims(lamgm))
     rcm_dims = list(horizontal_dims(lamem))

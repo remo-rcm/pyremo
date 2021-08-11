@@ -29,11 +29,11 @@ def open_remo_mfdataset(filenames, update_meta=False, parse_dates=False):
 
 def open_remo_dataset(
     filename,
-    options="",
+    options="-f nc4",
     update_meta=False,
     returnX=True,
     inplace=False,
-    parse_dates=False,
+    parse_time=False,
     **kwargs
 ):
     """Read a REMO dataset.
@@ -51,7 +51,7 @@ def open_remo_dataset(
         Return an xarray.Dataset. If False, use netCDF4 Dataset.
     inplace: bool
         Update meta info on disk, only useful for netCDF4 Datasets.
-    parse_dates: bool
+    parse_time: bool
         Parse absolute time axis into datetime objects.
 
     Returns
@@ -75,7 +75,7 @@ def open_remo_dataset(
         ds = _read_nc_dataset(filename, returnX, **kwargs)
     if update_meta:
         ds = update_meta_info(ds)
-    if parse_dates:
+    if parse_time is True:
         ds = parse_dates(ds)
     return ds
 

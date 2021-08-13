@@ -102,7 +102,9 @@ def remap(gds, domain_info, vc, surflib):
     """
 
     ## curvilinear coordinaetes
-    fibem = surflib.FIB * const.grav_const
+    # remove time dimension if there is one
+    fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
+        
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
     ## broadcast 1d global coordinates
@@ -193,13 +195,13 @@ def remap(gds, domain_info, vc, surflib):
 
     tsw = remap_sst(gds.tos, lamem, phiem, lamgm, phigm, 
                     blagm=np.around(gds.sftlf), 
-                    blaem=surflib.BLA)
+                    blaem=surflib.BLA.squeeze(drop=True))
 
     # check if gcm contains seaice, else derive from sst
     if 'sic' in gds:
         seaice = remap_seaice(gds.sic, lamem, phiem, lamgm, phigm, 
                            blagm=np.around(gds.sftlf), 
-                           blaem=surflib.BLA)
+                           blaem=surflib.BLA.squeeze(drop=True))
     else:
         seaice = physics.seaice(tsw)
     

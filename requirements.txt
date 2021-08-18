@@ -2,4 +2,4 @@ xarray
 numpy
 pandas
 pooch
-py-cordex
+py-cordex==0.1.2a1

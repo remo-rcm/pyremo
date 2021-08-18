@@ -11,6 +11,7 @@ with open("HISTORY.rst") as history_file:
     history = history_file.read()
 
 requirements = open("requirements.txt").read().strip().split("\n")
+print(requirements)
 
 setup_requirements = [
     "pytest-runner",
@@ -38,6 +39,9 @@ setup(
     description="Common Remo python tools",
     entry_points={"console_scripts": ["pyremo=pyremo.cli:main", "prsint=pyremo.cli:prsint"],},
     install_requires=requirements,
+    dependency_links = [
+     "http://github.com/euro-cordex/py-cordex"
+    ],
     extras_require={"docs": ["numpydoc", "jupyter", "nbconvert"]},
     license="MIT license",
     long_description=readme + "\n\n" + history,

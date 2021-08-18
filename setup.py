@@ -40,7 +40,7 @@ setup(
     entry_points={"console_scripts": ["pyremo=pyremo.cli:main", "prsint=pyremo.cli:prsint"],},
     install_requires=requirements,
     dependency_links = [
-     "http://github.com/euro-cordex/py-cordex/master"
+     "http://github.com/euro-cordex/py-cordex"
     ],
     extras_require={"docs": ["numpydoc", "jupyter", "nbconvert"]},
     license="MIT license",

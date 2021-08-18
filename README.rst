@@ -29,7 +29,6 @@ Common Remo python tools
 * Free software: MIT license
 * Documentation: https://pyremo.readthedocs.io.
 
-
 Features
 --------
 
@@ -38,6 +37,29 @@ Features
 * Pressure interpolation
 * Pre and post processing
 * Includes basic physics package
+
+Installation
+------------
+
+You can install the package directly from github using pip:
+
+
+.. code-block:: console
+
+    pip install git+https://github.com/remo-rcm/pyremo
+
+
+If you want to contribute, I recommend cloning the repository and installing the package in development mode, e.g.
+
+
+.. code-block:: console
+
+    git clone https://github.com/remo-rcm/pyremo
+    cd pyremo
+    pip install -e .
+
+
+This will install the package but you can still edit it and you don't need the package in your :code:`PYTHONPATH`
 
 Credits
 -------

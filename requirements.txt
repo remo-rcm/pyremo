@@ -1,5 +1,5 @@
 xarray
 numpy
 pandas
-py-cordex
 pooch
+git+https://github.com/euro-cordex/py-cordex

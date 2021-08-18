@@ -255,7 +255,7 @@ def get_grid(domain_info):
     return cx.create_dataset(**domain_info)
 
 
-def encoding(da):
+def encoding(da, missval):
     if np.isnan(da.values).any():
         return {'_FillValue': missval}
     else:

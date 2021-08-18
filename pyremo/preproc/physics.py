@@ -2,7 +2,7 @@
 
 import pyremo.physics as prp
 import xarray as xr
-
+import numpy as np
 
 zds3 = (3.25 - 0.0)/(3.5 - 0.0)
 zds4 = (19.2 - 17.5)/(64.0 - 17.5)
@@ -45,30 +45,30 @@ RDDrm1 = RD/R - 1.0
 EMRdrd = 1.0 - RDRd
 
 
-def soil_layers(state):
-#    if 'TD' not in state:
-    tswem = state['TSW']
-    tslem = state['TSL']
-    td3ge = state.get('TD3', None)
-    td4ge = state.get('TD4', None)
-    td5ge = state.get('TD5', None)
-    tdge = state.get('TD', None)
-    cm.print_datinfo('TSW', tswem)
-    cm.print_datinfo('TSL', tslem)
-    #cm.print_datinfo('td3ge', td3ge)
-    #cm.print_datinfo('td4ge', td4ge)
-    #cm.print_datinfo('td5ge', td5ge)
-    #cm.print_datinfo('tdge', tdge)
-    logging.info('adding soil layers')
-    soil = physics.soil_layers(tswem, tslem, sd.bodlib.blaem, sd.bodlib.fibem, sd.bodlib.fibge, td3ge, td4ge, td5ge, tdge )
-    for field, data in soil.items():
-        cm.print_datinfo(field, data)
-    state['TD3'] = soil['td3em']
-    state['TD4'] = soil['td4em']
-    state['TD5'] = soil['td5em']
-    state['TD'] = soil['tdem']
-    state['TDCL'] = soil['tdclem']
-    return state
+#def soil_layers(state):
+##    if 'TD' not in state:
+#    tswem = state['TSW']
+#    tslem = state['TSL']
+#    td3ge = state.get('TD3', None)
+#    td4ge = state.get('TD4', None)
+#    td5ge = state.get('TD5', None)
+#    tdge = state.get('TD', None)
+#    #cm.print_datinfo('TSW', tswem)
+#    #cm.print_datinfo('TSL', tslem)
+#    #cm.print_datinfo('td3ge', td3ge)
+#    #cm.print_datinfo('td4ge', td4ge)
+#    #cm.print_datinfo('td5ge', td5ge)
+#    #cm.print_datinfo('tdge', tdge)
+#    #logging.info('adding soil layers')
+#    ###soil = prp.soil_layers(tswem, tslem, sd.bodlib.blaem, sd.bodlib.fibem, sd.bodlib.fibge, td3ge, td4ge, td5ge, tdge )
+#    #for field, data in soil.items():
+#    #    cm.print_datinfo(field, data)
+#    #state['TD3'] = soil['td3em']
+#    #state['TD4'] = soil['td4em']
+#    #state['TD5'] = soil['td5em']
+#    #state['TD'] = soil['tdem']
+#    #state['TDCL'] = soil['tdclem']
+#    return state
 
     
 
@@ -84,7 +84,7 @@ def water_content(t, rf, ps, ak, bk):
     qdbl = qdem.isel(lev=-1)
     qdbl.name = 'QDBL'
     return xr.merge([qwem, qdem, qdbl])
-    return ads
+    #return ads
 
 
 
@@ -137,21 +137,39 @@ def _water_content(arfem, tem, psem, akem, bkem):
     #END IF
     qdem = np.zeros(arfem.shape, dtype=arfem.dtype)
     qwem = np.zeros(arfem.shape, dtype=arfem.dtype)
-    print_data('arfem', arfem)
-    print_data('qdem', qdem)
-    print_data('qwem', qdem)
+    #print_data('arfem', arfem)
+    #print_data('qdem', qdem)
+    #print_data('qwem', qdem)
     for k in range(arfem.shape[2]):
         print(k, B3)
         phem = 0.5 * (akem[k] + akem[k+1] + (bkem[k]+bkem[k+1]) * psem)
-        print_data('tem',tem[:,:,k])
+        #print_data('tem',tem[:,:,k])
         zgqd = np.where(tem[:,:,k] >= B3, fgqd( fgew(tem[:,:,k]), phem ), fgqd( fgee(tem[:,:,k]), phem) )
         zqdwem = arfem[:,:, k] * zgqd
-        print_data('zqdwem',zqdwem)
-        print_data('arfem',arfem[:,:,k])
+        #print_data('zqdwem',zqdwem)
+        #print_data('arfem',arfem[:,:,k])
         qdem[:,:,k] = np.where( arfem[:,:,k] < 1.0, zqdwem, zgqd )
         qwem[:,:,k] = np.where( arfem[:,:,k] < 1.0, 0.0, zqdwem - zgqd )
 
-    print_data('qdem', qdem)
-    print_data('qwem', qwem)
+    #print_data('qdem', qdem)
+    #print_data('qwem', qwem)
 
     return qdem, qwem
+
+
+# STATEMENTFUNKTION FUER SAETTIGUNGSDAMPFDRUCK
+def fgew(tx):
+    """magnus formula
+    """
+    return B1 * np.exp(B2W*(tx - B3)/(tx - B4W))
+
+def fgee(tx):
+    """magnus formula
+    """
+    return B1 * np.exp(B2E*(tx - B3)/(tx - B4E))
+
+def fgqd(ge, p):
+    """magnus formula
+    """
+    return RDRd*ge / (p - EMRdrd*ge)
+

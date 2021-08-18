@@ -30,7 +30,6 @@ except:
 
 from cordex import ecmwf as ectable
 
-eccodes = ectable.table
 
 xr.set_options(keep_attrs=True)
 
@@ -92,6 +91,7 @@ show_cdo = False
 
 
 def _get_attrs(code):
+    eccodes = ectable.table
     data = eccodes.loc[code]
     attrs = data.to_dict()
     attrs["code"] = code

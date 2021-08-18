@@ -5,9 +5,9 @@ Credits
 Development Lead
 ----------------
 
-* Lars Buntemeyer <lars.buntemeyer@hzg.de>
+* `Lars Buntemeyer <https://github.com/larsbuntemeyer>`_
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* `Ludwig Lierhammer <https://github.com/ludwiglierhammer>`_

@@ -281,7 +281,10 @@ def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
         twoD_dims,
         ["lev_2"],
         ["lev_2"],
+       # [],
+       # []
     ]
+    #print(input_core_dims)
     result = xr.apply_ufunc(
         intf.geopotential,  # first the function
         fibgm,  # now arguments in the order expected
@@ -293,7 +296,7 @@ def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
         input_core_dims=input_core_dims,  # list with one entry per arg
         #  output_core_dims=[threeD_dims],  # returned data has 3 dimensions
         output_core_dims=[twoD_dims],  # returned data has 3 dimensions
-        # vectorize=True,  # loop over non-core dims, in this case: time
+        vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
         dask_gufunc_kwargs={"allow_rechunk": True},

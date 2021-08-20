@@ -121,20 +121,21 @@ def remap(gds, domain_info, vc, surflib):
     fibge = interpolate_horizontal(gds.orog, lamem, phiem, lamgm, phigm, "FIB")
 
     ## geopotential
-    if "time" in gds.hus.dims:
-        hus = gds.hus.isel(time=0)
-    else:
-        hus = gds.hus
-    if "time" in gds.ta.dims:
-        ta = gds.ta.isel(time=0)
-    else:
-        ta = gds.ta
-    if "time" in gds.ps.dims:
-        ps = gds.ps.isel(time=0)
-    else:
-        ps = gds.ps
+#     if "time" in gds.hus.dims:
+#         hus = gds.hus.isel(time=0)
+#     else:
+#         hus = gds.hus
+#     if "time" in gds.ta.dims:
+#         ta = gds.ta.isel(time=0)
+#     else:
+#         ta = gds.ta
+#     if "time" in gds.ps.dims:
+#         ps = gds.ps.isel(time=0)
+#     else:
+#         ps = gds.ps
 
-    ficgm = geopotential(gds.orog, ta, hus, ps, gds.akgm, gds.bkgm).squeeze(drop=True)
+    ficgm = geopotential(gds.orog, gds.ta, gds.hus, gds.ps, gds.akgm, gds.bkgm)#.squeeze(drop=True)
+
     ficge = interpolate_horizontal(ficgm, lamem, phiem, lamgm, phigm, "FIC")
 
     if 'clw' in gds:

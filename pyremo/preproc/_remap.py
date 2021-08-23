@@ -99,6 +99,29 @@ def remap(gds, domain_info, vc, surflib):
     This function should be similar to the ones in the
     legacy fortran preprocessor intorg.
 
+    Parameters
+    ----------
+    gds : xarray.Dataset
+        Input model dataset containing atmospheric variables for
+        downscaling, including SST. The dataset must fullfil CF conventions
+        containing: `ta`, `ua`, `va`, `ps`, `tos`, `orog` and `sftlf`.
+       
+    domain_info : dict
+        A dictionary containing the domain information of the target domain. 
+
+    domain_info : pandas.DataFrame
+        A table with the vertical coordinate coefficients `ak` and `bk`.
+
+    surflib : xarray.Dataset
+        The surface library containing the target grid land sea mask `BLA` and
+        orography `FIB`.
+
+    Returns
+    -------
+    Forcing Data : xarray.core.Dataset
+        Dataset containing the atmospheric forcing data interpolated to the
+        target domain.
+
     """
 
     ## curvilinear coordinaetes

@@ -449,8 +449,13 @@ def convert_units(ds):
     return ds
 
 
-def gfile(datasets, ref_ds, tos=None, time_range=None):
+def gfile(datasets, ref_ds=None, tos=None, time_range=None):
     """Creates a virtual gfile"""
+    if ref_ds is None:
+        try:
+            ref_ds = open_mfdataset(datasets['ta'])
+        except:
+            raise Exception('ta is required in the datasets dict if no red_ds is given')
     lon, lat = horizontal_dims(ref_ds)
     if time_range is None:
         time_range = ref_ds.time

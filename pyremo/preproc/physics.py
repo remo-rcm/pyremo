@@ -99,7 +99,7 @@ def seaice(tswem):
     seaem = xr.where( tswem > melt, 0.0, seaem)
     seaem = xr.where( tswem < frozen, 1.0, seaem)
     seaem = xr.where( (tswem >= frozen) & (tswem <= melt), (melt - tswem) / freezing_range, seaem )
-
+    seaem.name = 'SEAICE'
     return seaem
 
 

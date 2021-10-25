@@ -11,6 +11,7 @@ Welcome to pyremo's documentation!
    domain
    processing
    remo-dataset
+   preprocessing-cf
    ar
    contributing
    authors

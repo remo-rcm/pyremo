@@ -52,7 +52,31 @@ def spatial_dims(da):
 
 
 def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
-    """main interface"""
+    """Pressure interpolation of data on 3D model levels.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        Varialbe data on model levels.
+    plev : array like or list
+        Pressure levels to interpolate to [hPa].
+    t : xarray.DataArray
+        Atmospheric temperature on model levels.
+    ps : xarray.DataArray
+        Surface pressure.
+    a : xarray.DataArray
+        Hybrid sigma A coefficient at full levels or
+        level interfaces.
+    b : xarray.DataArrays
+        Hybrid sigma B coefficient at full levels or
+        level interfaces.
+
+    Returns
+    -------
+    data on pressure levels : xarray.DataArray
+        Returns data array interpolated to pressure levels.
+
+    """
     srf_dims = list(spatial_dims(da))
     lev_dims = list(spatial_dims(da))
     lev_dims.append("lev")

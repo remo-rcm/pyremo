@@ -33,7 +33,8 @@ from cordex import ecmwf as ectable
 
 xr.set_options(keep_attrs=True)
 
-cdo_exe = "/sw/rhel6-x64/cdo/cdo-1.9.6-gcc64/bin/cdo"
+#cdo_exe = "/sw/rhel6-x64/cdo/cdo-1.9.6-gcc64/bin/cdo"
+cdo_exe = "cdo"
 
 tempdir = None  # os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
 
@@ -229,10 +230,10 @@ def _convert_files(files, dask=False):
     return results
 
 
-def to_xarray(filename, scratch=None):
-    """convert an ERA5 grib file to xarray"""
-    f_split = _split_time(filename)
-    f_split.sort()
+#def to_xarray(filename, scratch=None):
+#    """convert an ERA5 grib file to xarray"""
+#    f_split = _split_time(filename)
+#    f_split.sort()
 
 
 def _get_row_by_date(code, date, df):
@@ -467,15 +468,48 @@ def _clean_coords(ds, vcs=None):
 
 
 class ERA5:
+    """
+    Class for cmorizing original ERA5 GRIB data.
+    """
     def __init__(
-        self, catalog_url="/pool/data/Catalogs/mistral-era5.json", scratch=None
-    ):
+        self, catalog_url="/pool/data/Catalogs/mistral-era5.json", scratch=None):
+        """
+        Note
+        ----
+        The cmorizer class only works with the intake catalog provided by DKRZ.
+
+        Parameters
+        ----------
+        catalog_url : str
+            Url of the ERA5 intake catalog.
+        scratch : str
+            Scratch directory for temporary cdo files.
+
+        """
         if scratch is not None:
             init_tempdir(scratch)
         self.df = _get_catalog_df(catalog_url)
 
     def to_xarray(self, idents, dates, parallel=False, cf_meta=True):
-        """Create an xarray dataset"""
+        """Create an xarray dataset from ERA5 GRIB data at DKRZ.
+
+        Parameters
+        ----------
+        idents : str or int 
+            Code or variable name (cf name) that should be converted.
+        dates : date or list of dates in ISO 8601 format.
+            A single date or list of dates for which the variables should
+            be converted.
+        parallel : Bool
+            Use dask delayed for converting several variables and dates.
+        cf_meta : bool
+            Rename variables to CF standard names.
+
+        Returns
+        -------
+        Dataarray
+
+        """
         if not isinstance(idents, list):
             idents = [idents]
         idents = [_get_code(ident) for ident in idents]
@@ -492,7 +526,7 @@ class ERA5:
     def wind(self, dates, parallel=False, cf_meta=True):
         return _wind(dates, self.df, parallel=parallel, cf_meta=cf_meta)
 
-    def atmosphere(self, dates, parallel=False, cf_meta=True):
+    def _atmosphere(self, dates, parallel=False, cf_meta=True):
         variables = ["ta", "hus", "ps", "tos", "sic", "clw", "snd"]
         if parallel is True:
             from dask import delayed
@@ -515,7 +549,7 @@ class ERA5:
         # print(wind)
         return xr.merge(res, join="override", compat="override")
 
-    def dynamics(self, dates, parallel=False, cf_meta=True):
+    def _dynamics(self, dates, parallel=False, cf_meta=True):
         if not isinstance(dates, list):
             dates = [dates]
         if parallel is True:
@@ -527,7 +561,7 @@ class ERA5:
 
         res = []
         for date in tqdm(dates):
-            res.append(delayed(self.atmosphere)(date))
+            res.append(delayed(self._atmosphere)(date))
         if parallel is True:
             import dask
 
@@ -536,7 +570,7 @@ class ERA5:
             res_ = res
         return xr.concat(res_, dim="time")
 
-    def fx(self, cf_meta=True):
+    def _fx(self, cf_meta=True):
         """static variables
 
         Static variables are not supposed to be time dependent.
@@ -552,9 +586,33 @@ class ERA5:
     def gfile(
         self, dates, parallel=False, cf_meta=True, clean_coords=True, add_fx=True
     ):
-        gds = self.dynamics(dates, parallel=parallel, cf_meta=cf_meta)
+        """Create an ERA5 gfile dataset.
+        
+        Main function to convert ERA5 grib data to a regular gaussian Dataset
+        containing all variables required for REMO preprocessing.
+
+        Parameters
+        ----------
+        dates : date or list of dates in ISO 8601 format.
+            A single date or list of dates for which the variables should
+            be converted.
+        parallel : Bool
+            Use dask delayed for converting several variables and dates.
+        cf_meta : bool
+            Rename variables to CF standard names.
+        clean_coords: bool
+            Drop time coordinate from coordinate variables.
+        add_fx: bool
+            Add static fields, e.g., orography and land sea mask.
+
+        Returns
+        -------
+        Dataset
+
+        """
+        gds = self._dynamics(dates, parallel=parallel, cf_meta=cf_meta)
         if add_fx is True:
-            gds = xr.merge([gds, self.fx(cf_meta=cf_meta)])
+            gds = xr.merge([gds, self._fx(cf_meta=cf_meta)])
         if clean_coords is True:
             gds = _clean_coords(gds)
         return gds

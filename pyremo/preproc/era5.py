@@ -471,8 +471,8 @@ class ERA5:
     """
     Class for cmorizing original ERA5 GRIB data.
     
-    Note
-    ----
+    Notes
+    -----
     The cmorizer class only works with the intake catalog provided by DKRZ.
     
     """

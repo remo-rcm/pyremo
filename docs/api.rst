@@ -41,23 +41,16 @@ Pressure interpolation
    prsint.pressure_interpolation
 
    
-Preprocessor
-============
-
-.. autosummary::
-   :toctree: generated/
-
-   preproc.remap
-   preproc.to_netcdf
-   preproc.to_tar
-
-CF preprocessor (CMIP5/CMPI6)
------------------------------
+CF-Preprocessor
+===============
 
 .. autosummary::
    :toctree: generated/
 
    preproc.gfile
+   preproc.remap
+   preproc.to_netcdf
+   preproc.to_tar
 
 ECMWF cmorizer (ERA5)
 -------------------------
@@ -73,5 +66,5 @@ Converting ECMWF data
 .. autosummary::
    :toctree: generated/
 
-   ERA5.to_xarray
-   ERA5.gfile
+   preproc.ERA5.to_xarray
+   preproc.ERA5.gfile

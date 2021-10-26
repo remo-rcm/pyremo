@@ -15,7 +15,6 @@ Welcome to pyremo's documentation!
    ar
    contributing
    authors
-   history
    whats_new
    api
 

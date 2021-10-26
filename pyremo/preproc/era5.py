@@ -470,14 +470,16 @@ def _clean_coords(ds, vcs=None):
 class ERA5:
     """
     Class for cmorizing original ERA5 GRIB data.
+    
+    Note
+    ----
+    The cmorizer class only works with the intake catalog provided by DKRZ.
+    
     """
     def __init__(
         self, catalog_url="/pool/data/Catalogs/mistral-era5.json", scratch=None):
         """
-        Note
-        ----
-        The cmorizer class only works with the intake catalog provided by DKRZ.
-
+        
         Parameters
         ----------
         catalog_url : str

@@ -59,10 +59,19 @@ CF preprocessor (CMIP5/CMPI6)
 
    preproc.gfile
 
-ECMWF preprocessor (ERA5)
+ECMWF cmorizer (ERA5)
 -------------------------
 
 .. autosummary::
    :toctree: generated/
 
    preproc.ERA5
+   
+Converting ECMWF data
+^^^^^^^^^^^^^^^^^^^^^
+
+.. autosummary::
+   :toctree: generated/
+
+   ERA5.to_xarray
+   ERA5.gfile

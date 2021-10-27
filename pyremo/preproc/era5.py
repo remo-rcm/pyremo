@@ -518,7 +518,7 @@ class ERA5:
         ds = _to_dataarray(idents, dates, self.df, parallel=parallel, cf_meta=cf_meta)
         return ds
 
-    def get_timesteps(self, idents, dates, gaussian=True, delayed=False):
+    def _get_timesteps(self, idents, dates, gaussian=True, delayed=False):
         """Returns a list of cmorized files"""
         idents = [_get_code(ident) for ident in idents]
         return _get_timesteps(
@@ -526,6 +526,23 @@ class ERA5:
         )
 
     def wind(self, dates, parallel=False, cf_meta=True):
+        """Create an xarray dataset of wind variables from ERA5 GRIB data at DKRZ.
+
+        Parameters
+        ----------
+        dates : date or list of dates in ISO 8601 format.
+            A single date or list of dates for which the variables should
+            be converted.
+        parallel : Bool
+            Use dask delayed for converting several variables and dates.
+        cf_meta : bool
+            Rename variables to CF standard names.
+
+        Returns
+        -------
+        Dataarray
+
+        """
         return _wind(dates, self.df, parallel=parallel, cf_meta=cf_meta)
 
     def _atmosphere(self, dates, parallel=False, cf_meta=True):

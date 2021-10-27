@@ -455,7 +455,7 @@ def gfile(datasets, ref_ds=None, tos=None, time_range=None):
         try:
             ref_ds = open_mfdataset(datasets['ta'])
         except:
-            raise Exception('ta is required in the datasets dict if no red_ds is given')
+            raise Exception('ta is required in the datasets dict if no ref_ds is given')
     lon, lat = horizontal_dims(ref_ds)
     if time_range is None:
         time_range = ref_ds.time

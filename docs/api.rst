@@ -68,3 +68,4 @@ Converting ECMWF data
 
    preproc.ERA5.to_xarray
    preproc.ERA5.gfile
+   preproc.ERA5.wind

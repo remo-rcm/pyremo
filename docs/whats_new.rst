@@ -23,6 +23,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 - Tables are removed from the package and stored in an extra github repo.
 - Tables are download at first access using pooch.
+- New setup structure and github ci (:pull:`16`).
 
 Documentation
 ~~~~~~~~~~~~~

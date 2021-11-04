@@ -1,0 +1,19 @@
+name: pyremo-tests
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - cartopy
+  - matplotlib-base
+  - numpy
+  - pooch
+  - regionmask 
+  - setuptools
+  - xarray
+  - netCDF4
+# for testing
+  - pytest
+  - pytest-cov
+  - pytest-env
+  - pip:
+    - py-cordex >=0.2.0

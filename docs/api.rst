@@ -69,3 +69,12 @@ Converting ECMWF data
    preproc.ERA5.to_xarray
    preproc.ERA5.gfile
    preproc.ERA5.wind
+
+Tutorial
+========
+
+.. autosummary::
+   :toctree: generated/
+
+   tutorial.load_dataset
+   tutorial.open_dataset

@@ -23,6 +23,14 @@ pyremo.cli module
    :undoc-members:
    :show-inheritance:
 
+pyremo.version module
+---------------------
+
+.. automodule:: pyremo.version
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 
 Module contents
 ---------------

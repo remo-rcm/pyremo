@@ -9,6 +9,7 @@ This module contains functions to work with REMO datasets.
 # flake8: noqa
 from . import codes
 from . import cal
+from .cal import parse_dates
 
 try:
     import cdo
@@ -76,13 +77,7 @@ def open_remo_dataset(
     if update_meta:
         ds = update_meta_info(ds)
     if parse_time is True:
-        ds = parse_dates(ds)
-    return ds
-
-
-def parse_dates(ds, use_cftime=False):
-    parser = cal.AbsoluteCalendar()
-    ds["time"] = [parser.num2date(date, use_cftime) for date in ds.time]
+        ds = cal.parse_dates(ds)
     return ds
 
 

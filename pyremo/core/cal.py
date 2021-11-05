@@ -1,4 +1,4 @@
-"""this module handles absolute calendars (for a-files.)
+"""this module handles absolute calendars that occur in REMO datasets.
 """
 
 import datetime as dt
@@ -71,3 +71,35 @@ class AbsoluteCalendar:
                 datetime.minute,
             )
         return datetime
+    
+
+def parse_dates(ds, use_cftime=False):
+    """Update the time axis of a REMO dataset.
+
+    Updates the time axis of a REMO dataset containing an absolute time axis.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        Dataset with absolute time axis.
+    use_cftime: bool
+        Use cftime objects instead of datetime objects.
+    """
+    ds["time"] = parse_absolute_time(ds.time, use_cftime=use_cftime)
+    return ds
+
+
+def parse_absolute_time(time, use_cftime=False):
+    """Update a time axis containg fractional absolute dates.
+
+    Updates fractional absolute dates to relative dates.
+
+    Parameters
+    ----------
+    time : array like or xr.DataArray
+        Time axis containing absolute dates as float or int.
+    use_cftime: bool
+        Use cftime objects instead of datetime objects.
+    """
+    parser = AbsoluteCalendar()
+    return [parser.num2date(date, use_cftime) for date in time]

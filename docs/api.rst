@@ -18,6 +18,8 @@ Top-level functions
    open_remo_dataset
    update_meta_info
    parse_dates
+   parse_absolute_time
+   preprocess
 
 
 Physics
@@ -69,6 +71,15 @@ Converting ECMWF data
    preproc.ERA5.to_xarray
    preproc.ERA5.gfile
    preproc.ERA5.wind
+
+
+Cmorization
+===========
+
+.. autosummary::
+   :toctree: generated/
+
+   cmor.cmorize_variable
 
 Tutorial
 ========

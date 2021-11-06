@@ -22,7 +22,7 @@ def _set_time_units(time, units):
     return time
 
 
-def encode_time(time):
+def _encode_time(time):
     """encode xarray time axis into cf values
     
     see https://github.com/pydata/xarray/issues/4412

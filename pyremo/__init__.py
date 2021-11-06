@@ -13,7 +13,7 @@ from .core.cal import parse_dates, parse_absolute_time
 from .core import remo_tutorial as tutorial, remo_ds, data
 from .tables import domains, vc
 from .core import codes
-from .cmor.cmor import cmorize_variable
+from .cmor import cmor
 
 
 from .version import version

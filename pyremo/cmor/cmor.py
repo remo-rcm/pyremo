@@ -22,13 +22,13 @@ def _set_time_units(time, units):
     return time
 
 
-def encode_time(time, units="days since 1949-12-01T00:00:00"):
+def encode_time(time):
     """encode xarray time axis into cf values
     
     see https://github.com/pydata/xarray/issues/4412
     
     """
-    return xr.conventions.encode_cf_variable(_set_time_units(time, units))
+    return xr.conventions.encode_cf_variable(time)
 
 
 def cmorize_variable(ds, varname, time_units="days since 1949-12-01T00:00:00", squeeze=True):

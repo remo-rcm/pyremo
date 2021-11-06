@@ -54,6 +54,8 @@ class AbsoluteCalendar:
         """convert a numeric absolute date value to a datetime object."""
         frac, whole = math.modf(num)
         date_str = str(int(whole))
+        if date_str[6:8] == "00":
+            date_str = date_str[0:6] + "15"
         # date = pd.to_datetime(date_str, format=self.fmt) #dt.datetime.strptime(date_str, self.fmt)
         date = dt.datetime.strptime(date_str[0:8], self.fmt)
         datetime = roundTime(

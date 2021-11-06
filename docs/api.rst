@@ -79,6 +79,7 @@ Cmorization
 .. autosummary::
    :toctree: generated/
 
+   cmor.prepare_variable
    cmor.cmorize_variable
 
 Tutorial

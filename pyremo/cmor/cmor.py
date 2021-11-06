@@ -31,8 +31,8 @@ def _encode_time(time):
     return xr.conventions.encode_cf_variable(time)
 
 
-def cmorize_variable(ds, varname, time_units="days since 1949-12-01T00:00:00", squeeze=True):
-    """cmorize a single variable
+def prepare_variable(ds, varname, time_units="days since 1949-12-01T00:00:00", squeeze=True):
+    """prepares a variable for cmorization.
     """
     varinfo = _get_varinfo(varname)
     remo_name = varinfo['variable']
@@ -45,3 +45,7 @@ def cmorize_variable(ds, varname, time_units="days since 1949-12-01T00:00:00", s
     if time_units is not None:
         var_ds["time"] = _set_time_units(ds.time, time_units)
     return var_ds
+
+def cmorize_variable(ds, varname, time_units="days since 1949-12-01T00:00:00", squeeze=True):
+    return ds
+    

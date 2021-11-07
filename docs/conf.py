@@ -51,6 +51,12 @@ extensions = [
 ]
 
 
+extlinks = {
+    "issue": ("https://github.com/remo-rcm/pyremo/issues/%s", "GH"),
+    "pull": ("https://github.com/remo-rcm/pyremo/pull/%s", "PR"),
+}
+
+
 autosummary_generate = True
 
 napoleon_use_param = True

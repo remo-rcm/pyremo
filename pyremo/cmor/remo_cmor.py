@@ -176,7 +176,11 @@ def cmorize_variable(ds, varname, cmor_table, dataset_table, **kwargs):
 
     Example
     -------
-    Example
+    Example for cmorization of a dataset that contains REMO output::
+
+        $ filename = pr.cmor.cmorize_variable(ds, 'tas', 'Amon', 
+                                  cx.cordex_cmor_table('remo_example'), 
+                                  CORDEX_domain='EUR-11')
 
     """
     ds_prep = prepare_variable(ds, varname, **kwargs)

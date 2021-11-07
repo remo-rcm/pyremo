@@ -25,7 +25,7 @@ from .core import (
 from . import physics
 
 # variables that should have a mask with fill values
-fillvars = ['TSW', 'SEAICE', 'TSI']
+fillvars = ["TSW", "SEAICE", "TSI"]
 
 vcs = ["hyai", "hybi", "hyam", "hybm", "akgm", "bkgm", "ak", "bk"]
 
@@ -36,8 +36,15 @@ def get_filename(date, expid="000000", template=None):
     return template.format(expid, date.strftime(format="%Y%m%d%H"))
 
 
-def to_netcdf(ads, path="", expid="000000", template=None, tempfiles=None, 
-              missval = 1.e20, **kwargs):
+def to_netcdf(
+    ads,
+    path="",
+    expid="000000",
+    template=None,
+    tempfiles=None,
+    missval=1.0e20,
+    **kwargs
+):
     """write dataset to netcdf
 
     by default, each timestep goes into a separate output file
@@ -57,9 +64,9 @@ def to_netcdf(ads, path="", expid="000000", template=None, tempfiles=None,
             if var in expand_time:
                 ds[var] = da.expand_dims("time")
             if var in fillvars:
-                ds[var].encoding['_FillValue'] = missval
+                ds[var].encoding["_FillValue"] = missval
             else:
-                ds[var].encoding['_FillValue'] = None
+                ds[var].encoding["_FillValue"] = None
         dsets.append(ds)
     # dsets = [dset.expand_dims('time') for dset in datasets]
     writer = xr.save_mfdataset(dsets, paths, **kwargs)
@@ -105,9 +112,9 @@ def remap(gds, domain_info, vc, surflib):
         Input model dataset containing atmospheric variables for
         downscaling, including SST. The dataset must fullfil CF conventions
         containing: `ta`, `ua`, `va`, `ps`, `tos`, `orog` and `sftlf`.
-       
+
     domain_info : dict
-        A dictionary containing the domain information of the target domain. 
+        A dictionary containing the domain information of the target domain.
 
     domain_info : pandas.DataFrame
         A table with the vertical coordinate coefficients `ak` and `bk`.
@@ -127,7 +134,7 @@ def remap(gds, domain_info, vc, surflib):
     ## curvilinear coordinaetes
     # remove time dimension if there is one
     fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
-        
+
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
     ## broadcast 1d global coordinates
@@ -144,32 +151,31 @@ def remap(gds, domain_info, vc, surflib):
     fibge = interpolate_horizontal(gds.orog, lamem, phiem, lamgm, phigm, "FIB")
 
     ## geopotential
-#     if "time" in gds.hus.dims:
-#         hus = gds.hus.isel(time=0)
-#     else:
-#         hus = gds.hus
-#     if "time" in gds.ta.dims:
-#         ta = gds.ta.isel(time=0)
-#     else:
-#         ta = gds.ta
-#     if "time" in gds.ps.dims:
-#         ps = gds.ps.isel(time=0)
-#     else:
-#         ps = gds.ps
+    #     if "time" in gds.hus.dims:
+    #         hus = gds.hus.isel(time=0)
+    #     else:
+    #         hus = gds.hus
+    #     if "time" in gds.ta.dims:
+    #         ta = gds.ta.isel(time=0)
+    #     else:
+    #         ta = gds.ta
+    #     if "time" in gds.ps.dims:
+    #         ps = gds.ps.isel(time=0)
+    #     else:
+    #         ps = gds.ps
 
-    ficgm = geopotential(gds.orog, gds.ta, gds.hus, gds.ps, gds.akgm, gds.bkgm)#.squeeze(drop=True)
+    ficgm = geopotential(
+        gds.orog, gds.ta, gds.hus, gds.ps, gds.akgm, gds.bkgm
+    )  # .squeeze(drop=True)
 
     ficge = interpolate_horizontal(ficgm, lamem, phiem, lamgm, phigm, "FIC")
 
-    if 'clw' in gds:
-    #if False:
-        arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, 
-                                  gds.akgm, gds.bkgm, gds.clw)
+    if "clw" in gds:
+        # if False:
+        arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm, gds.clw)
     else:
-        arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, 
-                                  gds.akgm, gds.bkgm)
-    arfge = interpolate_horizontal(arfgm, lamem, phiem, 
-                                   lamgm, phigm, "AREL HUM")
+        arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm)
+    arfge = interpolate_horizontal(arfgm, lamem, phiem, lamgm, phigm, "AREL HUM")
 
     ## wind vector rotation
     uge_rot, vge_rot = rotate_uv(
@@ -217,45 +223,57 @@ def remap(gds, domain_info, vc, surflib):
         uem, vem, psem, akbkem.ak, akbkem.bk, lamem, phiem, philuem, dlamem, dphiem
     )
 
-    tsw = remap_sst(gds.tos, lamem, phiem, lamgm, phigm, 
-                    blagm=np.around(gds.sftlf), 
-                    blaem=surflib.BLA.squeeze(drop=True))
+    tsw = remap_sst(
+        gds.tos,
+        lamem,
+        phiem,
+        lamgm,
+        phigm,
+        blagm=np.around(gds.sftlf),
+        blaem=surflib.BLA.squeeze(drop=True),
+    )
 
     # check if gcm contains seaice, else derive from sst
-    if 'sic' in gds:
-        seaice = remap_seaice(gds.sic, lamem, phiem, lamgm, phigm, 
-                           blagm=np.around(gds.sftlf), 
-                           blaem=surflib.BLA.squeeze(drop=True))
+    if "sic" in gds:
+        seaice = remap_seaice(
+            gds.sic,
+            lamem,
+            phiem,
+            lamgm,
+            phigm,
+            blagm=np.around(gds.sftlf),
+            blaem=surflib.BLA.squeeze(drop=True),
+        )
     else:
         seaice = physics.seaice(tsw)
-    
+
     water_content = physics.water_content(tem, arfem, psem, akbkem.akh, akbkem.bkh)
     tsi = physics.tsi(tsw)
-    
-    ads = xr.merge([tem, uem_corr, vem_corr, psem, 
-                     arfem, tsw, seaice, water_content, tsi,
-                     akbkem])
-        
+
+    ads = xr.merge(
+        [tem, uem_corr, vem_corr, psem, arfem, tsw, seaice, water_content, tsi, akbkem]
+    )
+
     grid = get_grid(domain_info)
-    
-    ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method='nearest')
-    ads['rlon'] = grid.rlon
-    ads['rlat'] = grid.rlat
-    
+
+    ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
+    ads["rlon"] = grid.rlon
+    ads["rlat"] = grid.rlat
+
     ads = xr.merge([ads, grid])
-    
+
     # rename for remo to recognize
-    ads = ads.rename({'ak': 'hyai', 'bk': 'hybi', 'akh': 'hyam', 'bkh': 'hybm'})
-   
+    ads = ads.rename({"ak": "hyai", "bk": "hybi", "akh": "hyam", "bkh": "hybm"})
+
     # set global attributes
     ads.attrs = gds.attrs
-    
-    ads.attrs['history'] = 'preprocessing with pyremo = {}'.format(pr.__version__)
-    
+
+    ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
+
     ads = update_attrs(ads)
 
     # transpose to remo convention
-    return ads.transpose(..., 'lev', 'rlat', 'rlon')
+    return ads.transpose(..., "lev", "rlat", "rlon")
 
 
 def add_soil(ads):
@@ -263,14 +281,15 @@ def add_soil(ads):
 
 
 def remap_sst(tos, lamem, phiem, lamgm, phigm, blagm, blaem):
-    return interpolate_horizontal(tos, lamem, phiem, 
-                                  lamgm, phigm, 'TSW', 
-                                  blagm=blagm, blaem=blaem)
+    return interpolate_horizontal(
+        tos, lamem, phiem, lamgm, phigm, "TSW", blagm=blagm, blaem=blaem
+    )
+
 
 def remap_seaice(sic, lamem, phiem, lamgm, phigm, blagm, blaem):
-    seaice = interpolate_horizontal(sic, lamem, phiem, 
-                                  lamgm, phigm, 'SEAICE', 
-                                  blagm=blagm, blaem=blaem)
+    seaice = interpolate_horizontal(
+        sic, lamem, phiem, lamgm, phigm, "SEAICE", blagm=blagm, blaem=blaem
+    )
     seaice = xr.where(seaice < 0.0, 0.0, seaice)
     return seaice
 
@@ -281,9 +300,9 @@ def get_grid(domain_info):
 
 def encoding(da, missval):
     if np.isnan(da.values).any():
-        return {'_FillValue': missval}
+        return {"_FillValue": missval}
     else:
-        return {'_FillValue': None}
+        return {"_FillValue": None}
 
 
 def update_attrs(ds):
@@ -291,13 +310,13 @@ def update_attrs(ds):
         try:
             attrs = pr.codes.get_dict(var)
             da.attrs = {}
-            da.attrs['name'] = attrs['variable']
-            da.attrs['code'] = attrs['code']
-            da.attrs['description'] = attrs['description']
-            da.attrs['units'] = attrs['units']
-            #da.attrs['layer'] = attrs['layer']
-            da.attrs['grid_mapping'] = 'rotated_latitude_longitude'
-            da.attrs['coordinates'] = 'lon lat'
+            da.attrs["name"] = attrs["variable"]
+            da.attrs["code"] = attrs["code"]
+            da.attrs["description"] = attrs["description"]
+            da.attrs["units"] = attrs["units"]
+            # da.attrs['layer'] = attrs['layer']
+            da.attrs["grid_mapping"] = "rotated_latitude_longitude"
+            da.attrs["coordinates"] = "lon lat"
         except:
             pass
     return ds

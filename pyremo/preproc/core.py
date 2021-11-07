@@ -174,8 +174,7 @@ def interpolate_horizontal(
 #     return intorg.hiobla(field, lamgm, phigm, lamem, phiem, indii, indjj, name)
 
 
-def interp_horiz(da, lamgm, phigm, lamem, phiem, 
-                 indii, indjj, name, keep_attrs=False):
+def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=False):
     """main interface"""
     gcm_dims = list(horizontal_dims(lamgm))
     rcm_dims = list(horizontal_dims(lamem))
@@ -281,10 +280,10 @@ def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
         twoD_dims,
         ["lev_2"],
         ["lev_2"],
-       # [],
-       # []
+        # [],
+        # []
     ]
-    #print(input_core_dims)
+    # print(input_core_dims)
     result = xr.apply_ufunc(
         intf.geopotential,  # first the function
         fibgm,  # now arguments in the order expected
@@ -453,9 +452,9 @@ def gfile(datasets, ref_ds=None, tos=None, time_range=None):
     """Creates a virtual gfile"""
     if ref_ds is None:
         try:
-            ref_ds = open_mfdataset(datasets['ta'])
+            ref_ds = open_mfdataset(datasets["ta"])
         except:
-            raise Exception('ta is required in the datasets dict if no ref_ds is given')
+            raise Exception("ta is required in the datasets dict if no ref_ds is given")
     lon, lat = horizontal_dims(ref_ds)
     if time_range is None:
         time_range = ref_ds.time

@@ -73,7 +73,7 @@ class AbsoluteCalendar:
                 datetime.minute,
             )
         return datetime
-    
+
 
 def parse_dates(ds, use_cftime=False):
     """Update the time axis of a REMO dataset.

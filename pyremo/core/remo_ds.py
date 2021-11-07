@@ -132,7 +132,7 @@ def _get_fileformat(filename):
 def update_meta_info(ds, id=None):
     """Updates meta info of a dataset.
 
-    Updates variable names and attributes in a xarray or netCDF4 dataset
+    Updates variable names and attributes in an xarray Dataset
     based on Remo table.
 
     Parameters

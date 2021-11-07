@@ -6,6 +6,7 @@ Subpackages
 
 .. toctree::
 
+   pyremo.cmor
    pyremo.core
    pyremo.physics
    pyremo.preproc

@@ -2,7 +2,11 @@
 import warnings
 import xarray as xr
 import cordex as cx
-import cmor
+try:
+    import cmor
+except:
+    warnings.warn('no python cmor available')
+
 from ..core import codes
 
 xr.set_options(keep_attrs=True)
@@ -53,10 +57,17 @@ def _encode_time(time):
 
 
 def _load_table(table):
-    return cmor.load_table(CMOR_RESOURCE.fetch("CORDEX_Amon.json"))
+    cmor.load_table(cx.cordex_cmor_table(table))
 
-
-def _define_axes(ds):
+    
+def _setup(table):
+    cmor.setup(set_verbosity=cmor.CMOR_NORMAL,
+               netcdf_file_action=cmor.CMOR_REPLACE)
+    cmor.dataset_json(table)
+    
+    
+def _define_axes(ds, table):
+    _load_table(table)
     time_values = _encode_time(ds.time).values
     cmorTime = cmor.axis("time",
                      coord_vals  = time_values,
@@ -70,11 +81,38 @@ def _define_axes(ds):
                     coord_vals  = ds.rlon.values,
                     cell_bounds = _get_bnds(ds.rlon.values),
                     units       = ds.rlon.units)
-    return [cmorTime, cmorLat, cmorLon]
+    return cmorTime, cmorLat, cmorLon
 
+
+def _define_grid(ds, table, grid_table="grids"):
+    cmorTime, cmorLat, cmorLon = _define_axes(ds, table)
+    _load_table(grid_table)
+    
+    cmorGrid = cmor.grid([cmorLat, cmorLon],
+                     latitude=ds.lat.values, 
+                     longitude=ds.lon.values)
+    
+    pole = _get_pole(ds)
+    pole_dict = {'grid_north_pole_latitude' : 39.25, 
+                              'grid_north_pole_longitude' : -162, 
+                              'north_pole_grid_longitude' : 0.}
+    cmorGM   = cmor.set_grid_mapping(cmorGrid, "rotated_latitude_longitude", 
+                                 list(pole_dict.keys()), 
+                                 list(pole_dict.values()), 
+                                 ['','',''])
+    return cmorTime, cmorGrid
+
+
+def _cmor_write(da, table, cmorTime, cmorGrid, file_name=True):
+    cmor.load_table(cx.cordex_cmor_table(table))
+    cmor_var = cmor.variable(da.name, da.units, [cmorTime, cmorGrid])
+    cmor.write(cmor_var, da.values)
+    return cmor.close(cmor_var, file_name=file_name)
+    
 
 def prepare_variable(ds, varname, CORDEX_domain=None, 
-                     time_units="days since 1949-12-01T00:00:00", 
+                     time_units="days since 1949-12-01T00:00:00",
+                     time_range=None,
                      squeeze=True):
     """prepares a variable for cmorization.
     """
@@ -99,7 +137,35 @@ def prepare_variable(ds, varname, CORDEX_domain=None,
     return var_ds
 
 
-def cmorize_variable(ds, varname, **kwargs):
+def cmorize_variable(ds, varname, cmor_table, dataset_table,  **kwargs):
+    """Cmorizes a variable.
+    
+    Parameters
+    ----------
+    ds : xr.Dataset
+        REMO Dataset.
+    varname: str
+        CF name of the variable that should be cmorized.
+    cmor_table : str
+        Filepath to cmor table.
+    dataset_table: str
+        Filepath to dataset cmor table.
+    **kwargs: 
+        Argumets passed to prepare_variable.
+
+    Returns
+    -------
+    filename
+        Filepath to cmorized file.
+        
+        
+    Example
+    -------
+    Example
+
+    """
     ds_prep = prepare_variable(ds, varname, **kwargs)
-    return ds_prep
+    _setup(dataset_table)
+    cmorTime, cmorGrid = _define_grid(ds_prep, cmor_table)
+    return _cmor_write(ds_prep[varname], cmor_table, cmorTime, cmorGrid)
     

@@ -26,7 +26,7 @@ import sphinx_rtd_theme
 from pyremo import __version__
 
 
-autodoc_mock_imports = ["cordex", "pint", "pydruint"]
+autodoc_mock_imports = ["cordex", "pint", "pydruint", "pyintorg"]
 
 # -- General configuration ---------------------------------------------
 

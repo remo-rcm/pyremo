@@ -2,7 +2,11 @@
 import warnings
 import xarray as xr
 import cordex as cx
-import cmor
+try:
+    import cmor
+except:
+    warnings.warn('no python cmor available')
+
 from ..core import codes
 
 xr.set_options(keep_attrs=True)
@@ -157,11 +161,7 @@ def cmorize_variable(ds, varname, cmor_table, dataset_table,  **kwargs):
         
     Example
     -------
-    Example::
-
-        $ tas_ds = pr.cmor.cmorize_variable(ds, 'ps', 'Amon', 
-                                  cx.cordex_cmor_table('remo_example'), 
-                                  CORDEX_domain='EUR-11')
+    Example
 
     """
     ds_prep = prepare_variable(ds, varname, **kwargs)

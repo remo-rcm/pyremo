@@ -1,11 +1,8 @@
 import warnings
 import xarray as xr
 import cordex as cx
-<<<<<<< HEAD
 import datetime as dt
 import cftime as cfdt
-=======
->>>>>>> master
 
 try:
     import cmor
@@ -16,15 +13,15 @@ from ..core import codes
 
 xr.set_options(keep_attrs=True)
 
-<<<<<<< HEAD
-loffsets = {'3H': dt.timedelta(hours=1, minutes=30),
-            '6H': dt.timedelta(hours=3)}
+loffsets = {"3H": dt.timedelta(hours=1, minutes=30), "6H": dt.timedelta(hours=3)}
 
-#Y=2000
+# Y=2000
+
 
 def ensure_cftime(func):
     def wrapper(date, **kwargs):
         return func(_to_cftime(date), **kwargs)
+
     return wrapper
 
 
@@ -35,41 +32,52 @@ def to_cftime(date, calendar="proleptic_gregorian"):
     elif isinstance(date, cfdt.datetime):
         # do nothing
         return date
-    return cfdt.datetime(date.year, date.month, date.day, 
-                         date.hour, date.minute, date.second, 
-                         date.microsecond, calendar=calendar)
+    return cfdt.datetime(
+        date.year,
+        date.month,
+        date.day,
+        date.hour,
+        date.minute,
+        date.second,
+        date.microsecond,
+        calendar=calendar,
+    )
 
 
 def _seasons_bounds(year, calendar=None):
     if calendar is None:
         import datetime as dt
+
         args = {}
     else:
         # calendar requires cftime
         import cftime as dt
-        args = {'calendar' : calendar}
-    return {'DJF': (dt.datetime(year-1, 12, 1, **args), dt.datetime(year, 3, 1, **args)),
-            'MAM': (dt.datetime(year, 3, 1, **args), dt.datetime(year, 6, 1, **args)),
-            'JJA': (dt.datetime(year, 6, 1, **args), dt.datetime(year, 9, 1, **args)),
-            'SON': (dt.datetime(year, 9, 1, **args), dt.datetime(year, 12, 1, **args))}
+
+        args = {"calendar": calendar}
+    return {
+        "DJF": (dt.datetime(year - 1, 12, 1, **args), dt.datetime(year, 3, 1, **args)),
+        "MAM": (dt.datetime(year, 3, 1, **args), dt.datetime(year, 6, 1, **args)),
+        "JJA": (dt.datetime(year, 6, 1, **args), dt.datetime(year, 9, 1, **args)),
+        "SON": (dt.datetime(year, 9, 1, **args), dt.datetime(year, 12, 1, **args)),
+    }
 
 
 def season_bounds(date):
     """Determines the temporal bounds of the meteorological season.
-    
+
     Uses the month to determine the season and returns the
     temporal bounds of the season.
-    
+
     Parameters
     ----------
     date : datetime object
         Date in the current season.
-        
+
     Returns
     -------
     season : tuple
         Temporal bounds of the current meteorological season.
-    
+
     """
     month = date.month
     if month != 12:
@@ -83,53 +91,55 @@ def season_bounds(date):
     seasons_bounds = _seasons_bounds(year, calendar=calendar)
     return seasons_bounds[season(date)]
 
-    
+
 def _seasons():
-    seasons = [('DJF', (12, 1, 2)),
-           ('MAM', (3, 4, 5)),
-           ('JJA', (6, 7, 8)),
-           ('SON', (9, 10, 11))]
+    seasons = [
+        ("DJF", (12, 1, 2)),
+        ("MAM", (3, 4, 5)),
+        ("JJA", (6, 7, 8)),
+        ("SON", (9, 10, 11)),
+    ]
     return seasons
 
 
-#@ensure_cftime
+# @ensure_cftime
 def season(date):
     """Determines the meteorological season.
-    
+
     Uses the month to determine the season.
-    
+
     Parameters
     ----------
     date : datetime object
         Date in the current season.
-        
+
     Returns
     -------
     season : str
         Meteorological season of the current date.
-    
+
     """
-    return next(season for season, months in _seasons()
-                if date.month in months)
-    
+    return next(season for season, months in _seasons() if date.month in months)
+
 
 def mid_of_season(date):
     """Determine the mid of the current season
-    
+
     Parameters
     ----------
     date : datetime object
         Date in the current season.
-        
+
     Returns
     -------
     mid_of_season : datetime object
         Mid date of the current season.
-    
+
     """
     bounds = season_bounds(date)
     return bounds[0] + 0.5 * (bounds[1] - bounds[0])
-    
+
+
 # def _seasons_list():
 #     # dummy leap year to allow input X-02-29 (leap day)
 #     seasons = [('DJF', (dt.date(Y,  1,  1),  dt.date(Y,  2, 29))),
@@ -153,23 +163,21 @@ def _get_loffset(time):
     return loffsets.get(time, None)
 
 
-def _resample(ds, time, time_cell_method='point', 
-              label='left', time_offset=True, **kwargs):
-    """Resample a REMO variable.
-    """
-    if time_cell_method=='point':
-        return ds.resample(time=time, label=label, **kwargs).interpolate('nearest')
-    elif time_cell_method=='mean':
+def _resample(
+    ds, time, time_cell_method="point", label="left", time_offset=True, **kwargs
+):
+    """Resample a REMO variable."""
+    if time_cell_method == "point":
+        return ds.resample(time=time, label=label, **kwargs).interpolate("nearest")
+    elif time_cell_method == "mean":
         if time_offset is True:
             loffset = _get_loffset(time)
         else:
             loffset = None
         return ds.resample(time=time, label=label, loffset=loffset, **kwargs).mean()
     else:
-        raise Exception('unknown time_cell_method: {}'.format(time_cell_method))
-    
-=======
->>>>>>> master
+        raise Exception("unknown time_cell_method: {}".format(time_cell_method))
+
 
 def _get_bnds(values):
     bnds = [None] * (len(values) + 1)
@@ -337,8 +345,8 @@ def cmorize_variable(ds, varname, cmor_table, dataset_table, **kwargs):
     -------
     Example for cmorization of a dataset that contains REMO output::
 
-        $ filename = pr.cmor.cmorize_variable(ds, 'tas', 'Amon', 
-                                  cx.cordex_cmor_table('remo_example'), 
+        $ filename = pr.cmor.cmorize_variable(ds, 'tas', 'Amon',
+                                  cx.cordex_cmor_table('remo_example'),
                                   CORDEX_domain='EUR-11')
 
     """

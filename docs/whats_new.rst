@@ -18,7 +18,7 @@ New Features
 - Included physics package with xarray API.
 - Included preprocessing interface for xarray data structures.
 - Included ERA5 cmorizer.
-- Includes experimental cmorization functions (:pull:`20`).
+- Includes experimental cmorization functions (:pull:`20`, :pull:`21`).
   
 Internal Changes
 ~~~~~~~~~~~~~~~~

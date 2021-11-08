@@ -14,20 +14,20 @@ from .cal import parse_dates
 
 def preprocess(ds, use_cftime=False):
     """preprocessing for opening with xr.open_mfdataset
-    
+
     This function can be used as the preprocess function for
     opening a REMO dataset with xr.open_mfdataset. The function
     will update meta information according to the REMO code table
     and also parse the time axis if it contains absolute times.
-    
+
     """
     ds = update_meta_info(ds)
     try:
         return parse_dates(ds, use_cftime)
     except:
         return ds
-    
-    
+
+
 def open_remo_mfdataset(filenames, update_meta=False, parse_dates=False):
     import xarray as xr
 
@@ -132,7 +132,7 @@ def _get_fileformat(filename):
 def update_meta_info(ds, id=None):
     """Updates meta info of a dataset.
 
-    Updates variable names and attributes in a xarray or netCDF4 dataset
+    Updates variable names and attributes in an xarray Dataset
     based on Remo table.
 
     Parameters

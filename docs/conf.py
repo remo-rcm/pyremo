@@ -26,7 +26,7 @@ import sphinx_rtd_theme
 from pyremo import __version__
 
 
-autodoc_mock_imports = ["cordex", "pint", "pydruint"]
+autodoc_mock_imports = ["cordex", "pint", "pydruint", "pyintorg"]
 
 # -- General configuration ---------------------------------------------
 
@@ -49,6 +49,12 @@ extensions = [
         "nbsphinx_link",
         "IPython.sphinxext.ipython_console_highlighting"
 ]
+
+
+extlinks = {
+    "issue": ("https://github.com/remo-rcm/pyremo/issues/%s", "GH"),
+    "pull": ("https://github.com/remo-rcm/pyremo/pull/%s", "PR"),
+}
 
 
 autosummary_generate = True

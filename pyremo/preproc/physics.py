@@ -4,27 +4,27 @@ import pyremo.physics as prp
 import xarray as xr
 import numpy as np
 
-zds3 = (3.25 - 0.0)/(3.5 - 0.0)
-zds4 = (19.2 - 17.5)/(64.0 - 17.5)
-zds5 = (77.55 - 64.0)/(194.5 - 64.0)
+zds3 = (3.25 - 0.0) / (3.5 - 0.0)
+zds4 = (19.2 - 17.5) / (64.0 - 17.5)
+zds5 = (77.55 - 64.0) / (194.5 - 64.0)
 zdtfak = 0.00065
 
 
 # freezing and melting point for
 # seaice derivation
 frozen = 271.37
-melt   = 274.16
+melt = 274.16
 
 # from mo_comphy
 T0 = 273.16
-R = 2.8705E2
-RD = 4.6151E2
-WCP = 1.005E3
-WLK = 2.501E6
-WLF = 0.334E6
-WLS = 2.835E6
+R = 2.8705e2
+RD = 4.6151e2
+WCP = 1.005e3
+WLK = 2.501e6
+WLF = 0.334e6
+WLS = 2.835e6
 G = 9.80665
-RERd = 6.371229E6
+RERd = 6.371229e6
 STAg = 86164.09054
 
 
@@ -40,12 +40,12 @@ B4W = 35.86
 PI = 3.141592654
 RADdeg = 57.29577951
 DEGrad = 0.0174532925
-RDRd = R/RD
-RDDrm1 = RD/R - 1.0
+RDRd = R / RD
+RDDrm1 = RD / R - 1.0
 EMRdrd = 1.0 - RDRd
 
 
-#def soil_layers(state):
+# def soil_layers(state):
 ##    if 'TD' not in state:
 #    tswem = state['TSW']
 #    tslem = state['TSL']
@@ -70,22 +70,20 @@ EMRdrd = 1.0 - RDRd
 #    #state['TDCL'] = soil['tdclem']
 #    return state
 
-    
 
 def water_content(t, rf, ps, ak, bk):
     p = prp.pressure(ps, ak, bk)
     qwem = prp.liquid_water_content(t, rf, p)
     qdem = prp.specific_humidity(t, rf, p)
-    qwem.name = 'QW'
-    qdem.name = 'QD'
-    #ads['QD'] = qdem
-    #ads['QW'] = qwem
-    #ads['QDBL'] = qdem.isel(lev=-1) # last layer will be used for QDBL
+    qwem.name = "QW"
+    qdem.name = "QD"
+    # ads['QD'] = qdem
+    # ads['QW'] = qwem
+    # ads['QDBL'] = qdem.isel(lev=-1) # last layer will be used for QDBL
     qdbl = qdem.isel(lev=-1)
-    qdbl.name = 'QDBL'
+    qdbl.name = "QDBL"
     return xr.merge([qwem, qdem, qdbl])
-    #return ads
-
+    # return ads
 
 
 def seaice(tswem):
@@ -96,23 +94,23 @@ def seaice(tswem):
     """
     freezing_range = melt - frozen
     seaem = xr.zeros_like(tswem)
-    seaem = xr.where( tswem > melt, 0.0, seaem)
-    seaem = xr.where( tswem < frozen, 1.0, seaem)
-    seaem = xr.where( (tswem >= frozen) & (tswem <= melt), (melt - tswem) / freezing_range, seaem )
-    seaem.name = 'SEAICE'
+    seaem = xr.where(tswem > melt, 0.0, seaem)
+    seaem = xr.where(tswem < frozen, 1.0, seaem)
+    seaem = xr.where(
+        (tswem >= frozen) & (tswem <= melt), (melt - tswem) / freezing_range, seaem
+    )
+    seaem.name = "SEAICE"
     return seaem
 
 
-
 def tsw(tsw):
-    return xr.where( tsw < frozen, frozen, tsw)
+    return xr.where(tsw < frozen, frozen, tsw)
 
 
 def tsi(tsw):
-    tsi = xr.where( tsw > frozen, frozen, tsw)
-    tsi.name = 'TSI'
+    tsi = xr.where(tsw > frozen, frozen, tsw)
+    tsi.name = "TSI"
     return tsi
-
 
 
 def _water_content(arfem, tem, psem, akem, bkem):
@@ -121,55 +119,57 @@ def _water_content(arfem, tem, psem, akem, bkem):
     Python implementation of original Fortran source in `addem`.
     """
     # pressure height?!
-    #phem = 0.5*(AKEm(k) + AKEm(k + 1) + (BKEm(k) + BKEm(k + 1))*PSEm(ij))
-    #IF ( TEM(ij, k)>=B3 ) THEN
+    # phem = 0.5*(AKEm(k) + AKEm(k + 1) + (BKEm(k) + BKEm(k + 1))*PSEm(ij))
+    # IF ( TEM(ij, k)>=B3 ) THEN
     #  zgqd = FGQD(FGEW(TEM(ij, k)), phem)
-    #ELSE
+    # ELSE
     #  zgqd = FGQD(FGEE(TEM(ij, k)), phem)
-    #END IF
-    #zqdwem = ARFem(ij, k)*zgqd
-    #IF ( ARFem(ij, k)<1.0_DP ) THEN
+    # END IF
+    # zqdwem = ARFem(ij, k)*zgqd
+    # IF ( ARFem(ij, k)<1.0_DP ) THEN
     #  QDEm(ij, k) = zqdwem
     #  QWEm(ij, k) = 0.
-    #ELSE
+    # ELSE
     #  QDEm(ij, k) = zgqd
     #  QWEm(ij, k) = zqdwem - zgqd
-    #END IF
+    # END IF
     qdem = np.zeros(arfem.shape, dtype=arfem.dtype)
     qwem = np.zeros(arfem.shape, dtype=arfem.dtype)
-    #print_data('arfem', arfem)
-    #print_data('qdem', qdem)
-    #print_data('qwem', qdem)
+    # print_data('arfem', arfem)
+    # print_data('qdem', qdem)
+    # print_data('qwem', qdem)
     for k in range(arfem.shape[2]):
         print(k, B3)
-        phem = 0.5 * (akem[k] + akem[k+1] + (bkem[k]+bkem[k+1]) * psem)
-        #print_data('tem',tem[:,:,k])
-        zgqd = np.where(tem[:,:,k] >= B3, fgqd( fgew(tem[:,:,k]), phem ), fgqd( fgee(tem[:,:,k]), phem) )
-        zqdwem = arfem[:,:, k] * zgqd
-        #print_data('zqdwem',zqdwem)
-        #print_data('arfem',arfem[:,:,k])
-        qdem[:,:,k] = np.where( arfem[:,:,k] < 1.0, zqdwem, zgqd )
-        qwem[:,:,k] = np.where( arfem[:,:,k] < 1.0, 0.0, zqdwem - zgqd )
+        phem = 0.5 * (akem[k] + akem[k + 1] + (bkem[k] + bkem[k + 1]) * psem)
+        # print_data('tem',tem[:,:,k])
+        zgqd = np.where(
+            tem[:, :, k] >= B3,
+            fgqd(fgew(tem[:, :, k]), phem),
+            fgqd(fgee(tem[:, :, k]), phem),
+        )
+        zqdwem = arfem[:, :, k] * zgqd
+        # print_data('zqdwem',zqdwem)
+        # print_data('arfem',arfem[:,:,k])
+        qdem[:, :, k] = np.where(arfem[:, :, k] < 1.0, zqdwem, zgqd)
+        qwem[:, :, k] = np.where(arfem[:, :, k] < 1.0, 0.0, zqdwem - zgqd)
 
-    #print_data('qdem', qdem)
-    #print_data('qwem', qwem)
+    # print_data('qdem', qdem)
+    # print_data('qwem', qwem)
 
     return qdem, qwem
 
 
 # STATEMENTFUNKTION FUER SAETTIGUNGSDAMPFDRUCK
 def fgew(tx):
-    """magnus formula
-    """
-    return B1 * np.exp(B2W*(tx - B3)/(tx - B4W))
+    """magnus formula"""
+    return B1 * np.exp(B2W * (tx - B3) / (tx - B4W))
+
 
 def fgee(tx):
-    """magnus formula
-    """
-    return B1 * np.exp(B2E*(tx - B3)/(tx - B4E))
+    """magnus formula"""
+    return B1 * np.exp(B2E * (tx - B3) / (tx - B4E))
+
 
 def fgqd(ge, p):
-    """magnus formula
-    """
-    return RDRd*ge / (p - EMRdrd*ge)
-
+    """magnus formula"""
+    return RDRd * ge / (p - EMRdrd * ge)

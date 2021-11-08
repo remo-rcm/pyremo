@@ -3,6 +3,7 @@ import xarray as xr
 import cordex as cx
 import datetime as dt
 import cftime as cfdt
+from dateutil import relativedelta as reld
 
 try:
     import cmor
@@ -74,7 +75,7 @@ def season_bounds(date):
 
     Returns
     -------
-    season : tuple
+    season : tuple of datetime objects
         Temporal bounds of the current meteorological season.
 
     """
@@ -136,6 +137,54 @@ def mid_of_season(date):
 
     """
     bounds = season_bounds(date)
+    return bounds[0] + 0.5 * (bounds[1] - bounds[0])
+
+
+def month_bounds(date):
+    """Determine the mid of the current month.
+
+    Parameters
+    ----------
+    date : datetime object
+        Date in the current month.
+
+    Returns
+    -------
+    month_bounds : tuple of datetime object
+        Temporal bounds of the current month.
+
+    """
+    if type(date) == dt.date:
+        date = dt.datetime.combine(date, dt.time())
+    month = date.month
+    begin = date.replace(day=1)
+    # this does not work with cftime
+    # end = (date + reld.relativedelta(months=1)).replace(day=1)
+    if month == 12:
+        year = date.year + 1
+        month = 1
+    else:
+        year = date.year
+        month = date.month + 1
+    end = date.replace(day=1, year=year, month=month)
+    return (begin, end)
+
+
+def mid_of_month(date):
+    """Determine the mid of the current month.
+
+    Parameters
+    ----------
+    date : datetime object
+        Date in the current month.
+
+    Returns
+    -------
+    mid_of_month : datetime object
+        Mid date of the current month.
+
+    """
+    bounds = month_bounds(date)
     return bounds[0] + 0.5 * (bounds[1] - bounds[0])
 
 

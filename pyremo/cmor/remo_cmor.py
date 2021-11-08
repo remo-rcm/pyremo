@@ -27,7 +27,6 @@ def ensure_cftime(func):
 
 def to_cftime(date, calendar="proleptic_gregorian"):
     if type(date) == dt.date:
-        print("convert")
         date = dt.datetime.combine(date, dt.time())
     elif isinstance(date, cfdt.datetime):
         # do nothing

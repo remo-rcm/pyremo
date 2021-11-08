@@ -84,6 +84,8 @@ Cmorization
    cmor.season
    cmor.season_bounds
    cmor.mid_of_season
+   cmor.month_bounds
+   cmor.mid_of_month
 
 Tutorial
 ========

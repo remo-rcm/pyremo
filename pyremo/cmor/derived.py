@@ -11,35 +11,53 @@ import numpy as np
 #    = large scale precipitation + convective precipitation
 
 def pr(aprl, aprc):
-    """Precipitation flux"""
+    """Precipitation flux
+    """
     return aprl + aprc
 
-
-def water_vapour(dew):
-    """Partial pressure of water vapour [Pa] 
+# remo: dew = dew2 (168)
+def water_vapour(t):
+    """Partial pressure of water vapour e [Pa]. 
     
-    Computes water vapour from dewpoint temperature.
+    Computes water vapour from  temperature.
     
     references: https://doi.org/10.1175/1520-0450(1967)006%3C0203:OTCOSV%3E2.0.CO;2
+    
+    compare to: https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.saturation_vapor_pressure.html#metpy.calc.saturation_vapor_pressure
     
     """
     T_0 = 273.15
     T_rw = 35.86 # over water
     a = 17.269
     #cdo -mulc,610.78 -exp -div -mulc,17.5 -subc,273.15 a
-    return 610.78 * np.exp(a * (dew - T_0) / (dew - T_rw))
+    return 610.78 * np.exp(a * (t - T_0) / (t - T_rw))
 
 
 def specific_humidity(dew, ps):
-    """Specific humidity [kg/kg].
+    """Specific humidity `huss` [kg/kg].
     
     Computes specific humidity `huss` from dewpoint temperature and pressure.
     
     reference: https://de.wikipedia.org/wiki/Luftfeuchtigkeit#Spezifische_Luftfeuchtigkeit
     
+    compare to: https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.specific_humidity_from_dewpoint.html
+    
     """
     e = water_vapour(dew)
-    return (0.622 * e) / (ps - 0.378 * e) 
+    return (0.622 * e) / (ps - 0.378 * e)
+
+
+def relative_humidity(dew, t2m):
+    """Relative humidity `hurs` [%].
+    
+    Computes relative humidity `hurs` from dewpoint and air temperature.
+    
+    compare to: https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.relative_humidity_from_dewpoint.html
+    
+    """
+    e_dew = water_vapour(dew)
+    e_t2m = water_vapour(t2m)
+    return e_dew / e_t2m
 
 
 # old cdo formulas

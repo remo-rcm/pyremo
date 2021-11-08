@@ -159,13 +159,13 @@ def month_bounds(date):
     month = date.month
     begin = date.replace(day=1)
     # this does not work with cftime
-    #end = (date + reld.relativedelta(months=1)).replace(day=1)
+    # end = (date + reld.relativedelta(months=1)).replace(day=1)
     if month == 12:
-         year = date.year + 1
-         month = 1
+        year = date.year + 1
+        month = 1
     else:
-         year = date.year
-         month = date.month + 1
+        year = date.year
+        month = date.month + 1
     end = date.replace(day=1, year=year, month=month)
     return (begin, end)
 
@@ -186,7 +186,6 @@ def mid_of_month(date):
     """
     bounds = month_bounds(date)
     return bounds[0] + 0.5 * (bounds[1] - bounds[0])
-
 
 
 # def _seasons_list():

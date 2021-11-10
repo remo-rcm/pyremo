@@ -26,19 +26,22 @@ class derivator():
         args = (ds[param] for param in params if param in ds)
         warn('computing {} from {}'.format(cf_varname, [p for p in params]))
         return func(*args)
-                
+
+    @staticmethod
     def pr(APRL, APRC):
         res = pr(APRL, APRC)
         res.name = 'pr'
         res.attrs['units'] = 'mm'
         return res
     
+    @staticmethod
     def huss(DEW2, PS):
         res = specific_humidity(DEW2, PS)
         res.name = 'huss'
         res.attrs['units'] = 'kg/kg'
         return res
     
+    @staticmethod
     def hurs(DEW2, TEMP2):
         res = relative_humidity(DEW2, TEMP2)
         res.name = 'hurs'

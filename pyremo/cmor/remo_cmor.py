@@ -200,6 +200,7 @@ def prepare_variable(
     time_units="days since 1949-12-01T00:00:00",
     time_range=None,
     squeeze=True,
+    check_unit=False,
 ):
     """prepares a variable for cmorization."""
     if CORDEX_domain is None:

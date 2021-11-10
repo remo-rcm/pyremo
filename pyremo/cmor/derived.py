@@ -10,6 +10,10 @@ import numpy as np
 #    = APRL + APRC
 #    = large scale precipitation + convective precipitation
 
+def mm_to_kg(da):
+    """1 kg/m2/s = 86400 mm/day."""
+    return da * 1.0 / 86400.0
+
 
 def pr(aprl, aprc):
     """Precipitation flux"""

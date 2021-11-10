@@ -3,7 +3,11 @@ import xarray as xr
 import cordex as cx
 import datetime as dt
 import cftime as cfdt
+import json
 from dateutil import relativedelta as reld
+from warnings import warn
+
+from .derived import derivator
 
 try:
     import cmor
@@ -17,6 +21,15 @@ xr.set_options(keep_attrs=True)
 loffsets = {"3H": dt.timedelta(hours=1, minutes=30), "6H": dt.timedelta(hours=3)}
 
 # Y=2000
+
+units_convert_rules = {
+    "mm" : (lambda x : x * 1.0 / 86400.0, "kg m-2 s-1"),
+    "kg/kg" : (lambda x : x, "1")
+}
+
+
+def derive_variable(varname):
+    return getattr(derived, varname)
 
 
 def ensure_cftime(func):
@@ -104,7 +117,11 @@ def _crop_to_cordex_domain(ds, domain):
 
 
 def _get_varinfo(name):
-    return codes.get_dict(name)
+    # fails silently
+    try:
+        return codes.get_dict(name)
+    except:
+        return None
 
 
 def _get_pole(ds):
@@ -193,6 +210,19 @@ def _cmor_write(da, table, cmorTime, cmorGrid, file_name=True):
     return cmor.close(cmor_var, file_name=file_name)
 
 
+def _units_convert(da, table_file):
+    with open(cx.cordex_cmor_table(table_file)) as f:
+        table = json.load(f)
+    units = da.units
+    cf_units = table['variable_entry'][da.name]['units']
+    if units != cf_units:
+        warn('converting units {} to {}'.format(units, cf_units) )
+        rule = units_convert_rules[units]
+        da = rule[0](da)
+        da.attrs['units'] = rule[1]
+    return da
+
+
 def prepare_variable(
     ds,
     varname,
@@ -200,7 +230,7 @@ def prepare_variable(
     time_units="days since 1949-12-01T00:00:00",
     time_range=None,
     squeeze=True,
-    check_unit=False,
+    allow_derive=False,
 ):
     """prepares a variable for cmorization."""
     if CORDEX_domain is None:
@@ -209,10 +239,18 @@ def prepare_variable(
         except:
             warnings.warn("could not identify CORDEX domain")
     varinfo = _get_varinfo(varname)
-    remo_name = varinfo["variable"]
-    cf_name = varinfo["cf_name"]
-    var_ds = xr.merge([ds[remo_name], _get_pole(ds)])
-    var_ds = var_ds.rename_vars({remo_name: cf_name})
+    if varinfo is not None:
+        remo_name = varinfo["variable"]
+        cf_name = varinfo["cf_name"]
+        var_ds = xr.merge([ds[remo_name], _get_pole(ds)])
+        var_ds = var_ds.rename_vars({remo_name: cf_name})
+    elif allow_derive is True:     
+        try:
+            var_ds = xr.merge([derivator.derive(ds, varname), _get_pole(ds)])
+        except:
+            raise Exception('could not find or derive variable: {}'.format(varname))
+    else:
+        raise Exception('could not find {} in remo table, try allow_derive=True'.format(varname))
     # remove point coordinates, e.g, height2m
     if squeeze is True:
         var_ds = var_ds.squeeze(drop=True)
@@ -224,7 +262,8 @@ def prepare_variable(
     return var_ds
 
 
-def cmorize_variable(ds, varname, cmor_table, dataset_table, **kwargs):
+def cmorize_variable(ds, varname, cmor_table, dataset_table, allow_units_convert=False,
+                     **kwargs):
     """Cmorizes a variable.
 
     Parameters
@@ -237,6 +276,9 @@ def cmorize_variable(ds, varname, cmor_table, dataset_table, **kwargs):
         Filepath to cmor table.
     dataset_table: str
         Filepath to dataset cmor table.
+    allow_units_convert: bool
+        Allow units to be converted if they do not agree with the
+        units in the cmor table.
     **kwargs:
         Argumets passed to prepare_variable.
 
@@ -256,6 +298,8 @@ def cmorize_variable(ds, varname, cmor_table, dataset_table, **kwargs):
 
     """
     ds_prep = prepare_variable(ds, varname, **kwargs)
+    if allow_units_convert is True:
+        ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
     _setup(dataset_table)
     cmorTime, cmorGrid = _define_grid(ds_prep, cmor_table)
     return _cmor_write(ds_prep[varname], cmor_table, cmorTime, cmorGrid)

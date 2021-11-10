@@ -3,12 +3,48 @@
 
 
 import numpy as np
+import inspect
+from warnings import warn
 
 # units are incompatible: kg m-2 s-1 and mm
 
 # pr = 142 + 143
 #    = APRL + APRC
 #    = large scale precipitation + convective precipitation
+
+class derivator():
+    
+    @classmethod
+    def get_function(cls, ds, cf_varname):
+        func = getattr(cls, cf_varname)
+        params = inspect.signature(func).parameters
+        return func, params
+    
+    @classmethod
+    def derive(cls, ds, cf_varname):
+        func, params = cls.get_function(ds, cf_varname)
+        args = (ds[param] for param in params if param in ds)
+        warn('computing {} from {}'.format(cf_varname, [p for p in params]))
+        return func(*args)
+                
+    def pr(APRL, APRC):
+        res = pr(APRL, APRC)
+        res.name = 'pr'
+        res.attrs['units'] = 'mm'
+        return res
+    
+    def huss(DEW2, PS):
+        res = specific_humidity(DEW2, PS)
+        res.name = 'huss'
+        res.attrs['units'] = 'kg/kg'
+        return res
+    
+    def hurs(DEW2, TEMP2):
+        res = relative_humidity(DEW2, TEMP2)
+        res.name = 'hurs'
+        res.attrs['units'] = '%'
+        return res
+
 
 
 def mm_to_kg(da):

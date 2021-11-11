@@ -172,7 +172,7 @@ def liquid_water_content(t, relhum, p, set_meta=True):
 
 
 def precipitation_flux(aprl, aprc):
-    """Precipitation flux pr [mm]"""
+    """Precipitation flux ``pr`` [mm]"""
     return aprl + aprc
 
 
@@ -195,7 +195,7 @@ def water_vapour(t):
 
 
 def specific_humidity_from_dewpoint(dew, ps):
-    """Specific humidity `huss` [kg/kg].
+    """Specific humidity ``huss`` [kg/kg].
 
     Computes specific humidity `huss` from dewpoint temperature and pressure.
 
@@ -209,9 +209,9 @@ def specific_humidity_from_dewpoint(dew, ps):
 
 
 def relative_humidity_from_dewpoint(dew, t2m):
-    """Relative humidity `hurs` [%].
+    """Relative humidity ``hurs`` [%].
 
-    Computes relative humidity `hurs` from dewpoint and air temperature.
+    Computes relative humidity ``hurs`` from dewpoint and air temperature.
 
     compare to: https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.relative_humidity_from_dewpoint.html
     """
@@ -221,41 +221,41 @@ def relative_humidity_from_dewpoint(dew, t2m):
 
 
 def surface_runoff_flux(runoff, drain):
-    """Surface runoff `mrros` [mm].
+    """Surface runoff ``mrros`` [mm].
 
-    Computes surface runoff flux `mrros` from total runoff and drainage.
+    Computes surface runoff flux ``mrros`` from total runoff and drainage.
     """
     return runoff - drain
 
 
 def surface_downwelling_shortwave_flux_in_air(srads, sradsu):
-    """Surface downwelling shortwave flux in air `rsds` [W m-2].
+    """Surface downwelling shortwave flux in air ``rsds`` [W m-2].
 
-    Computes surface downwelling shortwave flux in air `rsds` from net surface solar radiation and surface solar radiation upward.
+    Computes surface downwelling shortwave flux in air ``rsds`` from net surface solar radiation and surface solar radiation upward.
     """
     return srads - sradsu
 
 
 def surface_downwelling_longwave_flux_in_air(trads, tradsu):
-    """Surface downwelling longwave flux in air `rlds` [W m-2].
+    """Surface downwelling longwave flux in air ``rlds`` [W m-2].
 
-    Computes surface downwelling longwave flux in air `rlds` from net surface thermal radiation and surface thermal radiation upward.
+    Computes surface downwelling longwave flux in air ``rlds`` from net surface thermal radiation and surface thermal radiation upward.
     """
     return trads - tradsu
 
 
 def toa_incoming_shortwave_flux(srad0, srad0u):
-    """TOA incoming shortwave flux `rsdt` [W m-2].
+    """TOA incoming shortwave flux ``rsdt`` [W m-2].
 
-    Computes TOA incoming shortwave flux `rsdt` from net top solar radiation and top solar radiation upward.
+    Computes TOA incoming shortwave flux ``rsdt`` from net top solar radiation and top solar radiation upward.
     """
     return srad0 - srad0u
 
 
 def water_evapotranspiration_flux(evap):
-    """Water evapotranspiration flux `evspsbl` [mm].
+    """Water evapotranspiration flux ``evspsbl`` [mm].
 
-    Computes water evapotranspiration flux `evspsbl` from surface evaporation.
+    Computes water evapotranspiration flux ``evspsbl`` from surface evaporation.
     """
     return evap * (-1)
 

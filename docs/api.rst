@@ -35,7 +35,7 @@ Physics
    physics.precipitation_flux
    physics.water_vapour
    physics.specific_humidity_from_dewpoint
-   phyiscs.relative_humidity_from_dewpoint
+   physics.relative_humidity_from_dewpoint
    physics.surface_runoff_flux
    physics.surface_downwelling_shortwave_flux_in_air
    physics.surface_downwelling_longwave_flux_in_air

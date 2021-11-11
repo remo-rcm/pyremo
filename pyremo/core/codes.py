@@ -57,7 +57,8 @@ def get_dict(id):
 
     Args:
         id (int or str): The variable identifier (might be code or
-            variable name or a variable name containing a code).
+            variable name or a variable name containing a code or
+            the variable name according to CF conventions).
 
     Returns:
         varinfo (dict): Dictionary with variable information.
@@ -85,7 +86,8 @@ def get_dict_by_name(varname):
     Searches the code table for a certain variable name.
 
     Args:
-        varname (str): The variable name.
+        varname (str): The variable name. If the name is not found
+        in the table, it searches for the cf name.
 
     Returns:
         varinfo (dict): Dictionary with variable information.
@@ -93,6 +95,9 @@ def get_dict_by_name(varname):
     """
     table = pd.concat(codes.tables.values())
     df = table.loc[table["variable"] == varname]
+    if df.empty:
+        # try with cf name
+        df = table.loc[table["cf_name"] == varname]
     code = df.index[0]
     dict = df.where(pd.notnull(df), None).to_dict(orient="list")
     dict = {key: item[0] for key, item in dict.items()}

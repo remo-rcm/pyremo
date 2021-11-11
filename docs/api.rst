@@ -18,6 +18,8 @@ Top-level functions
    open_remo_dataset
    update_meta_info
    parse_dates
+   parse_absolute_time
+   preprocess
 
 
 Physics
@@ -30,6 +32,15 @@ Physics
    physics.liquid_water_content
    physics.specific_humidity
    physics.relative_humidity
+   physics.precipitation_flux
+   physics.water_vapour
+   physics.specific_humidity_from_dewpoint
+   phyiscs.relative_humidity_from_dewpoint
+   physics.surface_runoff_flux
+   physics.surface_downwelling_shortwave_flux_in_air
+   physics.surface_downwelling_longwave_flux_in_air
+   physics.toa_incoming_shortwave_flux
+   physics.water_evapotranspiration_flux
 
 
 Pressure interpolation
@@ -69,3 +80,22 @@ Converting ECMWF data
    preproc.ERA5.to_xarray
    preproc.ERA5.gfile
    preproc.ERA5.wind
+
+
+Cmorization
+===========
+
+.. autosummary::
+   :toctree: generated/
+
+   cmor.prepare_variable
+   cmor.cmorize_variable
+
+Tutorial
+========
+
+.. autosummary::
+   :toctree: generated/
+
+   tutorial.load_dataset
+   tutorial.open_dataset

@@ -33,7 +33,7 @@ from cordex import ecmwf as ectable
 
 xr.set_options(keep_attrs=True)
 
-#cdo_exe = "/sw/rhel6-x64/cdo/cdo-1.9.6-gcc64/bin/cdo"
+# cdo_exe = "/sw/rhel6-x64/cdo/cdo-1.9.6-gcc64/bin/cdo"
 cdo_exe = "cdo"
 
 tempdir = None  # os.path.join(os.environ['SCRATCH'], '.cdo_tmp')
@@ -230,7 +230,7 @@ def _convert_files(files, dask=False):
     return results
 
 
-#def to_xarray(filename, scratch=None):
+# def to_xarray(filename, scratch=None):
 #    """convert an ERA5 grib file to xarray"""
 #    f_split = _split_time(filename)
 #    f_split.sort()
@@ -470,16 +470,18 @@ def _clean_coords(ds, vcs=None):
 class ERA5:
     """
     Class for cmorizing original ERA5 GRIB data.
-    
+
     Notes
     -----
     The cmorizer class only works with the intake catalog provided by DKRZ.
-    
+
     """
+
     def __init__(
-        self, catalog_url="/pool/data/Catalogs/mistral-era5.json", scratch=None):
+        self, catalog_url="/pool/data/Catalogs/mistral-era5.json", scratch=None
+    ):
         """
-        
+
         Parameters
         ----------
         catalog_url : str
@@ -497,7 +499,7 @@ class ERA5:
 
         Parameters
         ----------
-        idents : str or int 
+        idents : str or int
             Code or variable name (cf name) that should be converted.
         dates : date or list of dates in ISO 8601 format.
             A single date or list of dates for which the variables should
@@ -606,7 +608,7 @@ class ERA5:
         self, dates, parallel=False, cf_meta=True, clean_coords=True, add_fx=True
     ):
         """Create an ERA5 gfile dataset.
-        
+
         Main function to convert ERA5 grib data to a regular gaussian Dataset
         containing all variables required for REMO preprocessing.
 

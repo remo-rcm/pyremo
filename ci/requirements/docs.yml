@@ -17,6 +17,7 @@ dependencies:
   - nbsphinx
   - nbsphinx-link
   - ipython
+  - cmor
 # 
   - pip:
 #    - intake_geopandas>=0.2.4

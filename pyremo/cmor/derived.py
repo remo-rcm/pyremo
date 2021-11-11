@@ -12,9 +12,10 @@ from warnings import warn
 #    = APRL + APRC
 #    = large scale precipitation + convective precipitation
 
-class derivator():
+
+class derivator:
     """derivator static class.
-    
+
     The derivator class provides access to the derivation of
     variables for cmorization. For each derived variable, a
     static class method should be provided of the same name as
@@ -23,78 +24,80 @@ class derivator():
     The derive method can then determine which variables to take
     from the dataset and how to derive the variable automatically.
     """
+
     @classmethod
     def get_function(cls, cf_varname):
         func = getattr(cls, cf_varname)
         return func
-    
+
     @classmethod
     def get_params(cls, cf_varname):
         func = getattr(cls, cf_varname)
         return list(inspect.signature(func).parameters)
-    
+
     @classmethod
     def derive(cls, ds, cf_varname):
         func = cls.get_function(cf_varname)
         params = cls.get_params(cf_varname)
         args = (ds[param] for param in params if param in ds)
-        warn('computing {} from {}'.format(cf_varname, [p for p in params]))
+        warn("computing {} from {}".format(cf_varname, [p for p in params]))
         return func(*args)
 
     @staticmethod
     def pr(APRL, APRC):
         res = pr(APRL, APRC)
-        res.name = 'pr'
-        res.attrs['units'] = 'mm'
+        res.name = "pr"
+        res.attrs["units"] = "mm"
         return res
-    
+
     @staticmethod
     def huss(DEW2, PS):
         res = specific_humidity(DEW2, PS)
-        res.name = 'huss'
-        res.attrs['units'] = 'kg/kg'
+        res.name = "huss"
+        res.attrs["units"] = "kg/kg"
         return res
-    
+
     @staticmethod
     def hurs(DEW2, TEMP2):
         res = relative_humidity(DEW2, TEMP2)
-        res.name = 'hurs'
-        res.attrs['units'] = '%'
+        res.name = "hurs"
+        res.attrs["units"] = "%"
         return res
 
     @staticmethod
     def mrros(RUNOFF, DRAIN):
         res = surface_runoff_flux(RUNOFF, DRAIN)
-        res.name = 'mrros'
-        res.attrs['units'] = 'mm'
+        res.name = "mrros"
+        res.attrs["units"] = "mm"
         return res
 
     @staticmethod
     def rsds(SRADS, SRADSU):
         res = surface_downwelling_shortwave_flux_in_air(SRADS, SRADSU)
-        res.name = 'rsds'
-        res.attrs['units'] = 'W m-2'
+        res.name = "rsds"
+        res.attrs["units"] = "W m-2"
         return res
 
     @staticmethod
     def rlds(TRADS, TRADSU):
         res = surface_downwelling_longwave_flux_in_air(TRADS, TRADSU)
-        res.name = 'rlds'
-        res.attrs['units'] = 'W m-2'
+        res.name = "rlds"
+        res.attrs["units"] = "W m-2"
         return res
 
     @staticmethod
     def rsdt(SRAD0, SRAD0U):
         res = toa_incoming_shortwave_flux(SRAD0, SRAD0U)
-        res.name = 'rsdt'
-        res.attrs['units'] = 'W m-2'
+        res.name = "rsdt"
+        res.attrs["units"] = "W m-2"
         return res
 
     @staticmethod
     def evspsbl(EVAP):
         res = water_evapotranspiration_flux(EVAP)
-        res.name = 'evspsbl'
-        res.attrs['units'] = 'mm'
+        res.name = "evspsbl"
+        res.attrs["units"] = "mm"
+
 
 def mm_to_kg(da):
     """1 kg/m2/s = 86400 mm/day."""
@@ -154,23 +157,25 @@ def surface_runoff_flux(runoff, drain):
     """Surface runoff `mrros` [mm].
 
     Computes surface runoff flux `mrros` from total runoff and drainage.
-    """  
+    """
     return runoff - drain
 
 
 def surface_downwelling_shortwave_flux_in_air(srads, sradsu):
     """Surface downwelling shortwave flux in air `rsds` [W m-2].
-    
+
     Computes surface downwelling shortwave flux in air `rsds` from net surface solar radiation and surface solar radiation upward.
     """
     return srads - sradsu
 
+
 def surface_downwelling_longwave_flux_in_air(trads, tradsu):
     """Surface downwelling longwave flux in air `rlds` [W m-2].
-    
+
     Computes surface downwelling longwave flux in air `rlds` from net surface thermal radiation and surface thermal radiation upward.
     """
     return trads - tradsu
+
 
 def toa_incoming_shortwave_flux(srad0, srad0u):
     """TOA incoming shortwave flux `rsdt` [W m-2].
@@ -179,13 +184,13 @@ def toa_incoming_shortwave_flux(srad0, srad0u):
     """
     return srad0 - srad0u
 
+
 def water_evapotranspiration_flux(evap):
     """Water evapotranspiration flux `evspsbl` [mm].
 
     Computes water evapotranspiration flux `evspsbl` from surface evaporation.
     """
     return evap * (-1)
-
 
 
 # old cdo formulas

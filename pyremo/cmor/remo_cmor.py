@@ -23,8 +23,8 @@ loffsets = {"3H": dt.timedelta(hours=1, minutes=30), "6H": dt.timedelta(hours=3)
 # Y=2000
 
 units_convert_rules = {
-    "mm" : (lambda x : x * 1.0 / 86400.0, "kg m-2 s-1"),
-    "kg/kg" : (lambda x : x, "1")
+    "mm": (lambda x: x * 1.0 / 86400.0, "kg m-2 s-1"),
+    "kg/kg": (lambda x: x, "1"),
 }
 
 
@@ -214,12 +214,12 @@ def _units_convert(da, table_file):
     with open(cx.cordex_cmor_table(table_file)) as f:
         table = json.load(f)
     units = da.units
-    cf_units = table['variable_entry'][da.name]['units']
+    cf_units = table["variable_entry"][da.name]["units"]
     if units != cf_units:
-        warn('converting units {} to {}'.format(units, cf_units) )
+        warn("converting units {} to {}".format(units, cf_units))
         rule = units_convert_rules[units]
         da = rule[0](da)
-        da.attrs['units'] = rule[1]
+        da.attrs["units"] = rule[1]
     return da
 
 
@@ -244,13 +244,15 @@ def prepare_variable(
         cf_name = varinfo["cf_name"]
         var_ds = xr.merge([ds[remo_name], _get_pole(ds)])
         var_ds = var_ds.rename_vars({remo_name: cf_name})
-    elif allow_derive is True:     
+    elif allow_derive is True:
         try:
             var_ds = xr.merge([derivator.derive(ds, varname), _get_pole(ds)])
         except:
-            raise Exception('could not find or derive variable: {}'.format(varname))
+            raise Exception("could not find or derive variable: {}".format(varname))
     else:
-        raise Exception('could not find {} in remo table, try allow_derive=True'.format(varname))
+        raise Exception(
+            "could not find {} in remo table, try allow_derive=True".format(varname)
+        )
     # remove point coordinates, e.g, height2m
     if squeeze is True:
         var_ds = var_ds.squeeze(drop=True)
@@ -262,8 +264,9 @@ def prepare_variable(
     return var_ds
 
 
-def cmorize_variable(ds, varname, cmor_table, dataset_table, allow_units_convert=False,
-                     **kwargs):
+def cmorize_variable(
+    ds, varname, cmor_table, dataset_table, allow_units_convert=False, **kwargs
+):
     """Cmorizes a variable.
 
     Parameters

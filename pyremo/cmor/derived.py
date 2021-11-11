@@ -48,7 +48,39 @@ class derivator():
         res.attrs['units'] = '%'
         return res
 
+    @staticmethod
+    def mrros(RUNOFF, DRAIN):
+        res = surface_runoff_flux(RUNOFF, DRAIN)
+        res.name = 'mrros'
+        res.attrs['units'] = 'mm'
+        return res
 
+    @staticmethod
+    def rsds(SRADS, SRADSU):
+        res = surface_downwelling_shortwave_flux_in_air(SRADS, SRADSU)
+        res.name = 'rsds'
+        res.attrs['units'] = 'W m-2'
+        return res
+
+    @staticmethod
+    def rlds(TRADS, TRADSU):
+        res = surface_downwelling_longwave_flux_in_air(TRADS, TRADSU)
+        res.name = 'rlds'
+        res.attrs['units'] = 'W m-2'
+        return res
+
+    @staticmethod
+    def rsdt(SRAD0, SRAD0U):
+        res = toa_incoming_shortwave_flux(SRAD0, SRAD0U)
+        res.name = 'rsdt'
+        res.attrs['units'] = 'W m-2'
+        return res
+
+    @staticmethod
+    def evspsbl(EVAP):
+        res = water_evapotranspiration_flux(EVAP)
+        res.name = 'evspsbl'
+        res.attrs['units'] = 'mm'
 
 def mm_to_kg(da):
     """1 kg/m2/s = 86400 mm/day."""
@@ -98,11 +130,48 @@ def relative_humidity(dew, t2m):
     Computes relative humidity `hurs` from dewpoint and air temperature.
 
     compare to: https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.relative_humidity_from_dewpoint.html
-
     """
     e_dew = water_vapour(dew)
     e_t2m = water_vapour(t2m)
     return e_dew / e_t2m
+
+
+def surface_runoff_flux(runoff, drain):
+    """Surface runoff `mrros` [mm].
+
+    Computes surface runoff flux `mrros` from total runoff and drainage.
+    """  
+    return runoff - drain
+
+
+ def surface_downwelling_shortwave_flux_in_air(srads, sradsu):
+     """Surface downwelling shortwave flux in air `rsds` [W m-2].
+
+     Computes surface downwelling shortwave flux in air `rsds` from net surface solar radiation and surface solar radiation upward.
+     """
+     return srads - sradsu
+
+def surface_downwelling_longwave_flux_in_air(trads, tradsu):
+    """Surface downwelling longwave flux in air `rlds` [W m-2].
+    
+    Computes surface downwelling longwave flux in air `rlds` from net surface thermal radiation and surface thermal radiation upward.
+    """
+    return trads - tradsu
+
+def toa_incoming_shortwave_flux(srad0, srad0u):
+    """TOA incoming shortwave flux `rsdt` [W m-2].
+
+    Computes TOA incoming shortwave flux `rsdt` from net top solar radiation and top solar radiation upward.
+    """
+    return srad0 - srad0u
+
+def water_evapotranspiration_flux(evap):
+    """Water evapotranspiration flux `evspsbl` [mm].
+
+    Computes water evapotranspiration flux `evspsbl` from surface evaporation.
+    """
+    return evap * (-1)
+
 
 
 # old cdo formulas
@@ -125,7 +194,7 @@ def relative_humidity(dew, t2m):
 #        f1, os.path.join(tmp_dir,'EDDEW'))))
 #    lg.info(shell('cdo %s -mulc,610.78 -exp -div -mulc,17.5 -subc,273.15 %s -subc,35.86 %s %s' % (omp_flag, f2, f2, os.path.join(tmp_dir,'EDT2M'))))
 #    lg.info(shell('cdo %s div ' % (omp_flag) + os.path.join(tmp_dir,'EDDEW')+' '+ os.path.join(tmp_dir,'EDT2M')+' ' + file_out))
-## TODO: here we can use the codes from the pre list...
+## From here: Ludwig
 # elif var == 'mrros':
 #    f1 = os.path.join(store_dir,file_template % 160); f2 = os.path.join(store_dir,file_template % 53)
 #    lg.info(shell('cdo sub %s %s %s' % (f1, f2, file_out)))

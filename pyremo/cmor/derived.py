@@ -158,12 +158,12 @@ def surface_runoff_flux(runoff, drain):
     return runoff - drain
 
 
- def surface_downwelling_shortwave_flux_in_air(srads, sradsu):
-     """Surface downwelling shortwave flux in air `rsds` [W m-2].
-
-     Computes surface downwelling shortwave flux in air `rsds` from net surface solar radiation and surface solar radiation upward.
-     """
-     return srads - sradsu
+def surface_downwelling_shortwave_flux_in_air(srads, sradsu):
+    """Surface downwelling shortwave flux in air `rsds` [W m-2].
+    
+    Computes surface downwelling shortwave flux in air `rsds` from net surface solar radiation and surface solar radiation upward.
+    """
+    return srads - sradsu
 
 def surface_downwelling_longwave_flux_in_air(trads, tradsu):
     """Surface downwelling longwave flux in air `rlds` [W m-2].

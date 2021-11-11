@@ -18,7 +18,8 @@ def _get_pole(ds):
     """returns the first pole we find in the dataset"""
     pol_names = ["rotated_latitude_longitude", "rotated_pole"]
     for pol in pol_names:
-        return ds[pol]
+        if pol in ds:
+            return ds[pol]
     return None
 
 

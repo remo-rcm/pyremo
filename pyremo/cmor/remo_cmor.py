@@ -113,36 +113,6 @@ def _crop_to_cordex_domain(ds, domain):
     )
 
 
-def _get_varinfo(name):
-    # fails silently
-    try:
-        return codes.get_dict(name)
-    except:
-        return None
-
-
-def _get_pole(ds):
-    """returns the first pole we find in the dataset"""
-    pol_names = ["rotated_latitude_longitude", "rotated_pole"]
-    for pol in pol_names:
-        return ds[pol]
-    return None
-
-
-def _set_time_units(time, units):
-    time.encoding["units"] = units
-    return time
-
-
-def _encode_time(time):
-    """encode xarray time axis into cf values
-
-    see https://github.com/pydata/xarray/issues/4412
-
-    """
-    return xr.conventions.encode_cf_variable(time)
-
-
 def _load_table(table):
     cmor.load_table(cx.cordex_cmor_table(table))
 
@@ -154,13 +124,16 @@ def _setup(table):
 
 def _define_axes(ds, table):
     _load_table(table)
-    time_values = _encode_time(ds.time).values
-    cmorTime = cmor.axis(
-        "time",
-        coord_vals=time_values,
-        cell_bounds=_get_bnds(time_values),
-        units=ds.time.encoding["units"],
-    )
+    if "time" in ds:
+        time_values = _encode_time(ds.time).values
+        cmorTime = cmor.axis(
+            "time",
+            coord_vals=time_values,
+            cell_bounds=_get_bnds(time_values),
+            units=ds.time.encoding["units"],
+        )
+    else:
+        cmorTime = None
     cmorLat = cmor.axis(
         "gridlatitude",
         coord_vals=ds.rlat.values,
@@ -202,7 +175,11 @@ def _define_grid(ds, table, grid_table="grids"):
 
 def _cmor_write(da, table, cmorTime, cmorGrid, file_name=True):
     cmor.load_table(cx.cordex_cmor_table(table))
-    cmor_var = cmor.variable(da.name, da.units, [cmorTime, cmorGrid])
+    if cmorTime is None:
+        coords = [cmorGrid]
+    else:
+        coords = [cmorTime, cmorGrid]
+    cmor_var = cmor.variable(da.name, da.units, coords)
     cmor.write(cmor_var, da.values)
     return cmor.close(cmor_var, file_name=file_name)
 

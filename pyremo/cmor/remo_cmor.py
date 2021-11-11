@@ -8,6 +8,7 @@ from dateutil import relativedelta as reld
 from warnings import warn
 
 from .derived import derivator
+from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time
 
 try:
     import cmor
@@ -26,10 +27,6 @@ units_convert_rules = {
     "mm": (lambda x: x * 1.0 / 86400.0, "kg m-2 s-1"),
     "kg/kg": (lambda x: x, "1"),
 }
-
-
-def derive_variable(varname):
-    return getattr(derived, varname)
 
 
 def ensure_cftime(func):
@@ -189,8 +186,8 @@ def _define_grid(ds, table, grid_table="grids"):
 
     pole = _get_pole(ds)
     pole_dict = {
-        "grid_north_pole_latitude": 39.25,
-        "grid_north_pole_longitude": -162,
+        "grid_north_pole_latitude": pole.grid_north_pole_latitude,
+        "grid_north_pole_longitude": pole.grid_north_pole_longitude,
         "north_pole_grid_longitude": 0.0,
     }
     cmorGM = cmor.set_grid_mapping(
@@ -211,6 +208,12 @@ def _cmor_write(da, table, cmorTime, cmorGrid, file_name=True):
 
 
 def _units_convert(da, table_file):
+    """Convert units.
+    
+    Convert units according to the rules in units_convert_rules dict.
+    Maybe metpy can do this also: https://unidata.github.io/MetPy/latest/tutorials/unit_tutorial.html
+    
+    """
     with open(cx.cordex_cmor_table(table_file)) as f:
         table = json.load(f)
     units = da.units

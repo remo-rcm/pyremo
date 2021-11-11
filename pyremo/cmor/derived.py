@@ -53,7 +53,7 @@ class derivator:
 
     @staticmethod
     def huss(DEW2, PS):
-        res = physics.specific_humidity(DEW2, PS)
+        res = physics.specific_humidity_from_dewpoint(DEW2, PS)
         res.name = "huss"
         res.attrs["units"] = "kg/kg"
         return res

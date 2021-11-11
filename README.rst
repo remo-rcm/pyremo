@@ -5,14 +5,11 @@ pyremo
 .. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml
 
+.. image:: https://codecov.io/gh/remo-rcm/pyremo/branch/master/graph/badge.svg
+  :target: https://codecov.io/gh/remo-rcm/pyremo
+
 .. image:: https://img.shields.io/pypi/v/pyremo.svg
         :target: https://pypi.python.org/pypi/pyremo
-
-.. image:: https://travis-ci.com/remo-rcm/pyremo.svg?branch=master
-    :target: https://travis-ci.com/remo-rcm/pyremo
-
-.. image:: https://coveralls.io/repos/github/remo-rcm/pyremo/badge.svg?branch=master
-        :target: https://coveralls.io/github/remo-rcm/pyremo?branch=master
 
 .. image:: https://readthedocs.org/projects/pyremo/badge/?version=latest
         :target: https://pyremo.readthedocs.io/en/latest/?badge=latest

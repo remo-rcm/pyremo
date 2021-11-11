@@ -5,7 +5,9 @@ Subpackages
 -----------
 
 .. toctree::
+   :maxdepth: 4
 
+   pyremo.cmor
    pyremo.core
    pyremo.physics
    pyremo.preproc
@@ -23,6 +25,13 @@ pyremo.cli module
    :undoc-members:
    :show-inheritance:
 
+pyremo.version module
+---------------------
+
+.. automodule:: pyremo.version
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 Module contents
 ---------------

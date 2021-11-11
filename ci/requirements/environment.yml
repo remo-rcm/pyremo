@@ -15,5 +15,6 @@ dependencies:
   - pytest
   - pytest-cov
   - pytest-env
+  - cmor
   - pip:
     - py-cordex >=0.2.0

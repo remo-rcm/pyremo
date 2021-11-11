@@ -9,11 +9,23 @@ This module contains functions to work with REMO datasets.
 # flake8: noqa
 from . import codes
 from . import cal
+from .cal import parse_dates
 
-try:
-    import cdo
-except:
-    print("no python-cdo binding installed, unable to read IEG")
+
+def preprocess(ds, use_cftime=False):
+    """preprocessing for opening with xr.open_mfdataset
+
+    This function can be used as the preprocess function for
+    opening a REMO dataset with xr.open_mfdataset. The function
+    will update meta information according to the REMO code table
+    and also parse the time axis if it contains absolute times.
+
+    """
+    ds = update_meta_info(ds)
+    try:
+        return parse_dates(ds, use_cftime)
+    except:
+        return ds
 
 
 def open_remo_mfdataset(filenames, update_meta=False, parse_dates=False):
@@ -21,7 +33,7 @@ def open_remo_mfdataset(filenames, update_meta=False, parse_dates=False):
 
     ds = xr.open_mfdataset(filenames)
     if update_meta:
-        ds = _update_meta_infos(ds)
+        ds = update_meta_infos(ds)
     if parse_dates:
         ds = parse_dates(ds)
     return ds
@@ -76,13 +88,7 @@ def open_remo_dataset(
     if update_meta:
         ds = update_meta_info(ds)
     if parse_time is True:
-        ds = parse_dates(ds)
-    return ds
-
-
-def parse_dates(ds, use_cftime=False):
-    parser = cal.AbsoluteCalendar()
-    ds["time"] = [parser.num2date(date, use_cftime) for date in ds.time]
+        ds = cal.parse_dates(ds)
     return ds
 
 
@@ -126,7 +132,7 @@ def _get_fileformat(filename):
 def update_meta_info(ds, id=None):
     """Updates meta info of a dataset.
 
-    Updates variable names and attributes in a xarray or netCDF4 dataset
+    Updates variable names and attributes in an xarray Dataset
     based on Remo table.
 
     Parameters

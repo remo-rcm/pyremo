@@ -13,16 +13,30 @@ from warnings import warn
 #    = large scale precipitation + convective precipitation
 
 class derivator():
+    """derivator static class.
+    
+    The derivator class provides access to the derivation of
+    variables for cmorization. For each derived variable, a
+    static class method should be provided of the same name as
+    the cf variable. The parameters of the method should have the
+    REMO variable names that are required to derive the cf variable.
+    The derive method can then determine which variables to take
+    from the dataset and how to derive the variable automatically.
+    """
+    @classmethod
+    def get_function(cls, cf_varname):
+        func = getattr(cls, cf_varname)
+        return func
     
     @classmethod
-    def get_function(cls, ds, cf_varname):
+    def get_params(cls, cf_varname):
         func = getattr(cls, cf_varname)
-        params = inspect.signature(func).parameters
-        return func, params
+        return list(inspect.signature(func).parameters)
     
     @classmethod
     def derive(cls, ds, cf_varname):
-        func, params = cls.get_function(ds, cf_varname)
+        func = cls.get_function(cf_varname)
+        params = cls.get_params(cf_varname)
         args = (ds[param] for param in params if param in ds)
         warn('computing {} from {}'.format(cf_varname, [p for p in params]))
         return func(*args)

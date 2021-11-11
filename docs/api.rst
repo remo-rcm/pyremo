@@ -32,6 +32,15 @@ Physics
    physics.liquid_water_content
    physics.specific_humidity
    physics.relative_humidity
+   physics.precipitation_flux
+   physics.water_vapour
+   physics.specific_humidity_from_dewpoint
+   phyiscs.relative_humidity_from_dewpoint
+   physics.surface_runoff_flux
+   physics.surface_downwelling_shortwave_flux_in_air
+   physics.surface_downwelling_longwave_flux_in_air
+   physics.toa_incoming_shortwave_flux
+   physics.water_evapotranspiration_flux
 
 
 Pressure interpolation

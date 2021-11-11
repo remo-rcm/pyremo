@@ -3,3 +3,5 @@ from .remo_cmor import (
     cmorize_variable,
     to_cftime,
 )
+
+from .derived import derivator

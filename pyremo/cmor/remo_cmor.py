@@ -3,6 +3,12 @@ import xarray as xr
 import cordex as cx
 import datetime as dt
 import cftime as cfdt
+import json
+from dateutil import relativedelta as reld
+from warnings import warn
+
+from .derived import derivator
+from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time
 
 try:
     import cmor
@@ -17,6 +23,11 @@ loffsets = {"3H": dt.timedelta(hours=1, minutes=30), "6H": dt.timedelta(hours=3)
 
 # Y=2000
 
+units_convert_rules = {
+    "mm": (lambda x: x * 1.0 / 86400.0, "kg m-2 s-1"),
+    "kg/kg": (lambda x: x, "1"),
+}
+
 
 def ensure_cftime(func):
     def wrapper(date, **kwargs):
@@ -27,7 +38,6 @@ def ensure_cftime(func):
 
 def to_cftime(date, calendar="proleptic_gregorian"):
     if type(date) == dt.date:
-        print("convert")
         date = dt.datetime.combine(date, dt.time())
     elif isinstance(date, cfdt.datetime):
         # do nothing
@@ -42,102 +52,6 @@ def to_cftime(date, calendar="proleptic_gregorian"):
         date.microsecond,
         calendar=calendar,
     )
-
-
-def _seasons_bounds(year, calendar=None):
-    if calendar is None:
-        import datetime as dt
-
-        args = {}
-    else:
-        # calendar requires cftime
-        import cftime as dt
-
-        args = {"calendar": calendar}
-    return {
-        "DJF": (dt.datetime(year - 1, 12, 1, **args), dt.datetime(year, 3, 1, **args)),
-        "MAM": (dt.datetime(year, 3, 1, **args), dt.datetime(year, 6, 1, **args)),
-        "JJA": (dt.datetime(year, 6, 1, **args), dt.datetime(year, 9, 1, **args)),
-        "SON": (dt.datetime(year, 9, 1, **args), dt.datetime(year, 12, 1, **args)),
-    }
-
-
-def season_bounds(date):
-    """Determines the temporal bounds of the meteorological season.
-
-    Uses the month to determine the season and returns the
-    temporal bounds of the season.
-
-    Parameters
-    ----------
-    date : datetime object
-        Date in the current season.
-
-    Returns
-    -------
-    season : tuple
-        Temporal bounds of the current meteorological season.
-
-    """
-    month = date.month
-    if month != 12:
-        year = date.year
-    else:
-        year = date.year + 1
-    try:
-        calendar = date.calendar
-    except:
-        calendar = None
-    seasons_bounds = _seasons_bounds(year, calendar=calendar)
-    return seasons_bounds[season(date)]
-
-
-def _seasons():
-    seasons = [
-        ("DJF", (12, 1, 2)),
-        ("MAM", (3, 4, 5)),
-        ("JJA", (6, 7, 8)),
-        ("SON", (9, 10, 11)),
-    ]
-    return seasons
-
-
-# @ensure_cftime
-def season(date):
-    """Determines the meteorological season.
-
-    Uses the month to determine the season.
-
-    Parameters
-    ----------
-    date : datetime object
-        Date in the current season.
-
-    Returns
-    -------
-    season : str
-        Meteorological season of the current date.
-
-    """
-    return next(season for season, months in _seasons() if date.month in months)
-
-
-def mid_of_season(date):
-    """Determine the mid of the current season
-
-    Parameters
-    ----------
-    date : datetime object
-        Date in the current season.
-
-    Returns
-    -------
-    mid_of_season : datetime object
-        Mid date of the current season.
-
-    """
-    bounds = season_bounds(date)
-    return bounds[0] + 0.5 * (bounds[1] - bounds[0])
 
 
 # def _seasons_list():
@@ -199,32 +113,6 @@ def _crop_to_cordex_domain(ds, domain):
     )
 
 
-def _get_varinfo(name):
-    return codes.get_dict(name)
-
-
-def _get_pole(ds):
-    """returns the first pole we find in the dataset"""
-    pol_names = ["rotated_latitude_longitude", "rotated_pole"]
-    for pol in pol_names:
-        return ds[pol]
-    return None
-
-
-def _set_time_units(time, units):
-    time.encoding["units"] = units
-    return time
-
-
-def _encode_time(time):
-    """encode xarray time axis into cf values
-
-    see https://github.com/pydata/xarray/issues/4412
-
-    """
-    return xr.conventions.encode_cf_variable(time)
-
-
 def _load_table(table):
     cmor.load_table(cx.cordex_cmor_table(table))
 
@@ -236,13 +124,16 @@ def _setup(table):
 
 def _define_axes(ds, table):
     _load_table(table)
-    time_values = _encode_time(ds.time).values
-    cmorTime = cmor.axis(
-        "time",
-        coord_vals=time_values,
-        cell_bounds=_get_bnds(time_values),
-        units=ds.time.encoding["units"],
-    )
+    if "time" in ds:
+        time_values = _encode_time(ds.time).values
+        cmorTime = cmor.axis(
+            "time",
+            coord_vals=time_values,
+            cell_bounds=_get_bnds(time_values),
+            units=ds.time.encoding["units"],
+        )
+    else:
+        cmorTime = None
     cmorLat = cmor.axis(
         "gridlatitude",
         coord_vals=ds.rlat.values,
@@ -268,8 +159,8 @@ def _define_grid(ds, table, grid_table="grids"):
 
     pole = _get_pole(ds)
     pole_dict = {
-        "grid_north_pole_latitude": 39.25,
-        "grid_north_pole_longitude": -162,
+        "grid_north_pole_latitude": pole.grid_north_pole_latitude,
+        "grid_north_pole_longitude": pole.grid_north_pole_longitude,
         "north_pole_grid_longitude": 0.0,
     }
     cmorGM = cmor.set_grid_mapping(
@@ -284,9 +175,32 @@ def _define_grid(ds, table, grid_table="grids"):
 
 def _cmor_write(da, table, cmorTime, cmorGrid, file_name=True):
     cmor.load_table(cx.cordex_cmor_table(table))
-    cmor_var = cmor.variable(da.name, da.units, [cmorTime, cmorGrid])
+    if cmorTime is None:
+        coords = [cmorGrid]
+    else:
+        coords = [cmorTime, cmorGrid]
+    cmor_var = cmor.variable(da.name, da.units, coords)
     cmor.write(cmor_var, da.values)
     return cmor.close(cmor_var, file_name=file_name)
+
+
+def _units_convert(da, table_file):
+    """Convert units.
+    
+    Convert units according to the rules in units_convert_rules dict.
+    Maybe metpy can do this also: https://unidata.github.io/MetPy/latest/tutorials/unit_tutorial.html
+    
+    """
+    with open(cx.cordex_cmor_table(table_file)) as f:
+        table = json.load(f)
+    units = da.units
+    cf_units = table["variable_entry"][da.name]["units"]
+    if units != cf_units:
+        warn("converting units {} to {}".format(units, cf_units))
+        rule = units_convert_rules[units]
+        da = rule[0](da)
+        da.attrs["units"] = rule[1]
+    return da
 
 
 def prepare_variable(
@@ -296,6 +210,7 @@ def prepare_variable(
     time_units="days since 1949-12-01T00:00:00",
     time_range=None,
     squeeze=True,
+    allow_derive=False,
 ):
     """prepares a variable for cmorization."""
     if CORDEX_domain is None:
@@ -304,10 +219,20 @@ def prepare_variable(
         except:
             warnings.warn("could not identify CORDEX domain")
     varinfo = _get_varinfo(varname)
-    remo_name = varinfo["variable"]
-    cf_name = varinfo["cf_name"]
-    var_ds = xr.merge([ds[remo_name], _get_pole(ds)])
-    var_ds = var_ds.rename_vars({remo_name: cf_name})
+    if varinfo is not None:
+        remo_name = varinfo["variable"]
+        cf_name = varinfo["cf_name"]
+        var_ds = xr.merge([ds[remo_name], _get_pole(ds)])
+        var_ds = var_ds.rename_vars({remo_name: cf_name})
+    elif allow_derive is True:
+        try:
+            var_ds = xr.merge([derivator.derive(ds, varname), _get_pole(ds)])
+        except:
+            raise Exception("could not find or derive variable: {}".format(varname))
+    else:
+        raise Exception(
+            "could not find {} in remo table, try allow_derive=True".format(varname)
+        )
     # remove point coordinates, e.g, height2m
     if squeeze is True:
         var_ds = var_ds.squeeze(drop=True)
@@ -319,7 +244,9 @@ def prepare_variable(
     return var_ds
 
 
-def cmorize_variable(ds, varname, cmor_table, dataset_table, **kwargs):
+def cmorize_variable(
+    ds, varname, cmor_table, dataset_table, allow_units_convert=False, **kwargs
+):
     """Cmorizes a variable.
 
     Parameters
@@ -332,6 +259,9 @@ def cmorize_variable(ds, varname, cmor_table, dataset_table, **kwargs):
         Filepath to cmor table.
     dataset_table: str
         Filepath to dataset cmor table.
+    allow_units_convert: bool
+        Allow units to be converted if they do not agree with the
+        units in the cmor table.
     **kwargs:
         Argumets passed to prepare_variable.
 
@@ -351,6 +281,8 @@ def cmorize_variable(ds, varname, cmor_table, dataset_table, **kwargs):
 
     """
     ds_prep = prepare_variable(ds, varname, **kwargs)
+    if allow_units_convert is True:
+        ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
     _setup(dataset_table)
     cmorTime, cmorGrid = _define_grid(ds_prep, cmor_table)
     return _cmor_write(ds_prep[varname], cmor_table, cmorTime, cmorGrid)

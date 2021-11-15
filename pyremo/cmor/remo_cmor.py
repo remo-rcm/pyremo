@@ -8,7 +8,7 @@ from dateutil import relativedelta as reld
 from warnings import warn
 
 from .derived import derivator
-from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_cordex_pole
+from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_cordex_pole, _get_time_cell_method, get_cfvarinfo
 
 try:
     import cmor
@@ -252,8 +252,18 @@ def prepare_variable(
     return var_ds
 
 
+def adjust_frequency(ds, time_cell_method, input_freq=None):
+    if input_freq is None and 'time' in ds:
+        input_freq = xr.infer_freq(ds.time)
+    if input_freq is None:
+        warn('could not determine frequency of input data, will assume it is correct.')
+        return ds
+    return ds
+
+
 def cmorize_variable(
-    ds, varname, cmor_table, dataset_table, allow_units_convert=False, **kwargs
+    ds, varname, cmor_table, dataset_table, allow_units_convert=False, 
+    allow_resample=False, input_freq=None, **kwargs
 ):
     """Cmorizes a variable.
 
@@ -288,7 +298,10 @@ def cmorize_variable(
                                   CORDEX_domain='EUR-11')
 
     """
+    
     ds_prep = prepare_variable(ds, varname, **kwargs)
+    time_cell_method = _get_time_cell_method(varname, cmor_table)
+    ds_prep = adjust_frequency(ds, time_cell_method, input_freq)
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
     _setup(dataset_table)

@@ -8,7 +8,7 @@ from dateutil import relativedelta as reld
 from warnings import warn
 
 from .derived import derivator
-from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time
+from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_cordex_pole
 
 try:
     import cmor
@@ -221,11 +221,14 @@ def prepare_variable(
             CORDEX_domain = ds.CORDEX_domain
         except:
             warnings.warn("could not identify CORDEX domain")
+    pole = _get_pole(ds)
+    if pole is None:
+        pole = _get_cordex_pole(CORDEX_domain)
     varinfo = _get_varinfo(varname)
     if varinfo is not None:
         remo_name = varinfo["variable"]
         cf_name = varinfo["cf_name"]
-        var_ds = xr.merge([ds[remo_name], _get_pole(ds)])
+        var_ds = xr.merge([ds[remo_name], pole])
         var_ds = var_ds.rename_vars({remo_name: cf_name})
     elif allow_derive is True:
         try:

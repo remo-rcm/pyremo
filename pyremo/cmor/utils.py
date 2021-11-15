@@ -23,6 +23,10 @@ def _get_pole(ds):
     return None
 
 
+def _get_cordex_pole(CORDEX_domain):
+    return cx.cordex_domain(CORDEX_domain).rotated_latitude_longitude
+
+
 def _set_time_units(time, units):
     time.encoding["units"] = units
     return time

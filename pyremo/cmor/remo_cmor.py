@@ -19,7 +19,9 @@ from ..core import codes
 
 xr.set_options(keep_attrs=True)
 
-loffsets = {"3H": dt.timedelta(hours=1, minutes=30), "6H": dt.timedelta(hours=3)}
+loffsets = {"3H": dt.timedelta(hours=1, minutes=30), 
+            "6H": dt.timedelta(hours=3),
+            "D" : dt.timedelta(hours=12)}
 
 # Y=2000
 

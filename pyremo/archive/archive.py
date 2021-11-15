@@ -32,3 +32,34 @@ def convert_files(files, with_dask=False):
             nc = delayed(convert_with_cdo)(f)
             results.append(nc)
     return results
+
+
+def get_filename_from_archive(tar, pattern):
+    return next(f for f in tar.getnames() if pattern in f)
+
+
+def extract_file(filename, pattern, path):
+    open_tar = tarfile.open(filename, 'r')
+    filename = get_filename_from_archive(open_tar, pattern)
+    print(filename)
+    #dest = os.path.join(scratch, filename)
+    open_tar.extract(filename, path=path)
+    return os.path.join(path, filename)
+
+
+def extract_files(tars, pattern="", path=None, parallel=False):
+    if path is None:
+        path = os.path.join(os.environ['SCRATCH'], '_archive_extract')
+    else:
+        path = ""
+    filenames = []
+    if parallel is True:
+        from dask import delayed
+        futures = []
+    else:
+        def delayed(x):
+            return x
+        futures = None
+    for tar in tars:
+        filenames.append(delayed(extract_file)(tar, pattern, path))
+    return filenames

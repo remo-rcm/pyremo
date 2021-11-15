@@ -28,6 +28,9 @@ units_convert_rules = {
     "kg/kg": (lambda x: x, "1"),
 }
 
+coordinate = cx.cordex_cmor_table('coordinate')
+formula_terms = cx.cordex_cmor_table('formula_terms')
+cv = cx.cordex_cmor_table('CV')
 
 def ensure_cftime(func):
     def wrapper(date, **kwargs):

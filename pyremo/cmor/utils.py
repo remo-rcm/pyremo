@@ -57,4 +57,8 @@ def _get_cfvarinfo(cf_varname, table):
 
 
 def _get_time_cell_method(cf_varname, table):
-    return _get_cfvarinfo(cf_varname, table)['cell_methods'].split('time:')[1].strip()
+    return _strip_time_cell_method(_get_cfvarinfo(cf_varname, table))
+
+
+def _strip_time_cell_method(cfvarinfo):
+    return cfvarinfo['cell_methods'].split('time:')[1].strip()

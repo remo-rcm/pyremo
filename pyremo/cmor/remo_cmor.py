@@ -85,7 +85,7 @@ def _resample(
 ):
     """Resample a REMO variable."""
     if time_cell_method == "point":
-        return ds.resample(time=time, label=label, **kwargs).interpolate("nearest")
+        return ds.resample(time=time, label=label, **kwargs).nearest()#.interpolate("nearest")
     elif time_cell_method == "mean":
         if time_offset is True:
             loffset = _get_loffset(time)

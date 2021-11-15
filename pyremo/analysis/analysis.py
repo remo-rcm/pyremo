@@ -36,12 +36,13 @@ def stack_variables(ds, varnames, name=None, long_name=None):
     return stack
 
 
-def weighted_field_mean(ds, lon='rlon', lat='rlat'):
+def weighted_field_mean(ds, lon='rlon', lat='rlat', weights=None):
     """
     function to compute area-weighted spatial means
     """
-    weight = np.cos(np.deg2rad(ds[lat]))
-    return ds.weighted(weight).mean(dim=(lon, lat))
+    if weights is None:
+        weights = np.cos(np.deg2rad(ds[lat]))
+    return ds.weighted(weights).mean(dim=(lon, lat))
 
 
 def seasonal_mean(da):

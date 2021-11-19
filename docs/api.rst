@@ -35,7 +35,7 @@ Physics
    physics.precipitation_flux
    physics.water_vapour
    physics.specific_humidity_from_dewpoint
-   phyiscs.relative_humidity_from_dewpoint
+   physics.relative_humidity_from_dewpoint
    physics.surface_runoff_flux
    physics.surface_downwelling_shortwave_flux_in_air
    physics.surface_downwelling_longwave_flux_in_air
@@ -90,6 +90,9 @@ Cmorization
 
    cmor.prepare_variable
    cmor.cmorize_variable
+   cmor.season
+   cmor.season_bounds
+   cmor.mid_of_season
 
 Tutorial
 ========

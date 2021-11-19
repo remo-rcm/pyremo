@@ -8,6 +8,7 @@ from dateutil import relativedelta as reld
 from warnings import warn
 
 from .derived import derivator
+from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_cordex_pole
 
 try:
     import cmor
@@ -18,7 +19,9 @@ from ..core import codes
 
 xr.set_options(keep_attrs=True)
 
-loffsets = {"3H": dt.timedelta(hours=1, minutes=30), "6H": dt.timedelta(hours=3)}
+loffsets = {"3H": dt.timedelta(hours=1, minutes=30), 
+            "6H": dt.timedelta(hours=3),
+            "D" : dt.timedelta(hours=12)}
 
 # Y=2000
 
@@ -27,10 +30,9 @@ units_convert_rules = {
     "kg/kg": (lambda x: x, "1"),
 }
 
-
-def derive_variable(varname):
-    return getattr(derived, varname)
-
+coordinate = cx.cordex_cmor_table('coordinate')
+formula_terms = cx.cordex_cmor_table('formula_terms')
+cv = cx.cordex_cmor_table('CV')
 
 def ensure_cftime(func):
     def wrapper(date, **kwargs):
@@ -85,7 +87,7 @@ def _resample(
 ):
     """Resample a REMO variable."""
     if time_cell_method == "point":
-        return ds.resample(time=time, label=label, **kwargs).interpolate("nearest")
+        return ds.resample(time=time, label=label, **kwargs).nearest()#.interpolate("nearest")
     elif time_cell_method == "mean":
         if time_offset is True:
             loffset = _get_loffset(time)
@@ -116,36 +118,6 @@ def _crop_to_cordex_domain(ds, domain):
     )
 
 
-def _get_varinfo(name):
-    # fails silently
-    try:
-        return codes.get_dict(name)
-    except:
-        return None
-
-
-def _get_pole(ds):
-    """returns the first pole we find in the dataset"""
-    pol_names = ["rotated_latitude_longitude", "rotated_pole"]
-    for pol in pol_names:
-        return ds[pol]
-    return None
-
-
-def _set_time_units(time, units):
-    time.encoding["units"] = units
-    return time
-
-
-def _encode_time(time):
-    """encode xarray time axis into cf values
-
-    see https://github.com/pydata/xarray/issues/4412
-
-    """
-    return xr.conventions.encode_cf_variable(time)
-
-
 def _load_table(table):
     cmor.load_table(cx.cordex_cmor_table(table))
 
@@ -157,13 +129,16 @@ def _setup(table):
 
 def _define_axes(ds, table):
     _load_table(table)
-    time_values = _encode_time(ds.time).values
-    cmorTime = cmor.axis(
-        "time",
-        coord_vals=time_values,
-        cell_bounds=_get_bnds(time_values),
-        units=ds.time.encoding["units"],
-    )
+    if "time" in ds:
+        time_values = _encode_time(ds.time).values
+        cmorTime = cmor.axis(
+            "time",
+            coord_vals=time_values,
+            cell_bounds=_get_bnds(time_values),
+            units=ds.time.encoding["units"],
+        )
+    else:
+        cmorTime = None
     cmorLat = cmor.axis(
         "gridlatitude",
         coord_vals=ds.rlat.values,
@@ -189,8 +164,8 @@ def _define_grid(ds, table, grid_table="grids"):
 
     pole = _get_pole(ds)
     pole_dict = {
-        "grid_north_pole_latitude": 39.25,
-        "grid_north_pole_longitude": -162,
+        "grid_north_pole_latitude": pole.grid_north_pole_latitude,
+        "grid_north_pole_longitude": pole.grid_north_pole_longitude,
         "north_pole_grid_longitude": 0.0,
     }
     cmorGM = cmor.set_grid_mapping(
@@ -205,12 +180,22 @@ def _define_grid(ds, table, grid_table="grids"):
 
 def _cmor_write(da, table, cmorTime, cmorGrid, file_name=True):
     cmor.load_table(cx.cordex_cmor_table(table))
-    cmor_var = cmor.variable(da.name, da.units, [cmorTime, cmorGrid])
+    if cmorTime is None:
+        coords = [cmorGrid]
+    else:
+        coords = [cmorTime, cmorGrid]
+    cmor_var = cmor.variable(da.name, da.units, coords)
     cmor.write(cmor_var, da.values)
     return cmor.close(cmor_var, file_name=file_name)
 
 
 def _units_convert(da, table_file):
+    """Convert units.
+    
+    Convert units according to the rules in units_convert_rules dict.
+    Maybe metpy can do this also: https://unidata.github.io/MetPy/latest/tutorials/unit_tutorial.html
+    
+    """
     with open(cx.cordex_cmor_table(table_file)) as f:
         table = json.load(f)
     units = da.units
@@ -238,11 +223,14 @@ def prepare_variable(
             CORDEX_domain = ds.CORDEX_domain
         except:
             warnings.warn("could not identify CORDEX domain")
+    pole = _get_pole(ds)
+    if pole is None:
+        pole = _get_cordex_pole(CORDEX_domain)
     varinfo = _get_varinfo(varname)
     if varinfo is not None:
         remo_name = varinfo["variable"]
         cf_name = varinfo["cf_name"]
-        var_ds = xr.merge([ds[remo_name], _get_pole(ds)])
+        var_ds = xr.merge([ds[remo_name], pole])
         var_ds = var_ds.rename_vars({remo_name: cf_name})
     elif allow_derive is True:
         try:

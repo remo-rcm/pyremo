@@ -16,5 +16,8 @@ dependencies:
   - pytest-cov
   - pytest-env
   - cmor
+  - fsspec
+  - requests
+  - aiohttp
   - pip:
-    - py-cordex >=0.2.0
+    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now

@@ -312,7 +312,10 @@ def cmorize_variable(
                                   CORDEX_domain='EUR-11')
 
     """
-    time_cell_method = _get_time_cell_method(varname, cmor_table)
+    if "time" in ds:
+        time_cell_method = _get_time_cell_method(varname, cmor_table)
+    else:
+        time_cell_method = None
     if resample:
         resample_freq = _convert_cmor_to_resample_frequency(cmor_table)
         ds = _resample(ds, time=resample_freq, time_cell_method=time_cell_method)

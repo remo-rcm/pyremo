@@ -275,7 +275,7 @@ def prepare_variable(
 
 
 def cmorize_variable(
-    ds, varname, cmor_table, dataset_table, allow_units_convert=False, resample=True, **kwargs
+    ds, varname, cmor_table, dataset_table, allow_units_convert=False, resample=False, **kwargs
 ):
     """Cmorizes a variable.
 

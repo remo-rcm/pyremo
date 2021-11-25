@@ -23,13 +23,13 @@ loffsets = {"3H": dt.timedelta(hours=1, minutes=30),
             "6H": dt.timedelta(hours=3),
             "D" : dt.timedelta(hours=12)}
 
-#grouped_frequency = {"fx"  : None,
-#                     "1hr" : "A",
-#                     "3hr" : "A",
-#                     "6hr" : "A",
-#                     "day" : "5A",
-#                     "mon" : "10A",
-#                     "sem" : "10A"}
+grouped_frequency = {"fx"  : None,
+                     "1hr" : "A",
+                     "3hr" : "A",
+                     "6hr" : "A",
+                     "day" : "5A",
+                     "mon" : "10A",
+                     "sem" : "10A"}
 
 # Y=2000
 
@@ -86,25 +86,25 @@ def to_cftime(date, calendar="proleptic_gregorian"):
 #                 if start <= date <= end)
 
 
-#def _get_grouped_freq(cmor_table):
-#    return grouped_frequency[cmor_table]
+def _get_grouped_freq(cmor_table):
+    return grouped_frequency[cmor_table]
 
-#def _get_grouped_dictionary(resampled, dim="time"):
-#    """Concat resampled groups if lenght of time series of a single group is equal to 1""" 
-#    grouped_dict= {}
-#    i=0
-#    for time, group in resampled:
-#        if len(group.time) == 1:
-#            if i-1 in grouped_dict.keys():
-#                grouped_dict[i-1] = xr.concat([grouped_dict[i-1], group], dim=dim)
-#            else:
-#                grouped_dict[i+1] = group
-#        elif i in grouped_dict.keys():
-#            grouped_dict[i] = xr.concat([grouped_dict[i], group], dim=dim)
-#        else:
-#            grouped_dict[i] = group
-#        i += 1
-#    return grouped_dict
+def _get_grouped_dictionary(resampled, dim="time"):
+    """Concat resampled groups if lenght of time series of a single group is equal to 1""" 
+    grouped_dict= {}
+    i=0
+    for time, group in resampled:
+        if len(group.time) == 1:
+            if i-1 in grouped_dict.keys():
+                grouped_dict[i-1] = xr.concat([grouped_dict[i-1], group], dim=dim)
+            else:
+                grouped_dict[i+1] = group
+        elif i in grouped_dict.keys():
+            grouped_dict[i] = xr.concat([grouped_dict[i], group], dim=dim)
+        else:
+            grouped_dict[i] = group
+        i += 1
+    return grouped_dict
 
 def _get_loffset(time):
     return loffsets.get(time, None)
@@ -325,48 +325,48 @@ def cmorize_variable(
     return _cmor_write(ds_prep[varname], cmor_table, cmorTime, cmorGrid)
 
 
-#def cmorize_chunked_variable(
-#    ds, varname, cmor_table, dataset_table, **kwargs
-#):
-#    """Group dataset into several data chunks.
-#    Cmorize a variable for each chunk
-#
-#    Parameters
-#    ----------
-#    ds : xr.Dataset
-#        REMO Dataset.
-#    varname: str
-#        CF name of the variable that should be cmorized.
-#    cmor_table : str
-#        Filepath to cmor table.
-#    dataset_table: str
-#        Filepath to dataset cmor table.
-#    **kwargs:
-#        Argumets passed to cmorize_variable.
-#
-#    Returns
-#    -------
-#    filename_list
-#        List of filepathes to cmorized files.
-#
-#
-#    Example
-#    -------
-#    Example for cmorization of a chunked dataset that contains REMO output::
-#
-#        $ filename_list = pr.cmor.cmorize_chunked_variable(ds, 'tas', 'Amon',
-#                                  cx.cordex_cmor_table('remo_example'),
-#                                  CORDEX_domain='EUR-11')
-#    """
-#    filename_list = []
-#    grouped_freq = _get_grouped_freq(cmor_table)
-#    if grouped_freq:
-#        resampled    = ds.resample(time=grouped_freq)
-#        grouped_dict = _get_grouped_dictionary(resampled, dim="time")
-#    else:
-#        grouped_dict = {0:ds}
-#    for name, group in grouped_dict.items():
-#        print(group)
-#        filename_list += [cmorize_variable(group, varname, cmor_table, dataset_table, **kwargs)]
-#    return filename_list
+def cmorize_chunked_variable(
+    ds, varname, cmor_table, dataset_table, **kwargs
+):
+    """Group dataset into several data chunks.
+    Cmorize a variable for each chunk
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        REMO Dataset.
+    varname: str
+        CF name of the variable that should be cmorized.
+    cmor_table : str
+        Filepath to cmor table.
+    dataset_table: str
+        Filepath to dataset cmor table.
+    **kwargs:
+        Argumets passed to cmorize_variable.
+
+    Returns
+    -------
+    filename_list
+        List of filepathes to cmorized files.
+
+
+    Example
+    -------
+    Example for cmorization of a chunked dataset that contains REMO output::
+
+        $ filename_list = pr.cmor.cmorize_chunked_variable(ds, 'tas', 'Amon',
+                                  cx.cordex_cmor_table('remo_example'),
+                                  CORDEX_domain='EUR-11')
+    """
+    filename_list = []
+    grouped_freq = _get_grouped_freq(cmor_table)
+    if grouped_freq:
+        resampled    = ds.resample(time=grouped_freq)
+        grouped_dict = _get_grouped_dictionary(resampled, dim="time")
+    else:
+        grouped_dict = {0:ds}
+    for name, group in grouped_dict.items():
+        print(group)
+        filename_list += [cmorize_variable(group, varname, cmor_table, dataset_table, **kwargs)]
+    return filename_list
     

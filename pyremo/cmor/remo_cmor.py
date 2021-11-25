@@ -159,7 +159,6 @@ def _define_axes(ds, table):
     _load_table(table)
     if "time" in ds:
         time_values = _encode_time(ds.time).values
-        print(time_values)
         cmorTime = cmor.axis(
             "time1",
             coord_vals=time_values,
@@ -366,7 +365,6 @@ def cmorize_chunked_variable(
     else:
         grouped_dict = {0:ds}
     for name, group in grouped_dict.items():
-        print(group)
         filename_list += [cmorize_variable(group, varname, cmor_table, dataset_table, **kwargs)]
     return filename_list
     

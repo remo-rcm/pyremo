@@ -8,7 +8,7 @@ from dateutil import relativedelta as reld
 from warnings import warn
 
 from .derived import derivator
-from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_cordex_pole
+from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_cordex_pole, _get_time_cell_method, _get_cfvarinfo, _strip_time_cell_method
 
 try:
     import cmor
@@ -22,6 +22,13 @@ xr.set_options(keep_attrs=True)
 loffsets = {"3H": dt.timedelta(hours=1, minutes=30), 
             "6H": dt.timedelta(hours=3),
             "D" : dt.timedelta(hours=12)}
+
+# map mip frequencies to pandas frequencies
+freq_map = {
+            "1hr" : "H",
+            "3hr" : "3H",
+            "6hr" : "6H",
+            "day" : "D"}
 
 # Y=2000
 
@@ -218,11 +225,7 @@ def prepare_variable(
     allow_derive=False,
 ):
     """prepares a variable for cmorization."""
-    if CORDEX_domain is None:
-        try:
-            CORDEX_domain = ds.CORDEX_domain
-        except:
-            warnings.warn("could not identify CORDEX domain")
+    is_ds = isinstance(ds, xr.Dataset)
     pole = _get_pole(ds)
     if pole is None:
         pole = _get_cordex_pole(CORDEX_domain)
@@ -230,11 +233,15 @@ def prepare_variable(
     if varinfo is not None:
         remo_name = varinfo["variable"]
         cf_name = varinfo["cf_name"]
-        var_ds = xr.merge([ds[remo_name], pole])
-        var_ds = var_ds.rename_vars({remo_name: cf_name})
+        if is_ds is True:
+            var_ds = ds[remo_name]
+        else:
+            var_ds = ds
+        var_ds.name = cf_name
     elif allow_derive is True:
         try:
-            var_ds = xr.merge([derivator.derive(ds, varname), _get_pole(ds)])
+            # assume it's a dataset with input variables for derivation.
+            var_ds = derivator.derive(ds, varname)
         except:
             raise Exception("could not find or derive variable: {}".format(varname))
     else:
@@ -248,12 +255,28 @@ def prepare_variable(
         var_ds["time"] = _set_time_units(ds.time, time_units)
     if CORDEX_domain is not None:
         var_ds = _crop_to_cordex_domain(var_ds, CORDEX_domain)
-    var_ds.attrs = ds.attrs
+    #var_ds.attrs = ds.attrs
     return var_ds
 
 
+def adjust_frequency(ds, cfvarinfo, input_freq=None):
+    if input_freq is None and 'time' in ds.coords:
+        input_freq = xr.infer_freq(ds.time)
+    if input_freq is None:
+        warn('could not determine frequency of input data, will assume it is correct.')
+        return ds
+    freq = freq_map[cfvarinfo['frequency']]
+    if freq != input_freq:
+        warn('resampling input data from {} to {}'.format(input_freq, freq))
+        resample = _resample(ds, freq, time_cell_method=_strip_time_cell_method(cfvarinfo))
+        return resample
+    return ds
+    
+
+
 def cmorize_variable(
-    ds, varname, cmor_table, dataset_table, allow_units_convert=False, **kwargs
+    ds, varname, cmor_table, dataset_table, allow_units_convert=False, 
+    allow_resample=False, input_freq=None, CORDEX_domain=None, **kwargs
 ):
     """Cmorizes a variable.
 
@@ -288,7 +311,19 @@ def cmorize_variable(
                                   CORDEX_domain='EUR-11')
 
     """
+    if CORDEX_domain is None:
+        try:
+            CORDEX_domain = ds.CORDEX_domain
+        except:
+            warnings.warn("could not identify CORDEX domain")
     ds_prep = prepare_variable(ds, varname, **kwargs)
+    #time_cell_method = _get_time_cell_method(varname, cmor_table)
+    ds_prep = adjust_frequency(ds_prep, _get_cfvarinfo(varname, cmor_table), input_freq)
+    pole = _get_pole(ds_prep)
+    if pole is None:
+        pole = _get_cordex_pole(CORDEX_domain)
+        ds_prep = xr.merge([ds_prep, pole])
+    #return ds_prep
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
     _setup(dataset_table)

@@ -1,9 +1,31 @@
 
+import os
+import glob
 
 import numpy as np
 import xarray as xr
 
+from ..archive import archive
+from ..core.remo_ds import preprocess as remo_preprocess
+from ..core import codes
+
 soil_temps = ['TS', 'TSL', 'TEMP2', 'TSN', 'TD3', 'TD4', 'TD5']
+
+
+def open_mfdataset(files, use_cftime=True, parallel=True, data_vars='minimal', chunks={'time':1}, 
+                   coords='minimal', compat='override', drop=None, **kwargs):
+    """optimized function for opening large cf datasets.
+
+    based on https://github.com/pydata/xarray/issues/1385#issuecomment-561920115
+    
+    """
+    def drop_all_coords(ds):
+        return ds.reset_coords(drop=True)
+    ds = xr.open_mfdataset(files, parallel=parallel, decode_times=False, combine='by_coords', 
+                       preprocess=drop_all_coords, decode_cf=False, chunks=chunks,
+                      data_vars=data_vars, coords=coords, compat=compat, **kwargs)
+    return xr.decode_cf(ds, use_cftime=use_cftime)
+
 
 
 class VariableSet():
@@ -53,8 +75,3 @@ def seasonal_mean(da):
     return da.groupby('time.season').mean(dim='time')
 
 
-
-class Experiment():
-    
-    def __init__(path):
-        return None

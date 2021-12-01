@@ -4,6 +4,8 @@ import os
 import pandas as pd
 from pathlib import Path
 
+from warnings import warn
+
 import tarfile
 
 import parse
@@ -61,27 +63,28 @@ def get_filename_from_archive(tar, pattern):
 def extract_file(filename, pattern, path):
     open_tar = tarfile.open(filename, 'r')
     filename = get_filename_from_archive(open_tar, pattern)
-    print(filename)
     #dest = os.path.join(scratch, filename)
     open_tar.extract(filename, path=path)
     return os.path.join(path, filename)
 
 
-def extract_files(tars, pattern="", path=None, parallel=False):
+def extract_files(tars, pattern="", path=None, delayed=False, compute=False):
+    if not isinstance(tars, list):
+        tars = [tars]
     if path is None:
         path = os.path.join(os.environ['SCRATCH'], '_archive_extract')
-    else:
-        path = ""
     filenames = []
-    if parallel is True:
-        from dask import delayed
-        futures = []
+    if delayed is True:
+        from dask import delayed as delay
     else:
-        def delayed(x):
+        def delay(x):
             return x
         futures = None
     for tar in tars:
-        filenames.append(delayed(extract_file)(tar, pattern, path))
+        filenames.append(delay(extract_file)(tar, pattern, path))
+    if delayed is True and compute is True:
+        import dask
+        return list(dask.compute(*filenames))
     return filenames
 
 
@@ -92,36 +95,42 @@ def _find_files(dir, file_template="e*", exclude=None):
 
 
 def _parse_file(file):
+    file = Path(file).stem
     for pattern in patterns:
         finfo = parse.parse(pattern, file)
         if finfo:
             return finfo.named
 
 
-def get_data_catalog(dir, parse_dates=False, exclude=None):
-    filepathes = _find_files(dir, exclude=exclude)
-    df_all = pd.DataFrame()
-    for path in tqdm(filepathes):
+def _parse_filepathes(filepathes, parse_dates=True):
+    finfos = []
+    for f in tqdm(filepathes):
+        path = Path(f)
         finfo = _parse_file(path.stem)
         if finfo is None:
-            print("could not parse: ", path.stem)
+            warn("could not parse: ", path.stem)
             continue
         finfo["path"] = str(path)
         finfo["suffix"] = path.suffix
-        df = pd.DataFrame(finfo, index=[0])
-        if parse_dates:
+        if parse_dates is True:
             for dpat in date_patterns:
                 try:
-                    df["date"] = pd.to_datetime(df.date, format=dpat)
+                    finfo["date"] = pd.to_datetime(finfo["date"], format=dpat)
                     break
                 except:
                     pass
-        df_all = df_all.append(df, ignore_index=True)
+        finfos.append(finfo)
+    return finfos
+        
+        
+def get_data_catalog(dir, parse_dates=False, exclude=None):
+    filepathes = _find_files(dir, exclude=exclude)
+    df = pd.DataFrame(_parse_filepathes(filepathes, parse_dates=parse_dates))
     try:
-        df_all["code"] = df_all.code.astype(pd.Int64Dtype())
+        df["code"] = df.code.astype(pd.Int64Dtype())
     except:
         pass
-    return df_all
+    return df
 
 
 def _time_range(df, time_range):
@@ -144,36 +153,59 @@ class RemoCatalog():
         if os.path.isfile(self.csv) and force_parse is False:
             self.df = pd.read_csv(self.csv)
         else:
-            self.df = get_data_catalog(path, parse_dates=True)
+            self.df = self.parse(path, parse_dates=True)
             self.to_csv()
+            
+    def __add__(self, other):
+        df = pd.concat([self.df, other.df])
+        cat = RemoCatalog(self.path)
+        cat.df = df
+        return cat
+    
+    def parse(self, path=None, parse_dates=True):
+        if path is None:
+            path = self.path
+        return get_data_catalog(path, parse_dates=parse_dates)
         
     def to_csv(self, path=None):
         self.df.to_csv(self.csv, index=False)
   
     def search(self, time_range=None, **kwargs):
-        return _search(self.df, time_range=time_range, **kwargs)#.sort_values('date') 
+        return _search(self.df, time_range=time_range, **kwargs).sort_values('date') 
 
     def archive(self, type, suffix='.tar', time_range=None, **kwargs):
         return _search(self.df, type=type, suffix=suffix,
                        time_range=time_range, **kwargs).sort_values('date')
     
+    def update(self, filepathes):
+        self.df = pd.concat([self.df, pd.DataFrame(_parse_filepathes(filepathes))])
+    
     
 class RemoArchive():
     
-    def __init__(self, path, force_parse=False):
+    def __init__(self, path, extract_path=None, force_parse=False):
         self.path = path
-        self.catalog = RemoCatalog(path, force_parse)
+        if extract_path is None:
+            self.extract_path = os.path.join(os.environ['SCRATCH'], '_archive_extract')
+        else:
+            self.extract_path = extract_path
+        self.catalog = RemoCatalog(self.path, force_parse) + RemoCatalog(self.extract_path, force_parse=True)
+        #self.df = get_data_catalog(self.extract_path, parse_dates=True)
         
     def extract(self, type, code=None, time=None):
         pass
                  
-    def _extract_code(self, code, time_range=None, **kwargs):
+    def _extract_code(self, code, time_range=None, parallel=False, **kwargs):
         pattern = "c{:03d}".format(code)
         tars = list(self.catalog.archive('e', time_range=time_range, **kwargs).path)
-        return extract_files(tars, pattern=pattern, path=None, parallel=True)
-            
-
+        filepathes = extract_files(tars, pattern=pattern, path=self.extract_path, 
+                             delayed=parallel, compute=parallel)
+        self.catalog.update(filepathes)
+        return filepathes
     
+    def first_tfile(self):
+        tar = list(self.catalog.archive('t').path)[0]
+        return extract_files(tar, pattern="010106")[0]
     
-        
-        
+    def monthly(self, time_range=None):
+        return list(self.catalog.search(type='m', suffix='.nc', time_range=time_range).path)        

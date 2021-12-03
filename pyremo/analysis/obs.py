@@ -12,7 +12,7 @@ from ..core import codes
 soil_temps = ['TS', 'TSL', 'TEMP2', 'TSN', 'TD3', 'TD4', 'TD5']
 
 
-def open_mfdataset(files, use_cftime=True, parallel=True, data_vars='minimal', chunks={'time':1}, 
+def open_mfdataset(files, use_cftime=True, parallel=True, data_vars='minimal', chunks="auto", 
                    coords='minimal', compat='override', drop=None, **kwargs):
     """optimized function for opening large cf datasets.
 
@@ -25,6 +25,19 @@ def open_mfdataset(files, use_cftime=True, parallel=True, data_vars='minimal', c
                        preprocess=drop_all_coords, decode_cf=False, chunks=chunks,
                       data_vars=data_vars, coords=coords, compat=compat, **kwargs)
     return xr.decode_cf(ds, use_cftime=use_cftime)
+
+
+def open_mfdataset2(files, use_cftime=True, parallel=True, data_vars='minimal', chunks="auto", 
+                   coords='minimal', compat='override', drop=None, **kwargs):
+    """optimized function for opening large cf datasets.
+
+    based on https://github.com/pydata/xarray/issues/1385#issuecomment-561920115
+    
+    """
+    ds = xr.open_mfdataset(files, parallel=parallel, decode_times=True, combine='by_coords', 
+                       decode_cf=True, chunks=chunks, use_cftime=use_cftime,
+                      data_vars=data_vars, coords=coords, compat=compat, **kwargs)
+    return ds#xr.decode_cf(ds, use_cftime=use_cftime)
 
 
 
@@ -145,8 +158,34 @@ def inv_map(dict):
     return {v: k for k, v in dict.items()}
     
     
-def create_dataset(filenames, mask=None, varmap=None):
-    ds = xr.merge([xr.open_dataset(f)[v] for v, f in filenames.items()])
+def _glob_filenames(pattern):
+    filenames = glob.glob(pattern)
+    filenames.sort()
+    return filenames
+
+
+def _get_dataarrays(filenames, drop=None, chunks="auto", **kwargs):
+    da = []
+    for v, f in filenames.items():
+        files = _glob_filenames(f)
+        if len(files) > 1:
+            ds = open_mfdataset2(files)
+        else:
+            ds = xr.open_dataset(files[0], chunks=chunks, **kwargs)
+        if drop is not None:
+            try:
+                ds.drop(drop)
+            #grid_mapping = cx.preprocessing.get_grid_mapping(ds)
+            #da.append(xr.merge(ds[v], grid_mapping))         
+            except:
+                pass
+        da.append(ds)
+    return da
+
+
+def create_dataset(filenames, drop=None, mask=None, varmap=None, **kwargs):
+    ds = xr.merge(_get_dataarrays(filenames, drop=drop, **kwargs), 
+                  compat='override')
     if mask is not None:
         ds["mask"] = xr.where(~np.isnan(ds[mask].isel(time=0)),1,0)
     if varmap is not None:
@@ -154,7 +193,8 @@ def create_dataset(filenames, mask=None, varmap=None):
     return ds
     
     
-def cru_ts4():
+def cru_ts4(chunks="auto", **kwargs):
+    """Returns CRU_TS4 dataset from DKRZ filesystem"""
     varmap = {'tas': 'tmp',
               'pr': 'pre',
               'orog': 'topo'}
@@ -163,10 +203,11 @@ def cru_ts4():
     template = "cru_ts4.04.1901.2019.{variable}.dat.nc"
     filenames = {key: os.path.join(path, template.format(variable=key)) for key in variables}
     filenames['topo'] = "/mnt/lustre02/work/ch0636/eddy/pool/obs/cru/CRU/TS4.04/original/cru404_c129.nc"
-    return create_dataset(filenames, mask='tmp', varmap=varmap)
+    return create_dataset(filenames, mask='tmp', drop="stn", varmap=varmap, chunks=chunks, **kwargs)
 
 
-def eobs(version="v22.0e"):
+def eobs(version="v22.0e", chunks="auto", **kwargs):
+    """Returns eobs dataset from DKRZ filesystem"""
     varmap = {'tas': 'tg',
               'pr': 'rr',
               'tasmax': 'tx',
@@ -180,9 +221,18 @@ def eobs(version="v22.0e"):
     filenames = {key: os.path.join(path, template).format(variable=key, version=version, cf_name=inv_map(varmap)[key]) 
                  for key in variables}
     filenames['elevation'] = "/mnt/lustre02/work/ch0636/eddy/pool/obs/eobs/{version}/original_025/fx/orog/elev_ens_0.25deg_reg_{version}.nc".format(version=version)
-    return create_dataset(filenames, mask='tg', varmap=varmap)
+    return create_dataset(filenames, mask='tg', varmap=varmap, chunks=chunks, **kwargs)
     
 #CRU_TS4 = Dataset(tas="/mnt/lustre02/work/ch0636/eddy/pool/obs/cru/CRU/TS4.04/original/cru_ts4.04.1901.2019.tmp.dat.nc")
+
+def hyras(chunks="auto", **kwargs):
+    """Returns hyras dataset from DKRZ filesystem."""
+    variables = ["tas", "pr", "tmax", "tmin", "hurs"]
+    path = "/mnt/lustre02/work/ch0636/eddy/pool/obs/HYRAS/{variable}"
+    template = "{variable}_hyras_5_*_v3.0_ocz.nc"
+    filenames = {key: os.path.join(path, template).format(variable=key) 
+                 for key in variables}
+    return create_dataset(filenames, mask="tas", chunks=chunks, **kwargs)
 
 
 class RemoExperiment():
@@ -248,4 +298,56 @@ def get_regridder(finer, coarser, method='bilinear', **kwargs):
     
     import xesmf as xe
     
-    return xe.Regridder(finer, coarser, method=method, **kwargs)   
+    return xe.Regridder(finer, coarser, method=method, **kwargs)
+
+
+def compare_seasons(ds1, ds2, orog1=None, orog2=None, do_height_correction=False,
+                   regrid='ds1'):
+    ds1_seasmean = seasonal_mean(ds1)
+    ds2_seasmean = seasonal_mean(ds2)
+    if regrid == "ds1":
+        regridder = get_regridder(ds1, ds2)
+        print(regridder)
+        ds1_seasmean = regridder(ds1_seasmean)
+        
+    if do_height_correction is True:
+        orog1 = regridder(orog1)
+        ds1_seasmean += height_correction(orog1, orog2)
+    return ds2_seasmean - ds1_seasmean    
+    return xr.where(ds1_seasmean.mask, ds2_seasmean - ds1_seasmean, np.nan)
+
+
+
+def plot_seasons(da, vmin=None, vmax=None, extent=None, cmap='bwr', transform=None,
+                projection=None, crs_extent=None, borders=False, xlocs=range(-180,180,10), ylocs=range(-90,90,10)):
+    """plot seasonal means"""
+    from matplotlib import pyplot as plt
+    import cartopy.crs as ccrs
+    import cartopy.feature as cf
+    if projection is None:
+        projection=ccrs.PlateCarree()
+    if transform is None:
+        transform=ccrs.PlateCarree()
+    if crs_extent is None:
+        crs_extent = transform
+    #plt.subplots_adjust(hspace=1.5, wspace=1.0)
+    fig, ((ax1, ax2),(ax3, ax4)) = plt.subplots(
+        ncols=2, nrows=2, subplot_kw={'projection': projection}, 
+        figsize=(18,14))
+    
+    axes = (ax1, ax2, ax3, ax4)
+    for ax in axes:
+        #ax.set_axis_off()
+        if extent is None:
+            ax.set_extent([da.rlon.min(), da.rlon.max(), da.rlat.min(), da.rlat.max()], crs=transform)
+        else:
+            ax.set_extent(extent)
+        ax.gridlines(draw_labels=True, linewidth=0.5, color='gray', 
+                      xlocs=xlocs, ylocs=ylocs)
+        ax.coastlines(resolution='50m', color='black', linewidth=1)
+        if borders: ax.add_feature(cf.BORDERS)
+    for season, ax in zip(da.season, axes):
+        im = da.sel(season=season).plot(ax=ax, vmin=vmin, vmax=vmax, cmap=cmap, 
+                                        transform=transform, add_colorbar=False)
+    cbar = fig.colorbar(im, ax=axes)
+    return plt

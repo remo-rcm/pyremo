@@ -20,7 +20,8 @@ New Features
 - Included ERA5 cmorizer.
 - Includes experimental cmorization module (:pull:`20`, :pull:`21`, :pull:`22`,
   :pull:`23`, :pull:`25`, :pull:`26`).
-  
+- Included production analysis (:pull:`33`).
+ 
 Internal Changes
 ~~~~~~~~~~~~~~~~
 - Tables are removed from the package and stored in an extra github repo.

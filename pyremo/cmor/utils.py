@@ -57,7 +57,10 @@ def _get_cfvarinfo(cf_varname, table):
 
 
 def _get_time_cell_method(cf_varname, table):
-    return _strip_time_cell_method(_get_cfvarinfo(cf_varname, table))
+    try:
+        return _strip_time_cell_method(_get_cfvarinfo(cf_varname, table))
+    except:
+        return None
 
 
 def _strip_time_cell_method(cfvarinfo):

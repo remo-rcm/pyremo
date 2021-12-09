@@ -1,4 +1,3 @@
-import warnings
 import xarray as xr
 import cordex as cx
 import datetime as dt
@@ -15,7 +14,7 @@ from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_
 try:
     import cmor
 except:
-    warnings.warn("no python cmor available")
+    warn("no python cmor available")
 
 from ..core import codes
 
@@ -151,9 +150,12 @@ def _get_time_axis_name(time_cell_method):
     return time_axis_names[time_cell_method]
 
 
-def _define_axes(ds, table, time_cell_method="point"):
+def _define_axes(ds, table, time_cell_method=None):
     _load_table(table)
     if "time" in ds:
+        if time_cell_method is None:
+            warn('no time_cell_method given, assuming: point')
+            time_cell_method = "point"
         time_values = _encode_time(ds.time).values
         time_axis_name = _get_time_axis_name(time_cell_method)
         cmorTime = cmor.axis(
@@ -340,7 +342,7 @@ def cmorize_variable(
         try:
             CORDEX_domain = ds.CORDEX_domain
         except:
-            warnings.warn("could not identify CORDEX domain")
+            warn("could not identify CORDEX domain")
     ds_prep = prepare_variable(ds, varname, **kwargs)
     cfvarinfo = _get_cfvarinfo(varname, cmor_table)
     #time_cell_method = _get_time_cell_method(varname, cmor_table)

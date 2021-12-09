@@ -107,13 +107,13 @@ def _resample(
 ):
     """Resample a REMO variable."""
     if time_cell_method == "point":
-        return _clear_time_axis(ds.resample(time=time, label=label, **kwargs).nearest())#.interpolate("nearest")
+        return ds.resample(time=time, label=label, **kwargs).nearest()#.interpolate("nearest")
     elif time_cell_method == "mean":
         if time_offset is True:
             loffset = _get_loffset(time)
         else:
             loffset = None
-        return _clear_time_axis(ds.resample(time=time, label=label, loffset=loffset, **kwargs).mean())
+        return ds.resample(time=time, label=label, loffset=loffset, **kwargs).mean()
     else:
         raise Exception("unknown time_cell_method: {}".format(time_cell_method))
 
@@ -342,8 +342,9 @@ def cmorize_variable(
         except:
             warnings.warn("could not identify CORDEX domain")
     ds_prep = prepare_variable(ds, varname, **kwargs)
+    cfvarinfo = _get_cfvarinfo(varname, cmor_table)
     #time_cell_method = _get_time_cell_method(varname, cmor_table)
-    ds_prep = adjust_frequency(ds_prep, _get_cfvarinfo(varname, cmor_table), input_freq)
+    ds_prep = adjust_frequency(ds_prep, cfvarinfo, input_freq)
     pole = _get_pole(ds_prep)
     if pole is None:
         pole = _get_cordex_pole(CORDEX_domain)
@@ -352,5 +353,6 @@ def cmorize_variable(
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
     _setup(dataset_table)
+    time_cell_method = _strip_time_cell_method(cfvarinfo)
     cmorTime, cmorGrid = _define_grid(ds_prep, cmor_table, time_cell_method)
     return _cmor_write(ds_prep[varname], cmor_table, cmorTime, cmorGrid)

@@ -56,11 +56,11 @@ def convert_files(files, with_dask=False):
     return results
 
 
-def get_filename_from_archive(tar, pattern):
+def get_filename_from_archive(tar, pattern=None):
     return next(f for f in tar.getnames() if pattern in f)
 
 
-def extract_file(filename, pattern, path):
+def extract_file(filename, path, pattern):
     open_tar = tarfile.open(filename, 'r')
     filename = get_filename_from_archive(open_tar, pattern)
     #dest = os.path.join(scratch, filename)
@@ -68,7 +68,7 @@ def extract_file(filename, pattern, path):
     return os.path.join(path, filename)
 
 
-def extract_files(tars, pattern="", path=None, delayed=False, compute=False):
+def extract_files(tars, pattern=None, path=None, delayed=False, compute=False):
     if not isinstance(tars, list):
         tars = [tars]
     if path is None:
@@ -81,11 +81,21 @@ def extract_files(tars, pattern="", path=None, delayed=False, compute=False):
             return x
         futures = None
     for tar in tars:
-        filenames.append(delay(extract_file)(tar, pattern, path))
+        if pattern is not None:
+            filenames.append(delay(extract_file)(tar, path, pattern))
+        else:
+            filenames.append(delay(extractall)(tar, path))
     if delayed is True and compute is True:
         import dask
         return list(dask.compute(*filenames))
     return filenames
+
+
+def extractall(filename, path=None):
+    open_tar = tarfile.open(filename, 'r')
+    open_tar.extractall(path=path)
+    return [os.path.join(path, f) for f in open_tar.getnames()]
+        
 
 
 def _find_files(dir, file_template="e*", exclude=None):
@@ -139,7 +149,8 @@ def _time_range(df, time_range):
 
 def _search(df, time_range=None, **kwargs):
     for key, value in kwargs.items():
-        df = df[df[key] == value]
+        if value is not None:
+            df = df[df[key] == value]
     if time_range is not None:
             return _time_range(df, time_range)
     return df
@@ -171,6 +182,11 @@ class RemoCatalog():
         self.df.to_csv(self.csv, index=False)
   
     def search(self, time_range=None, **kwargs):
+        """arbitrary search in the catalog
+        
+        search for arbitrary keyword arguments.
+        
+        """
         return _search(self.df, time_range=time_range, **kwargs).sort_values('date') 
 
     def archive(self, type, suffix='.tar', time_range=None, **kwargs):
@@ -178,12 +194,17 @@ class RemoCatalog():
                        time_range=time_range, **kwargs).sort_values('date')
     
     def update(self, filepathes):
-        self.df = pd.concat([self.df, pd.DataFrame(_parse_filepathes(filepathes))])
+        """update catalog with filepathes
+        
+        drops duplicates.
+        
+        """
+        self.df = pd.concat([self.df, pd.DataFrame(_parse_filepathes(filepathes))]).drop_duplicates().reset_index(drop=True)
     
     
 class RemoArchive():
     
-    def __init__(self, path, extract_path=None, force_parse=False):
+    def __init__(self, path, extract_path=None, force_parse=True):
         self.path = path
         if extract_path is None:
             self.extract_path = os.path.join(os.environ['SCRATCH'], '_archive_extract')
@@ -192,8 +213,10 @@ class RemoArchive():
         self.catalog = RemoCatalog(self.path, force_parse) + RemoCatalog(self.extract_path, force_parse=True)
         #self.df = get_data_catalog(self.extract_path, parse_dates=True)
         
-    def extract(self, type, code=None, time=None):
-        pass
+    def _extractall(self, type='t', time_range=None, **kwargs):
+        tars = list(self.catalog.archive(type, time_range=time_range, **kwargs).path)
+        return tars
+        #filepathes = extractall()
                  
     def _extract_code(self, code, time_range=None, parallel=False, **kwargs):
         pattern = "c{:03d}".format(code)
@@ -208,4 +231,10 @@ class RemoArchive():
         return extract_files(tar, pattern="010106")[0]
     
     def monthly(self, time_range=None):
-        return list(self.catalog.search(type='m', suffix='.nc', time_range=time_range).path)        
+        return list(self.catalog.search(type='m', suffix='.nc', time_range=time_range).path)
+    
+    def hourly(self, code=None, time_range=None):
+        return list(self.catalog.search(type='e', code=code, suffix='.nc', time_range=time_range).path)
+    
+    def tfiles(self, time_range=None):
+        return list(self.catalog.search(type='t', suffix='.nc', time_range=time_range).path)

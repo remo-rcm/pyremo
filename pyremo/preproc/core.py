@@ -122,6 +122,60 @@ def intersect(lamgm, phigm, lamem, phiem):
     return result
 
 
+def compute_relative_pol(polphihm,pollamhm,polphiem,pollamem):
+    """python implementation of pol calculation in readni"""
+    import numpy as np
+    if polphihm==polphiem and pollamhm==pollamem:
+        pollam = 0.0
+        polphi = 90.0
+        polgam = 180.0
+    else:
+    #SK      POLGAM = - ZRPI18*ASIN(SIN(POLLAM*ZPIR18)  *
+    #SK     1                     COS(POLPHIEM*ZPIR18)/COS(POLPHIHM*ZPIR18))
+    #SK     2         - 180.0
+        zrpi18 = 57.2957795
+        zpir18 = 0.0174532925
+        polgam = -zrpi18*np.arcsin(np.cos(zpir18*polphiem)*np.sin(zpir18*(pollamhm-pollamem))                         
+                                / np.cos(zpir18*intorg.phtophs(polphiem,pollamem,polphihm,pollamhm)))
+        polphi = intorg.phtophs(args['polphihm'],args['pollamhm'],args['polphiem'],args['pollamem'])
+        pollam = intorg.lmtolms(args['polphihm'],args['pollamhm'],args['polphiem'],args['pollamem'])
+    return {'pollam': pollam, 'polphi': polphi, 'polgam': polgam}
+
+
+def intersect_regional(em, hm):
+    
+    def get_arguments(em, hm):
+        args = {}
+        args['lamluem'] = em['ll_lon']
+        args['philuem'] = em['ll_lat']
+        args['lamluhm'] = hm['ll_lon']
+        args['philuhm'] = hm['ll_lat']
+        args['dlamem'] = em['dlon']
+        args['dlamhm'] = hm['dlon']
+        args['dphiem'] = em['dlat']
+        args['dphihm'] = hm['dlat']
+        args['pollamem'] = em['pollon']
+        args['polphiem'] = em['pollat']
+        args['pollamhm'] = hm['pollon']
+        args['polphihm'] = hm['pollat']
+        args['ieem'] = em['nlon']
+        args['jeem'] = em['nlat']
+        args['ie2hm'] = hm['nlon'] + 2
+        args['je2hm'] = hm['nlat'] + 2
+        return args
+    args = get_arguments(em, hm)
+    args.update(compute_relative_pol(args['polphihm'],args['pollamhm'],
+                                     args['polphiem'],args['pollamem']))
+    print(args)
+    indemi,indemj,dxemhm,dyemhm = intf.intersection_points_regional(**args)
+    dims=('rlon', 'rlat', 'pos')
+    indemi = xr.DataArray(indemi, dims=dims, name='indemi')
+    indemj = xr.DataArray(indemj, dims=dims, name='indemj')
+    dxemhm = xr.DataArray(dxemhm, dims=dims, name='dxemhm')
+    dyemhm = xr.DataArray(dyemhm, dims=dims, name='dyemhm')
+    return indemi,indemj,dxemhm,dyemhm
+
+
 def interpolate_horizontal(
     da, lamem, phiem, lamgm, phigm, name=None, igr=None, blagm=None, blaem=None
 ):
@@ -178,6 +232,8 @@ def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=
     """main interface"""
     gcm_dims = list(horizontal_dims(lamgm))
     rcm_dims = list(horizontal_dims(lamem))
+    print(gcm_dims)
+    print(rcm_dims)
     input_core_dims = [
         gcm_dims,
         gcm_dims,
@@ -188,6 +244,7 @@ def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=
         rcm_dims,
         [],
     ]
+    print(input_core_dims)
     result = xr.apply_ufunc(
         intf.interp_horiz_2d,  # first the function
         da,  # now arguments in the order expected
@@ -200,6 +257,40 @@ def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=
         name,
         input_core_dims=input_core_dims,  # list with one entry per arg
         output_core_dims=[rcm_dims],  # returned data has 3 dimensions
+        vectorize=True,  # loop over non-core dims, in this case: time
+        #  exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
+        dask="parallelized",
+        dask_gufunc_kwargs={"allow_rechunk": True},
+        output_dtypes=[da.dtype],
+    )
+
+    result.name = name
+    # result = result.to_dataset()
+    if keep_attrs:
+        result.attrs = da.attrs
+    # result = result.transpose(..., *spatial_dims(da)[::-1])
+    return result
+
+
+def interp_horiz_remo(da, indemi, indemj, dxemhm, dyemhm, name, keep_attrs=False):
+    """main interface"""
+    em_dims = list(horizontal_dims(da))
+    hm_dims = list(horizontal_dims(indemj))
+    print(em_dims)
+    print(hm_dims)
+    input_core_dims = [em_dims] + 4*[hm_dims] + [[]]
+    print(input_core_dims)
+    #return
+    result = xr.apply_ufunc(
+        intf.interp_horiz_remo_2d,  # first the function
+        da,  # now arguments in the order expected
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        name,
+        input_core_dims=input_core_dims,  # list with one entry per arg
+        output_core_dims=[hm_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
         #  exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",

@@ -20,6 +20,7 @@ from .core import (
     pressure_correction_em,
     pressure_correction_ge,
     correct_uv,
+    intersect_regional
 )
 
 from . import physics
@@ -93,11 +94,11 @@ def to_tar(files, tar_file, mode="w"):
     return tar_file
 
 
-def gm_coords(gds):
+def broadcast_coords(ds, coords=('lon', 'lat')):
     """broadcast 1d global coordinates"""
-    lat2d, lon2d = xr.broadcast(gds.lat, gds.lon)
-    lamgm, phigm = lon2d, lat2d
-    return lamgm, phigm
+    lat2d, lon2d = xr.broadcast(ds[coords[1]], ds[coords[0]])
+    lam, phi = lon2d, lat2d
+    return lam, phi
 
 
 def remap(gds, domain_info, vc, surflib):
@@ -138,7 +139,7 @@ def remap(gds, domain_info, vc, surflib):
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
     ## broadcast 1d global coordinates
-    lamgm, phigm = gm_coords(gds)
+    lamgm, phigm = broadcast_coords(gds)
 
     ## horizontal interpolation
     tge = interpolate_horizontal(gds.ta, lamem, phiem, lamgm, phigm, "T")
@@ -274,6 +275,52 @@ def remap(gds, domain_info, vc, surflib):
 
     # transpose to remo convention
     return ads.transpose(..., "lev", "rlat", "rlon")
+
+
+
+def remap_remo(gds, domain_info_em, domain_info_hm, vc, surflib):
+    """remapping workflow for double nesting
+
+    This function should be similar to the ones in the
+    legacy fortran preprocessor intorg.
+
+    Parameters
+    ----------
+    gds : xarray.Dataset
+        Input model dataset containing atmospheric variables for
+        downscaling, including SST. The dataset must fullfil CF conventions
+        containing: `ta`, `ua`, `va`, `ps`, `tos`, `orog` and `sftlf`.
+
+    domain_info : dict
+        A dictionary containing the domain information of the target domain.
+
+    domain_info : pandas.DataFrame
+        A table with the vertical coordinate coefficients `ak` and `bk`.
+
+    surflib : xarray.Dataset
+        The surface library containing the target grid land sea mask `BLA` and
+        orography `FIB`.
+
+    Returns
+    -------
+    Forcing Data : xarray.core.Dataset
+        Dataset containing the atmospheric forcing data interpolated to the
+        target domain.
+
+    """
+
+    ## curvilinear coordinaetes
+    # remove time dimension if there is one
+    fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
+
+    lamhm, phihm = geo_coords(domain_info_hm, fibhm.rlon, fibhm.rlat)
+    #lamhm = lamhm.isel(pos=0).squeeze(drop=True)
+    #phihm = phihm.isel(pos=0).squeeze(drop=True)
+    indemi,indemj,dxemhm,dyemhm = intersect_regional(em, hm)
+
+    ## broadcast 1d global coordinates
+    #lamem, phiem = gm_coords(gds)
+
 
 
 def add_soil(ads):

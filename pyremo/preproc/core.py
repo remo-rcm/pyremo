@@ -125,6 +125,7 @@ def intersect(lamgm, phigm, lamem, phiem):
 def compute_relative_pol(polphihm,pollamhm,polphiem,pollamem):
     """python implementation of pol calculation in readni"""
     import numpy as np
+    import intorg
     if polphihm==polphiem and pollamhm==pollamem:
         pollam = 0.0
         polphi = 90.0
@@ -137,8 +138,8 @@ def compute_relative_pol(polphihm,pollamhm,polphiem,pollamem):
         zpir18 = 0.0174532925
         polgam = -zrpi18*np.arcsin(np.cos(zpir18*polphiem)*np.sin(zpir18*(pollamhm-pollamem))                         
                                 / np.cos(zpir18*intorg.phtophs(polphiem,pollamem,polphihm,pollamhm)))
-        polphi = intorg.phtophs(args['polphihm'],args['pollamhm'],args['polphiem'],args['pollamem'])
-        pollam = intorg.lmtolms(args['polphihm'],args['pollamhm'],args['polphiem'],args['pollamem'])
+        polphi = intorg.phtophs(polphihm,pollamhm,polphiem,pollamem)
+        pollam = intorg.lmtolms(polphihm,pollamhm,polphiem,pollamem)
     return {'pollam': pollam, 'polphi': polphi, 'polgam': polgam}
 
 
@@ -210,6 +211,36 @@ def interpolate_horizontal(
         )
 
 
+def interpolate_horizontal_remo(
+    da, indemi,indemj,dxemhm,dyemhm, name=None, igr=None, blaem=None, blahm=None
+):
+    if name is None:
+        name = da.name
+    if igr is None:
+        igr = 0
+    if blaem is None or blahm is None:
+        return interp_horiz_remo(
+            da,
+            indemi.isel(pos=igr),
+            indemj.isel(pos=igr),
+            dxemhm.isel(pos=igr),
+            dyemhm.isel(pos=igr),
+            name,
+        )
+    else:
+        return interp_horiz_remo_cm(
+            da,
+            lamgm,
+            phigm,
+            lamem.isel(pos=igr),
+            phiem.isel(pos=igr),
+            indii.isel(pos=igr),
+            indjj.isel(pos=igr),
+            name,
+            blagm,
+            blaem,
+        )
+    
 # def interp_horiz_2d(field, lamgm, phigm, lamem, phiem, indii, indjj, name):
 #     """interpolates 2d global data horizontally.
 

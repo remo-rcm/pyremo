@@ -12,6 +12,7 @@ from .core import (
     geo_coords,
     geopotential,
     interpolate_horizontal,
+    interpolate_horizontal_remo,
     relative_humidity,
     interpolate_vertical,
     rotate_uv,
@@ -278,7 +279,7 @@ def remap(gds, domain_info, vc, surflib):
 
 
 
-def remap_remo(gds, domain_info_em, domain_info_hm, vc, surflib):
+def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     """remapping workflow for double nesting
 
     This function should be similar to the ones in the
@@ -308,7 +309,8 @@ def remap_remo(gds, domain_info_em, domain_info_hm, vc, surflib):
         target domain.
 
     """
-
+    # rename coords so they dont conflict with hm coords
+    tds = tds.copy().rename({'rlon':'rlon_em', 'rlat':'rlat_em'})
     ## curvilinear coordinaetes
     # remove time dimension if there is one
     fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
@@ -316,10 +318,23 @@ def remap_remo(gds, domain_info_em, domain_info_hm, vc, surflib):
     lamhm, phihm = geo_coords(domain_info_hm, fibhm.rlon, fibhm.rlat)
     #lamhm = lamhm.isel(pos=0).squeeze(drop=True)
     #phihm = phihm.isel(pos=0).squeeze(drop=True)
-    indemi,indemj,dxemhm,dyemhm = intersect_regional(em, hm)
+    indemi,indemj,dxemhm,dyemhm = intersect_regional(domain_info_em, domain_info_hm)
+    indemi = indemi.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
+    indemj = indemj.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
+    dxemhm = dxemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
+    dyemhm = dyemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
 
-    ## broadcast 1d global coordinates
-    #lamem, phiem = gm_coords(gds)
+    ## horizontal interpolation
+    tem = interpolate_horizontal_remo(tds.T, indemi,indemj,dxemhm,dyemhm, "T")
+    psem = interpolate_horizontal_remo(tds.PS, indemi,indemj,dxemhm,dyemhm, "PS")
+    uem = interpolate_horizontal_remo(tds.U, indemi,indemj,dxemhm,dyemhm, "U", 1)
+    uvem = interpolate_horizontal_remo(tds.U, indemi,indemj,dxemhm,dyemhm, "U", 2)
+    vem = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 2)
+    vuem = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 1)
+    qdem = interpolate_horizontal_remo(tds.QD, indemi,indemj,dxemhm,dyemhm, "QD")
+    fibem = interpolate_horizontal_remo(tds.FIB, indemi,indemj,dxemhm,dyemhm, "FIB")
+    
+    return psem
 
 
 

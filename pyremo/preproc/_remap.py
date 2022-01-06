@@ -21,7 +21,8 @@ from .core import (
     pressure_correction_em,
     pressure_correction_ge,
     correct_uv,
-    intersect_regional
+    intersect_regional,
+    lev_gm
 )
 
 from . import physics
@@ -201,7 +202,7 @@ def remap(gds, domain_info, vc, surflib):
     tem = interpolate_vertical(
         tge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "T", kpbl
     )
-    # return tem
+
     arfem = interpolate_vertical(
         arfge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "RF", kpbl
     )
@@ -310,7 +311,7 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
 
     """
     # rename coords so they dont conflict with hm coords
-    tds = tds.copy().rename({'rlon':'rlon_em', 'rlat':'rlat_em'})
+    tds = tds.copy().rename({'rlon':'rlon_em', 'rlat':'rlat_em', 'lev':lev_gm})
     ## curvilinear coordinaetes
     # remove time dimension if there is one
     fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
@@ -325,16 +326,45 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     dyemhm = dyemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
 
     ## horizontal interpolation
-    tem = interpolate_horizontal_remo(tds.T, indemi,indemj,dxemhm,dyemhm, "T")
-    psem = interpolate_horizontal_remo(tds.PS, indemi,indemj,dxemhm,dyemhm, "PS")
-    uem = interpolate_horizontal_remo(tds.U, indemi,indemj,dxemhm,dyemhm, "U", 1)
-    uvem = interpolate_horizontal_remo(tds.U, indemi,indemj,dxemhm,dyemhm, "U", 2)
-    vem = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 2)
-    vuem = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 1)
-    qdem = interpolate_horizontal_remo(tds.QD, indemi,indemj,dxemhm,dyemhm, "QD")
-    fibem = interpolate_horizontal_remo(tds.FIB, indemi,indemj,dxemhm,dyemhm, "FIB")
+    teh = interpolate_horizontal_remo(tds.T, indemi,indemj,dxemhm,dyemhm, "T")
+    pseh = interpolate_horizontal_remo(tds.PS, indemi,indemj,dxemhm,dyemhm, "PS")
+    ueh = interpolate_horizontal_remo(tds.U, indemi,indemj,dxemhm,dyemhm, "U", 1)
+    uveh = interpolate_horizontal_remo(tds.U, indemi,indemj,dxemhm,dyemhm, "U", 2)
+    veh = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 4)
+    vueh = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 3)
+    qdeh = interpolate_horizontal_remo(tds.QD, indemi,indemj,dxemhm,dyemhm, "QD")
+    fibeh = interpolate_horizontal_remo(tds.FIB*const.grav_const, indemi,indemj,dxemhm,dyemhm, "FIB")
     
-    return psem
+    ficem = geopotential(
+        tds.FIB, tds.T, tds.QD, tds.PS, tds.hyai, tds.hybi
+    )  # .squeeze(drop=True)
+
+    ficeh = interpolate_horizontal_remo(ficem, indemi,indemj,dxemhm,dyemhm, "FIC")
+
+
+    arfem = relative_humidity(tds.QD, tds.T, tds.PS, tds.hyai, tds.hybi, tds.QW)
+    arfeh = interpolate_horizontal_remo(arfem, indemi,indemj,dxemhm,dyemhm, "AREL HUM")
+    
+     ## first pressure correction
+    kpbl = pbl_index(tds.hyai, tds.hybi)
+
+    ps1hm = pressure_correction_em(
+        pseh, teh, arfeh, fibeh, fibhm, tds.hyai, tds.hybi, kpbl
+    )
+    ps1hm.name = 'PS1HM'
+    ## vertical interpolation
+    akhem = tds.hyam
+    bkhem = tds.hybm
+    dakem = tds.hyai[1:] - tds.hyai[:-1]
+    dbkem = tds.hybi[1:] - tds.hybi[:-1]
+    akbkhm = get_akbkem(vc)
+
+    thm = interpolate_vertical(
+        teh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "T", kpbl
+    )
+        #tge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "T", kpbl
+    return thm
+    return xr.merge([teh, pseh, ueh, veh, qdeh, fibeh, ficeh, arfeh, ps1hm])
 
 
 

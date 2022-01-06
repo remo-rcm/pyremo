@@ -20,7 +20,7 @@ except:
 
 lev_i = "lev_i"
 lev = "lev"
-lev_gm = "lev_gm"
+lev_gm = "lev_input"
 
 
 class const:
@@ -39,7 +39,7 @@ def open_mfdataset(
     use_cftime=True,
     parallel=True,
     data_vars="minimal",
-    chunks={"time": 1},
+    chunks="auto",
     coords="minimal",
     compat="override",
     drop=None,
@@ -167,7 +167,7 @@ def intersect_regional(em, hm):
     args = get_arguments(em, hm)
     args.update(compute_relative_pol(args['polphihm'],args['pollamhm'],
                                      args['polphiem'],args['pollamem']))
-    print(args)
+
     indemi,indemj,dxemhm,dyemhm = intf.intersection_points_regional(**args)
     dims=('rlon', 'rlat', 'pos')
     indemi = xr.DataArray(indemi, dims=dims, name='indemi')
@@ -307,10 +307,7 @@ def interp_horiz_remo(da, indemi, indemj, dxemhm, dyemhm, name, keep_attrs=False
     """main interface"""
     em_dims = list(horizontal_dims(da))
     hm_dims = list(horizontal_dims(indemj))
-    print(em_dims)
-    print(hm_dims)
     input_core_dims = [em_dims] + 4*[hm_dims] + [[]]
-    print(input_core_dims)
     #return
     result = xr.apply_ufunc(
         intf.interp_horiz_remo_2d,  # first the function
@@ -400,8 +397,8 @@ def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
         threeD_dims,
         threeD_dims,
         twoD_dims,
-        ["lev_2"],
-        ["lev_2"],
+        list(akgm.dims),
+        list(bkgm.dims),
         # [],
         # []
     ]
@@ -431,7 +428,7 @@ def relative_humidity(qdgm, tgm, psgm, akgm, bkgm, qwgm=None):
     if qwgm is None:
         qwgm = xr.zeros_like(qdgm)
     twoD_dims = list(horizontal_dims(qdgm))
-    threeD_dims = list(horizontal_dims(qdgm)) + ["lev_gm"]
+    threeD_dims = list(horizontal_dims(qdgm)) + [lev_gm]
     #  print(twoD_dims)
     # threeD_dims.append("lev")
     input_core_dims = [

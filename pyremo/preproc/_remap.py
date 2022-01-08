@@ -218,7 +218,7 @@ def remap(gds, domain_info, vc, surflib):
         vge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "V", kpbl
     )
 
-    ## wind vector correction
+    ## correct wind with potential divergence
     philuem = domain_info["ll_lon"]
     dlamem = domain_info["dlon"]
     dphiem = domain_info["dlat"]
@@ -362,8 +362,30 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     thm = interpolate_vertical(
         teh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "T", kpbl
     )
-        #tge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "T", kpbl
-    return thm
+    
+    arfhm = interpolate_vertical(
+        arfeh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "RF", kpbl
+    )
+    
+    ## second pressure correction and vertical interpolation of wind
+    pshm = pressure_correction_ge(ps1hm, thm, arfhm, ficeh, fibeh, akbkhm.ak, akbkhm.bk)
+    pshm.name = "PS"
+    
+    uhm = interpolate_vertical(
+        ueh, pseh, pshm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "U", kpbl
+    )
+    vhm = interpolate_vertical(
+        veh, pseh, pshm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "V", kpbl
+    )
+    
+    philuhm = domain_info_hm["ll_lon"]
+    dlamhm = domain_info_hm["dlon"]
+    dphihm = domain_info_hm["dlat"]
+    uhm_corr, vhm_corr = correct_uv(
+        uhm, vhm, pshm, akbkhm.ak, akbkhm.bk, lamhm, phihm, philuhm, dlamhm, dphihm
+    )
+    
+    return uhm_corr
     return xr.merge([teh, pseh, ueh, veh, qdeh, fibeh, ficeh, arfeh, ps1hm])
 
 

@@ -39,7 +39,7 @@ def open_mfdataset(
     use_cftime=True,
     parallel=True,
     data_vars="minimal",
-    chunks="auto",
+    chunks={},
     coords="minimal",
     compat="override",
     drop=None,

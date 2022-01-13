@@ -385,7 +385,37 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
         uhm, vhm, pshm, akbkhm.ak, akbkhm.bk, lamhm, phihm, philuhm, dlamhm, dphihm
     )
     
-    return uhm_corr
+    water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
+    #tsi = physics.tsi(tsw)
+
+    ads = xr.merge(
+        [thm, uhm_corr, vhm_corr, pshm, arfhm, water_content, akbkhm]
+    )
+
+    grid = get_grid(domain_info_hm)
+
+    ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
+    ads["rlon"] = grid.rlon
+    ads["rlat"] = grid.rlat
+
+    ads = xr.merge([ads, grid])
+
+    # rename for remo to recognize
+    ads = ads.rename({"ak": "hyai", "bk": "hybi", "akh": "hyam", "bkh": "hybm"})
+
+    # set global attributes
+    ads.attrs = tds.attrs
+
+    ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
+
+    ads = update_attrs(ads)
+
+    # transpose to remo convention
+    return ads.transpose(..., "lev", "rlat", "rlon")
+
+    
+    
+    #return uhm_corr
     return xr.merge([teh, pseh, ueh, veh, qdeh, fibeh, ficeh, arfeh, ps1hm])
 
 

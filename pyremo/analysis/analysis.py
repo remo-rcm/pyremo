@@ -66,6 +66,12 @@ def weighted_field_mean(ds, lon='rlon', lat='rlat', weights=None):
         weights = np.cos(np.deg2rad(ds[lat]))
     return ds.weighted(weights).mean(dim=(lon, lat))
 
+def daily_sum(da):
+    """
+    Function to compute daily sums with a simple groupby approach
+    """
+    
+    return da.groupby('time.day').sum(dim='time')
 
 def seasonal_mean(da):
     """
@@ -139,11 +145,14 @@ def compare_seasons(ds1, ds2, orog1=None, orog2=None, do_height_correction=False
         regridder = get_regridder(ds1, ds2)
         print(regridder)
         ds1_seasmean = regridder(ds1_seasmean)
-        
+    elif regrid == "ds2":
+        regridder = get_regridder(ds2, ds1)
+        print(regridder)
+        ds2_seasmean = regridder(ds2_seasmean)
+
     if do_height_correction is True:
         orog1 = regridder(orog1)
         ds1_seasmean += height_correction(orog1, orog2)
-    return ds2_seasmean - ds1_seasmean    
-    return xr.where(ds1_seasmean.mask, ds2_seasmean - ds1_seasmean, np.nan)
-
+    return ds1_seasmean - ds2_seasmean    
+    #return xr.where(ds1_seasmean.mask, ds2_seasmean - ds1_seasmean, np.nan)
 

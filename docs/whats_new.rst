@@ -21,6 +21,7 @@ New Features
 - Includes experimental cmorization module (:pull:`20`, :pull:`21`, :pull:`22`,
   :pull:`23`, :pull:`25`, :pull:`26`).
 - Included production analysis (:pull:`33`).
+- Command line tool for remo analysis (:pull:`35`).
  
 Internal Changes
 ~~~~~~~~~~~~~~~~

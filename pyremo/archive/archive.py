@@ -165,7 +165,7 @@ class RemoCatalog():
             self.df = pd.read_csv(self.csv)
         else:
             self.df = self.parse(path, parse_dates=True)
-            self.to_csv()
+            #self.to_csv()
             
     def __add__(self, other):
         df = pd.concat([self.df, other.df])

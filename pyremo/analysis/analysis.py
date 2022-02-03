@@ -135,8 +135,40 @@ def get_regridder(finer, coarser, method='bilinear', **kwargs):
     return xe.Regridder(finer, coarser, method=method, **kwargs)
 
 
-def compare_seasons(ds1, ds2, orog1=None, orog2=None, do_height_correction=False,
-                   regrid='ds1'):
+def compare_seasons(ds1, ds2, regrid='ds1', do_height_correction=False, orog1=None, orog2=None):
+    """
+    Function to compare seasonal means of two datasets.
+
+    Paramters
+    ---------
+    ds1 : xarray.Dataset
+        First variable data for comparision. Temporal resolution has to be less than monthly.
+        ds1 is mainly model output data.
+        ds2 is subtracted from ds1.
+    ds2 : xarray.Dataset
+        Second variable data for comparision. Temporal resolution has to be less than monthly.
+        ds2 is mainly observational or reanalysis data.
+        ds2 is subtracted from ds1. 
+    regrid : {"ds1", "ds2"}, optional
+        Denotes the dataset to be bilinearly regridded. Specify the dataset with the finer spatial resolution:
+
+        - "ds1": Regrid ds1 to ds2's grid with coarser spatial resolution.
+        - "ds2": Regrid ds2 to ds1's grid with coarser spatial resolution.
+    do_height_correction : bool, optional
+        If ``do_height_correction=True``, do a height correction on ds1 using two orography files orog1 and orog2.
+    orog1 : xarray.Dataset, optional
+        Use only if ``do_height_correction=True``. 
+        Specify a orography file referring to ds1.
+    orog2 : xarray.Dataset, optional
+        Use only if ``do_height_correction=True``. 
+        Specify a orography file referring to ds2.
+
+    Returns
+    -------
+    seasonal_comparision : xarray.Dataset
+        Spatial mean differences of two datasets
+
+    """
     ds1 = ds1.copy()
     ds2 = ds2.copy()
     ds1_seasmean = seasonal_mean(ds1)

@@ -73,12 +73,30 @@ def daily_sum(da):
     
     return da.groupby('time.day').sum(dim='time')
 
-def seasonal_mean(da):
+def monthly_sum(da):
     """
-    Function to compute seasonal means with a simple groupby approach
+    Function to compute dailymonthly means with a simple groupby approach
     """
     
-    return da.groupby('time.season').mean(dim='time')
+    return da.groupby('time.month').mean(dim='time')
+
+def seasonal_mean(da):
+    """
+    Optimized function to calculate seasonal averages from time series of monthly means
+
+    based on: https://xarray.pydata.org/en/stable/examples/monthly-means.html
+    """
+
+    #Get number od days for each month
+    month_length = da.time.dt.days_in_month
+    # Calculate the weights by grouping by 'time.season'.
+    weights = (month_length.groupby("time.season") / month_length.groupby("time.season").sum())
+
+    # Test that the sum of the weights for each season is 1.0
+    np.testing.assert_allclose(weights.groupby("time.season").sum().values, np.ones(4))
+
+    # Calculate the weighted average
+    return (da * weights).groupby("time.season").sum(dim="time")
 
 
 class RemoExperiment():

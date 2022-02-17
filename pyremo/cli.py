@@ -85,11 +85,12 @@ def main_analysis():
     from .analysis import analysis, obs, plot
 
     import xarray as xr
+    import cartopy.crs as ccrs
 
     time_range  = slice(args.time_range[0], args.time_range[1])
     output_path = os.path.realpath(args.output_path)
 
-    with Client() as client:
+    with dask.config.set(**{'array.slicing.split_large_chunks': True}):
 
         """
         Load Datasets. REMO and observational data
@@ -99,10 +100,9 @@ def main_analysis():
         cru_ds   = obs.cru_ts4(chunks={'time':1, 'lat':360, 'lon':720})
         eobs_ds  = obs.eobs(chunks={'time':1, 'latitude': 201, 'longitude': 464})
         hyras_ds = obs.hyras()
-        #hyras_ds.mask.plot(cmap='binary').savefig(os.path.join(output_path, 'HYRAS_mask.png'))
 
         """
-        Convert data to into correct units and select time range
+        Convert data into correct units and select time range
         """
         remo_tas = xr.merge([remo_ds.TEMP2.sel(time=time_range)-273.15, remo_ds.mask]).rename({'TEMP2':'tas'})
         remo_tas.attrs['units'] = 'Celsius'
@@ -130,97 +130,80 @@ def main_analysis():
         Plot seasonal differences
         """
 
-        import cartopy.crs as ccrs
         pole = (remo_ds.rotated_latitude_longitude.grid_north_pole_longitude,  
                 remo_ds.rotated_latitude_longitude.grid_north_pole_latitude)
-        transform=ccrs.RotatedPole(*pole)
-
-
+        
+        plotting_settings = {"borders" : True,
+                             "xlocs" : range(-180,180,5),
+                             "ylocs" : range(-90,90,5),
+                             "figsize" : (14,10),
+                             "aspect" : "auto"}
+        
         ##HYRAS
-        extent = {"extents": [hyras_ds.lon.min(), hyras_ds.lon.max(), 
-                              hyras_ds.lat.min(), hyras_ds.lat.max()]}
+        plotting_settings["transform"] = ccrs.RotatedPole(*pole)
+        plotting_settings["extent"] = {"extents": [hyras_ds.lon.min(), hyras_ds.lon.max(), 
+                                                   hyras_ds.lat.min(), hyras_ds.lat.max()]}
 
-
+        
         ####TAS
         compare_hyras_tas = analysis.compare_seasons(remo_tas, hyras_tas, regrid='ds2').compute()
         hyras_tas_season_plot = plot.plot_seasons(compare_hyras_tas.tas, 
-                                                  transform=transform, 
-                                                  extent=extent, 
-                                                  borders=True, 
-                                                  xlocs=range(-180,180,5), 
-                                                  ylocs=range(-90,90,5), 
-                                                  figsize=(14,10), aspect="auto")
+                                                  **plotting_settings)
+
         hyras_tas_season_plot.savefig(os.path.join(output_path, 'TAS_REMO-HYRAS.png'))
 
         ####PR
         compare_hyras_pr = analysis.compare_seasons(remo_pr, hyras_pr, regrid='ds2').compute()
         hyras_pr_season_plot = plot.plot_seasons(compare_hyras_pr.pr,
-                                                 transform=transform,
-                                                 extent=extent, 
-                                                 borders=True, 
-                                                 xlocs=range(-180,180,5), 
-                                                 ylocs=range(-90,90,5),
-                                                 figsize=(14,10), aspect="auto", 
+                                                 **plotting_settings, 
                                                  vmax=5, vmin=-5, cmap='bwr_r')
-        hyras_pr_season_plot.savefig(os.path.join(output_path, 'PR_REMO-HYRAS.png'))
 
+        hyras_pr_season_plot.savefig(os.path.join(output_path, 'PR_REMO-HYRAS.png'))
         
         ###CRU_TS4
-        extent = {"extents": [remo_ds.rlon.min(), remo_ds.rlon.max(), 
-                              remo_ds.rlat.min(), remo_ds.rlat.max()]}
-
+        plotting_settings["transform"] = ccrs.PlateCarree()
+        plotting_settings["extent"] = {"extents" : [remo_ds.rlon.min(), remo_ds.rlon.max(), 
+                                                    remo_ds.rlat.min(), remo_ds.rlat.max()],
+                                       "crs" : ccrs.RotatedPole(*pole)}
+        plotting_settings["projection"] = ccrs.RotatedPole(*pole)
+        
         ####TAS
         compare_cru_tas = analysis.compare_seasons(remo_tas, cru_tas).compute()
         cru_tas_season_plot = plot.plot_seasons(compare_cru_tas.tas,
-                                                transform=transform,
-                                                extent=extent,
-                                                borders=True, 
-                                                xlocs=range(-180,180,10), 
-                                                ylocs=range(-90,90,10), 
-                                                figsize=(14,10), aspect="auto")
-        cru_tas_season_plot.savefig(os.path.join(output_path, 'TAS_REMO-CRU.png'))
+                                                **plotting_settings)
 
+        cru_tas_season_plot.savefig(os.path.join(output_path, 'TAS_REMO-CRU.png'))
+        
         ####PR
         compare_cru_pr = analysis.compare_seasons(remo_pr, cru_pr).compute()
         cru_pr_season_plot = plot.plot_seasons(compare_cru_pr.pr, 
-                                               transform=transform,
-                                               extent=extent,
-                                               borders=True, 
-                                               xlocs=range(-180,180,10), 
-                                               ylocs=range(-90,90,10), 
-                                               figsize=(14,10), aspect="auto",
-                                               vmin=-2, vmax=2, cmap='bwr_r')
-        
+                                               **plotting_settings,
+                                               vmax=2, vmin=-2, cmap='bwr_r')
+
         cru_pr_season_plot.savefig(os.path.join(output_path, 'PR_REMO-CRU.png'))
 
-              
         ###EOBS
-        extent = {"extents": [remo_ds.rlon.min(), remo_ds.rlon.max(), 
-                              remo_ds.rlat.min(), remo_ds.rlat.max()]}
+        plotting_settings["transform"] = ccrs.PlateCarree()
+        plotting_settings["extent"] = {"extents" : [remo_ds.rlon.min(), remo_ds.rlon.max(), 
+                                                   remo_ds.rlat.min(), remo_ds.rlat.max()], 
+                                       'crs' : ccrs.RotatedPole(*pole)}
+        plotting_settings["projection"] = ccrs.RotatedPole(*pole)
 
         ####TAS
         compare_eobs_tas = analysis.compare_seasons(remo_tas, eobs_tas).compute()
         eobs_tas_season_plot = plot.plot_seasons(compare_eobs_tas.tas,
-                                                 transform=transform,
-                                                 extent=extent,
-                                                 borders=True, 
-                                                 xlocs=range(-180,180,10), 
-                                                 ylocs=range(-90,90,10), 
-                                                 figsize=(14,10), aspect="auto")
+                                                 **plotting_settings)
+
         eobs_tas_season_plot.savefig(os.path.join(output_path, 'TAS_REMO-EOBS.png'))
 
         ####PR
         compare_eobs_pr = analysis.compare_seasons(remo_pr, eobs_pr).compute()
         eobs_pr_season_plot = plot.plot_seasons(compare_eobs_pr.pr, 
-                                                transform=transform,
-                                                extent=extent,
-                                                borders=True, 
-                                                xlocs=range(-180,180,10), 
-                                                ylocs=range(-90,90,10), 
-                                                figsize=(14,10), aspect="auto",
-                                                vmin=-2, vmax=2, cmap='bwr_r')
-        
+                                                **plotting_settings,
+                                                vmax=2, vmin=-2, cmap='bwr_r')
+
         eobs_pr_season_plot.savefig(os.path.join(output_path, 'PR_REMO-EOBS.png'))
+
     return 
 
 if __name__ == "__main__":

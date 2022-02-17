@@ -5,7 +5,7 @@ __email__ = "lars.buntemeyer@hzg.de"
 
 
 # from . import core, preproc
-from . import preproc, physics, cmor
+from . import preproc, physics, cmor, analysis
 
 from .core.domain import domain_info, remo_domain
 from .core.remo_ds import open_remo_dataset, update_meta_info, preprocess

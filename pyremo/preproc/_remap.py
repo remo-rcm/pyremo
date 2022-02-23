@@ -15,6 +15,7 @@ from .core import (
     interpolate_horizontal_remo,
     relative_humidity,
     interpolate_vertical,
+    interpolate_vertical_remo,
     rotate_uv,
     pbl_index,
     get_akbkem,
@@ -315,15 +316,18 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     ## curvilinear coordinaetes
     # remove time dimension if there is one
     fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
+    tds['FIB'] = tds.FIB * const.grav_const
 
     lamhm, phihm = geo_coords(domain_info_hm, fibhm.rlon, fibhm.rlat)
     #lamhm = lamhm.isel(pos=0).squeeze(drop=True)
     #phihm = phihm.isel(pos=0).squeeze(drop=True)
+    #return lamhm, phihm
     indemi,indemj,dxemhm,dyemhm = intersect_regional(domain_info_em, domain_info_hm)
     indemi = indemi.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     indemj = indemj.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     dxemhm = dxemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     dyemhm = dyemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
+    #return indemi, indemj, dxemhm, dyemhm
 
     ## horizontal interpolation
     teh = interpolate_horizontal_remo(tds.T, indemi,indemj,dxemhm,dyemhm, "T")
@@ -333,18 +337,17 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     veh = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 4)
     vueh = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 3)
     qdeh = interpolate_horizontal_remo(tds.QD, indemi,indemj,dxemhm,dyemhm, "QD")
-    fibeh = interpolate_horizontal_remo(tds.FIB*const.grav_const, indemi,indemj,dxemhm,dyemhm, "FIB")
-    
+    fibeh = interpolate_horizontal_remo(tds.FIB, indemi,indemj,dxemhm,dyemhm, "FIB")
+    #return pseh
     ficem = geopotential(
         tds.FIB, tds.T, tds.QD, tds.PS, tds.hyai, tds.hybi
     )  # .squeeze(drop=True)
 
     ficeh = interpolate_horizontal_remo(ficem, indemi,indemj,dxemhm,dyemhm, "FIC")
 
-
     arfem = relative_humidity(tds.QD, tds.T, tds.PS, tds.hyai, tds.hybi, tds.QW)
     arfeh = interpolate_horizontal_remo(arfem, indemi,indemj,dxemhm,dyemhm, "AREL HUM")
-    
+
      ## first pressure correction
     kpbl = pbl_index(tds.hyai, tds.hybi)
 
@@ -352,6 +355,7 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
         pseh, teh, arfeh, fibeh, fibhm, tds.hyai, tds.hybi, kpbl
     )
     ps1hm.name = 'PS1HM'
+    #return pseh, teh, arfeh, fibeh, fibhm
     ## vertical interpolation
     akhem = tds.hyam
     bkhem = tds.hybm
@@ -359,18 +363,21 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     dbkem = tds.hybi[1:] - tds.hybi[:-1]
     akbkhm = get_akbkem(vc)
 
-    thm = interpolate_vertical(
+    thm = interpolate_vertical_remo(
         teh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "T", kpbl
     )
+    #return thm
+    #return teh,thm, pseh, ps1hm
+    #return akhem, bkhem, akbkhm.akh, akbkhm.bkh
     
     arfhm = interpolate_vertical(
         arfeh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "RF", kpbl
     )
-    
+
     ## second pressure correction and vertical interpolation of wind
-    pshm = pressure_correction_ge(ps1hm, thm, arfhm, ficeh, fibeh, akbkhm.ak, akbkhm.bk)
+    pshm = pressure_correction_ge(ps1hm, thm, arfhm, ficeh, fibhm, akbkhm.ak, akbkhm.bk)
     pshm.name = "PS"
-    
+    #return ps1hm, pshm, thm, arfhm, ficeh, fibeh
     uhm = interpolate_vertical(
         ueh, pseh, pshm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "U", kpbl
     )
@@ -416,7 +423,7 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     
     
     #return uhm_corr
-    return xr.merge([teh, pseh, ueh, veh, qdeh, fibeh, ficeh, arfeh, ps1hm])
+    #return xr.merge([thm, pshm, uhm_corr, vhm_corr, qdhm, fibeh, ficeh, arfeh, ps1hm])
 
 
 

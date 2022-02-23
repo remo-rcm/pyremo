@@ -167,7 +167,6 @@ def intersect_regional(em, hm):
     args = get_arguments(em, hm)
     args.update(compute_relative_pol(args['polphihm'],args['pollamhm'],
                                      args['polphiem'],args['pollamem']))
-
     indemi,indemj,dxemhm,dyemhm = intf.intersection_points_regional(**args)
     dims=('rlon', 'rlat', 'pos')
     indemi = xr.DataArray(indemi, dims=dims, name='indemi')
@@ -668,6 +667,39 @@ def pressure_correction_em(psge, tge, arfge, fibge, fibem, akgm, bkgm, kpbl):
 
 
 def interpolate_vertical(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, kpbl):
+    twoD_dims = list(horizontal_dims(psge))
+    threeD_dims = list(horizontal_dims(psge)) + [lev_gm]
+    input_core_dims = (
+        [threeD_dims]
+        + 2 * [twoD_dims]
+        + [[akhgm.dims[0]], [bkhgm.dims[0]], [akhem.dims[0]], [bkhem.dims[0]], [], []]
+    )
+    output_core_dims = [twoD_dims + [akhem.dims[0]]]
+    # print(output_core_dims)
+    result = xr.apply_ufunc(
+        intf.interp_vert,  # first the function
+        xge,  # now arguments in the order expected
+        psge,
+        ps1em,
+        akhgm,
+        bkhgm,
+        akhem,
+        bkhem,
+        varname,
+        kpbl,
+        input_core_dims=input_core_dims,  # list with one entry per arg
+        output_core_dims=output_core_dims,  # returned data has 3 dimensions
+        # exclude_dims=set(("index",)),
+        vectorize=True,  # loop over non-core dims, in this case: time
+        dask="parallelized",
+        dask_gufunc_kwargs={"allow_rechunk": True},
+        output_dtypes=[xge.dtype],
+    )
+    result.name = varname
+    return result
+
+
+def interpolate_vertical_remo(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, kpbl):
     twoD_dims = list(horizontal_dims(psge))
     threeD_dims = list(horizontal_dims(psge)) + [lev_gm]
     input_core_dims = (

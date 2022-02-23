@@ -1,4 +1,3 @@
-
 import xarray as xr
 import cordex as cx
 import json
@@ -53,7 +52,7 @@ def _read_json_file(filename):
 
 def _get_cfvarinfo(cf_varname, table):
     data = _read_cmor_table(table)
-    return data['variable_entry'][cf_varname]
+    return data["variable_entry"][cf_varname]
 
 
 def _get_time_cell_method(cf_varname, table):
@@ -62,6 +61,6 @@ def _get_time_cell_method(cf_varname, table):
 
 def _strip_time_cell_method(cfvarinfo):
     try:
-        return cfvarinfo['cell_methods'].split('time:')[1].strip()
+        return cfvarinfo["cell_methods"].split("time:")[1].strip()
     except:
         return None

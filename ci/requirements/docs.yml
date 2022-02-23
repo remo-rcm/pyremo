@@ -17,7 +17,7 @@ dependencies:
   - nbsphinx
   - nbsphinx-link
   - ipython
-  - py-cordex>=0.3.0
+#  - py-cordex>=0.3.0
 # 
   - pip:
 #    - intake_geopandas>=0.2.4

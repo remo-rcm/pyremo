@@ -14,6 +14,9 @@ pyremo
 .. image:: https://readthedocs.org/projects/pyremo/badge/?version=latest
         :target: https://pyremo.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
+        
+.. image:: https://anaconda.org/conda-forge/pyremo/badges/installer/conda.svg
+    :target: https://anaconda.org/conda-forge/pyremo
 
 .. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo/badge
    :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo

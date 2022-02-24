@@ -5,7 +5,7 @@ channels:
   - nodefaults
 
 dependencies:
-  - python=3.7
+  - python
   - xarray
   - docutils==0.16
   - nbconvert

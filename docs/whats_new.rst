@@ -8,8 +8,8 @@ What's New
 
     import pyremo 
 
-v0.2.0 (unreleased)
--------------------
+v0.2.0 (24 February 2022)
+-------------------------
 
 This is a major restructuring release. 
 
@@ -37,7 +37,7 @@ Documentation
 - Documentation now includes preprocessing and pressure interpolation examples.
 
 
-0.1.0 (2020-07-23)
-------------------
+0.1.0 (23 July 2020)
+--------------------
 
 * First release on PyPI.

@@ -11,7 +11,8 @@ What's New
 v0.2.0 (24 February 2022)
 -------------------------
 
-This is a major restructuring release. 
+This is a major restructuring release and comes with a new package structure and a lot of reintegrated tools.
+It includes a new preprocessing module, pressure interpolation and cmorization based on an xarray API.
 
 New Features
 ~~~~~~~~~~~~

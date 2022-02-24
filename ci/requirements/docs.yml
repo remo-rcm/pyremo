@@ -23,7 +23,7 @@ dependencies:
   - pip:
 #    - intake_geopandas>=0.2.4
 #    - msgpack
-    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now
+#    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now
     - sphinxcontrib-mockautodoc
     
 

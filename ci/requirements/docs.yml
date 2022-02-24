@@ -18,7 +18,7 @@ dependencies:
   - nbsphinx-link
   - ipython
 #  - py-cordex
-#  - cftime
+  - cftime
 # 
   - pip:
 #    - intake_geopandas>=0.2.4

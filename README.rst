@@ -2,6 +2,9 @@
 pyremo
 ======
 
+.. image:: https://zenodo.org/badge/282037812.svg
+   :target: https://zenodo.org/badge/latestdoi/282037812
+
 .. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml
 

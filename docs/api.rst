@@ -90,9 +90,6 @@ Cmorization
 
    cmor.prepare_variable
    cmor.cmorize_variable
-   cmor.season
-   cmor.season_bounds
-   cmor.mid_of_season
 
 Tutorial
 ========

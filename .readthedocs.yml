@@ -6,7 +6,7 @@ build:
     python: mambaforge-4.10
 sphinx:
   configuration: docs/conf.py
-  fail_on_warning: true
+  fail_on_warning: false
 conda:
   environment: ci/requirements/docs.yml
 formats: []

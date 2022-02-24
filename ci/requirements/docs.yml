@@ -17,7 +17,7 @@ dependencies:
   - nbsphinx
   - nbsphinx-link
   - ipython
-  - py-cordex
+#  - py-cordex
 #  - cftime
 # 
   - pip:

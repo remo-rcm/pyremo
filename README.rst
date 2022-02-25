@@ -44,25 +44,38 @@ Features
 Installation
 ------------
 
+We recommend installing `pyremo` with conda:
+
+.. code-block:: console
+
+    conda install -c conda-forge pyremo
+    
+
+Installation from source
+------------------------
+
 You can install the package directly from github using pip:
 
 
 .. code-block:: console
 
-    pip install git+https://github.com/remo-rcm/pyremo
+    pip install git+https://github.com/euro-cordex/pyremo
 
 
-If you want to contribute, I recommend cloning the repository and installing the package in development mode, e.g.
+If you want to contribute, please fork the repository to your github account
+and install it in development mode, e.g.
 
 
 .. code-block:: console
 
-    git clone https://github.com/remo-rcm/pyremo
+    git clone https://github.com/<your-account>/pyremo
     cd pyremo
     pip install -e .
 
 
-This will install the package but you can still edit it and you don't need the package in your :code:`PYTHONPATH`
+This will install the package but you can still edit it and you don't need the package in your :code:`PYTHONPATH`.
+Please get in contact as early as possible, e.g., using `draft pull requests <https://github.blog/2019-02-14-introducing-draft-pull-requests>`_.
+
 
 Credits
 -------

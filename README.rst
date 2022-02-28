@@ -76,6 +76,21 @@ and install it in development mode, e.g.
 This will install the package but you can still edit it and you don't need the package in your :code:`PYTHONPATH`.
 Please get in contact as early as possible, e.g., using `draft pull requests <https://github.blog/2019-02-14-introducing-draft-pull-requests>`_.
 
+Additional requirements
+-----------------------
+
+There are two sub-packages that have additional private dependencies, .e.g, the preprocessing module `preproc` will require the installation
+of the legacy source code for preprocessing which is packaged in 
+
+* https://gitlab.dkrz.de/remo/pyintorg
+
+For the pressure interpolation `prsint`, you will need to install the additional package:
+
+* https://gitlab.dkrz.de/remo/pydruint
+
+Note, that you will have to install these packages from source which will require a fortran compiler (e.g. `gfortran`). If you require access to those 
+packages, please request access to the REMO group in the DRKZ gitlab.
+
 
 Credits
 -------

@@ -79,16 +79,16 @@ Please get in contact as early as possible, e.g., using `draft pull requests <ht
 Additional requirements
 -----------------------
 
-There are two sub-packages that have additional private dependencies, .e.g, the preprocessing module `preproc` will require the installation
+There are two sub-packages that have additional private dependencies, .e.g, the preprocessing module :code:`preproc` will require the installation
 of the legacy source code for preprocessing which is packaged in 
 
 * https://gitlab.dkrz.de/remo/pyintorg
 
-For the pressure interpolation `prsint`, you will need to install the additional package:
+For the pressure interpolation :code:`prsint`, you will need to install the additional package:
 
 * https://gitlab.dkrz.de/remo/pydruint
 
-Note, that you will have to install these packages from source which will require a fortran compiler (e.g. `gfortran`). If you require access to those 
+Note, that you will have to install these packages from source which will require a fortran compiler (e.g. :code:`gfortran`). If you require access to those 
 packages, please request access to the REMO group in the DRKZ gitlab.
 
 

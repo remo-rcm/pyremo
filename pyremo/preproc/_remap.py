@@ -339,6 +339,7 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     qdeh = interpolate_horizontal_remo(tds.QD, indemi,indemj,dxemhm,dyemhm, "QD")
     fibeh = interpolate_horizontal_remo(tds.FIB, indemi,indemj,dxemhm,dyemhm, "FIB")
     #return pseh
+    #return ueh
     ficem = geopotential(
         tds.FIB, tds.T, tds.QD, tds.PS, tds.hyai, tds.hybi
     )  # .squeeze(drop=True)
@@ -363,7 +364,7 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     dbkem = tds.hybi[1:] - tds.hybi[:-1]
     akbkhm = get_akbkem(vc)
 
-    thm = interpolate_vertical_remo(
+    thm = interpolate_vertical(
         teh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "T", kpbl
     )
     #return thm
@@ -378,11 +379,30 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     pshm = pressure_correction_ge(ps1hm, thm, arfhm, ficeh, fibhm, akbkhm.ak, akbkhm.bk)
     pshm.name = "PS"
     #return ps1hm, pshm, thm, arfhm, ficeh, fibeh
+    #return pseh, pshm
+    #pseh_u = pseh.interp(rlon=pseh.rlon+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
+    #pshm_u = pshm.interp(rlon=pshm.rlon+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
+    #pseh_u[:,-1,:] = pseh[:,-1,:]
+    #pshm_u[:,-1,:] = pshm[:,-1,:]
     uhm = interpolate_vertical(
-        ueh, pseh, pshm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "U", kpbl
+        ueh, 
+        pseh.interp(rlon=pseh.rlon+0.5*hm['dlon'], method='linear', kwargs={"fill_value": "extrapolate"}), 
+        pshm.interp(rlon=pshm.rlon+0.5*hm['dlon'], method='linear', kwargs={"fill_value": "extrapolate"}),
+       # pseh, 
+       # pshm,
+        akhem, bkhem, akbkhm.akh, akbkhm.bkh, "U", kpbl
     )
+    #pseh_v = pseh.interp(rlat=pseh.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
+    #pshm_v = pshm.interp(rlat=pshm.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
+    #pseh_v[:,:,-1] = pseh[:,:,-1]
+    #pshm_v[:,:,-1] = pshm[:,:,-1]
     vhm = interpolate_vertical(
-        veh, pseh, pshm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "V", kpbl
+        veh,
+        pseh.interp(rlat=pseh.rlat+0.5*hm['dlat'], method='linear', kwargs={"fill_value": "extrapolate"}), 
+        pshm.interp(rlat=pshm.rlat+0.5*hm['dlat'], method='linear', kwargs={"fill_value": "extrapolate"}),
+       # pseh_v, 
+       # pshm_v, 
+        akhem, bkhem, akbkhm.akh, akbkhm.bkh, "V", kpbl
     )
     
     philuhm = domain_info_hm["ll_lon"]

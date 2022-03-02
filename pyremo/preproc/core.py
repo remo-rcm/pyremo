@@ -211,7 +211,7 @@ def interpolate_horizontal(
 
 
 def interpolate_horizontal_remo(
-    da, indemi,indemj,dxemhm,dyemhm, name=None, igr=None, blaem=None, blahm=None
+    da, indemi, indemj, dxemhm, dyemhm, name=None, igr=None, blaem=None, blahm=None
 ):
     if name is None:
         name = da.name
@@ -318,7 +318,7 @@ def interp_horiz_remo(da, indemi, indemj, dxemhm, dyemhm, name, keep_attrs=False
         name,
         input_core_dims=input_core_dims,  # list with one entry per arg
         output_core_dims=[hm_dims],  # returned data has 3 dimensions
-        vectorize=True,  # loop over non-core dims, in this case: time
+        vectorize=True,  # loop over non-core dims, in this case: time, lev
         #  exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
         dask_gufunc_kwargs={"allow_rechunk": True},
@@ -367,6 +367,44 @@ def interp_horiz_cm(
         input_core_dims=input_core_dims,  # list with one entry per arg
         output_core_dims=[rcm_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
+        #  exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
+        dask="parallelized",
+        dask_gufunc_kwargs={"allow_rechunk": True},
+        output_dtypes=[da.dtype],
+    )
+
+    result.name = name
+    # result = result.to_dataset()
+    if keep_attrs:
+        result.attrs = da.attrs
+    # result = result.transpose(..., *spatial_dims(da)[::-1])
+    return result
+
+
+def interp_horiz_remo_cm(da, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, name, keep_attrs=False):
+    """main interface"""
+    em_dims = list(horizontal_dims(da))
+    hm_dims = list(horizontal_dims(indemj))
+    input_core_dims = [em_dims] + 4*[hm_dims] + [[]]
+    #return
+    result = xr.apply_ufunc(
+        intf.interp_horiz_remo_2d_cm,  # first the function
+        da,  # now arguments in the order expected
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        name,
+        input_core_dims=input_core_dims,  # list with one entry per arg
+        output_core_dims=[hm_dims],  # returned data has 3 dimensions
+        vectorize=True,  # loop over non-core dims, in this case: time, lev
         #  exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
         dask_gufunc_kwargs={"allow_rechunk": True},
@@ -710,7 +748,7 @@ def interpolate_vertical_remo(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varn
     output_core_dims = [twoD_dims + [akhem.dims[0]]]
     # print(output_core_dims)
     result = xr.apply_ufunc(
-        intf.interp_vert,  # first the function
+        intf.interp_vert2,  # first the function
         xge,  # now arguments in the order expected
         psge,
         ps1em,

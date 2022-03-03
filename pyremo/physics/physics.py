@@ -22,7 +22,7 @@ def _vertical_dim(da):
     return lev_dim
 
 
-def pressure(ps, ak, bk, ptop=None):
+def pressure(ps, ak, bk, ptop=0.0):
     """computes pressure at model levels.
 
     Uses surface pressure and vertical hybrid coordinates.
@@ -38,8 +38,8 @@ def pressure(ps, ak, bk, ptop=None):
         Hybrid sigma B coefficient at full levels or
         level interfaces.
     ptop : float
-        Pressure at the top of the atmosphere. If ptop is
-        None, ak[0] will be used as top pressure.
+        Pressure at the top of the atmosphere. Defaults to
+        zero.
 
     Returns
     -------
@@ -47,8 +47,6 @@ def pressure(ps, ak, bk, ptop=None):
         Returns atmopspheric pressure.
 
     """
-    if ptop is None:
-        ptop = ak[0]
     return ak + bk * (ps - ptop)
 
 

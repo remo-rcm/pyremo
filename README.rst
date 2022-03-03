@@ -26,11 +26,7 @@ pyremo
    :alt: CodeFactor
 
 
-
-Common Remo python tools
-
-* Free software: MIT license
-* Documentation: https://pyremo.readthedocs.io.
+Python tools for the regional climate model `REMO <https://www.remo-rcm.de>`_.
 
 Features
 --------

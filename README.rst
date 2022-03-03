@@ -25,8 +25,7 @@ pyremo
    :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo
    :alt: CodeFactor
 
-
-Python tools for the regional climate model `REMO <https://www.remo-rcm.de>`_.
+Python tools for the regional climate model `REMO <https://www.remo-rcm.de>`_
 
 Features
 --------

@@ -13,6 +13,7 @@ from .core import (
     geopotential,
     interpolate_horizontal,
     interpolate_horizontal_remo,
+    interp_horiz_remo_cm,
     relative_humidity,
     interpolate_vertical,
     interpolate_vertical_remo,
@@ -23,8 +24,9 @@ from .core import (
     pressure_correction_ge,
     correct_uv,
     intersect_regional,
-    lev_gm
 )
+
+from .constants import lev_gm, lev_input
 
 from . import physics
 
@@ -312,12 +314,17 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
 
     """
     # rename coords so they dont conflict with hm coords
-    tds = tds.copy().rename({'rlon':'rlon_em', 'rlat':'rlat_em', 'lev':lev_gm})
+    tds = tds.copy().rename({'rlon':'rlon_em', 'rlat':'rlat_em', 'lev':lev_input})
     ## curvilinear coordinaetes
     # remove time dimension if there is one
     fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
     tds['FIB'] = tds.FIB * const.grav_const
 
+    blaem = tds.BLA
+    blahm=surflib.BLA.squeeze(drop=True)
+    phiem = tds.PHI.squeeze(drop=True)
+    lamem = tds.RLA.squeeze(drop=True)
+    
     lamhm, phihm = geo_coords(domain_info_hm, fibhm.rlon, fibhm.rlat)
     #lamhm = lamhm.isel(pos=0).squeeze(drop=True)
     #phihm = phihm.isel(pos=0).squeeze(drop=True)
@@ -329,6 +336,7 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     dyemhm = dyemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     #return indemi, indemj, dxemhm, dyemhm
 
+    addem = addem_remo(tds)
     ## horizontal interpolation
     teh = interpolate_horizontal_remo(tds.T, indemi,indemj,dxemhm,dyemhm, "T")
     pseh = interpolate_horizontal_remo(tds.PS, indemi,indemj,dxemhm,dyemhm, "PS")
@@ -338,6 +346,13 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     vueh = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 3)
     qdeh = interpolate_horizontal_remo(tds.QD, indemi,indemj,dxemhm,dyemhm, "QD")
     fibeh = interpolate_horizontal_remo(tds.FIB, indemi,indemj,dxemhm,dyemhm, "FIB")
+    
+    # TEMPERATUR - DIFFERENZ TP - TB HORIZONTAL INTERPOLIEREN
+    dtpbeh = interp_horiz_remo_cm(addem.DTPB, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, 'DTPB')
+    dtpbeh.name = 'DTPB'
+    
+    pseh.name = 'PSEH'
     #return pseh
     #return ueh
     ficem = geopotential(
@@ -386,8 +401,8 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     #pshm_u[:,-1,:] = pshm[:,-1,:]
     uhm = interpolate_vertical(
         ueh, 
-        pseh.interp(rlon=pseh.rlon+0.5*hm['dlon'], method='linear', kwargs={"fill_value": "extrapolate"}), 
-        pshm.interp(rlon=pshm.rlon+0.5*hm['dlon'], method='linear', kwargs={"fill_value": "extrapolate"}),
+        pseh.interp(rlon=pseh.rlon+0.5*domain_info_hm['dlon'], method='linear', kwargs={"fill_value": "extrapolate"}), 
+        pshm.interp(rlon=pshm.rlon+0.5*domain_info_hm['dlon'], method='linear', kwargs={"fill_value": "extrapolate"}),
        # pseh, 
        # pshm,
         akhem, bkhem, akbkhm.akh, akbkhm.bkh, "U", kpbl
@@ -398,8 +413,8 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     #pshm_v[:,:,-1] = pshm[:,:,-1]
     vhm = interpolate_vertical(
         veh,
-        pseh.interp(rlat=pseh.rlat+0.5*hm['dlat'], method='linear', kwargs={"fill_value": "extrapolate"}), 
-        pshm.interp(rlat=pshm.rlat+0.5*hm['dlat'], method='linear', kwargs={"fill_value": "extrapolate"}),
+        pseh.interp(rlat=pseh.rlat+0.5*domain_info_hm['dlat'], method='linear', kwargs={"fill_value": "extrapolate"}), 
+        pshm.interp(rlat=pshm.rlat+0.5*domain_info_hm['dlat'], method='linear', kwargs={"fill_value": "extrapolate"}),
        # pseh_v, 
        # pshm_v, 
         akhem, bkhem, akbkhm.akh, akbkhm.bkh, "V", kpbl
@@ -415,8 +430,13 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
     #tsi = physics.tsi(tsw)
 
+    blaem=np.around(tds.BLA),
+    blahm=surflib.BLA.squeeze(drop=True)
+    phiem = tds.PHI.squeeze(drop=True)
+    lamem = tds.RLA.squeeze(drop=True)
+    
     ads = xr.merge(
-        [thm, uhm_corr, vhm_corr, pshm, arfhm, water_content, akbkhm]
+        [thm, uhm_corr, vhm_corr, pshm, arfhm, water_content, pseh, dtpbeh, akbkhm]
     )
 
     grid = get_grid(domain_info_hm)
@@ -445,6 +465,39 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     #return uhm_corr
     #return xr.merge([thm, pshm, uhm_corr, vhm_corr, qdhm, fibeh, ficeh, arfeh, ps1hm])
 
+def derive_soil_temperatures(ads):
+    dpeh = ads.PSEH - pr.physics.pressure(ads.PSEH, ads.hyai[-2], ads.hybi[-2])
+    dphm = ads.PS - pr.physics.pressure(ads.PS, ads.hyai[-2], ads.hybi[-2])
+    tslhm = ads.T.isel(lev=-1) - ads.DTPB*dphm/dpeh
+    return tslhm
+#  dpeh(ij) = pseh(ij) - GETP(akem(KEEM),bkem(KEEM),pseh(ij),akem(1))
+#  dphm(ij) = pshm(ij) - GETP(akhm(KEHM),bkhm(KEHM),pshm(ij),akhm(1))
+
+
+# DO ij = 1 , IJ2HM
+#   tswhm(ij) = tsweh(ij)
+#   tsihm(ij) = tsieh(ij)
+#   tslhm(ij) = thm(ij,KEHM) - dtpbeh(ij)*dphm(ij)/dpeh(ij)
+# ENDDO
+# !
+# DO ij = 1 , IJ2HM
+#   zdts(ij) = tslhm(ij) - tsleh(ij)
+#   tsnhm(ij) = tsneh(ij) + zdts(ij)
+#   td3hm(ij) = td3eh(ij) + zdts(ij)
+#   td4hm(ij) = td4eh(ij) + zdts(ij)
+#   td5hm(ij) = td5eh(ij) + zdts(ij)
+#   tdhm(ij) = tdeh(ij) + zdts(ij)
+#   tdclhm(ij) = tdcleh(ij) + zdts(ij)
+# ENDDO
+
+def addem_remo(tds):
+    # ws auf relative bodenfeucht umrechnen
+    wsem = tds.WS.where(tds.WS < 1.e9, 0.0) / tds.WSMX
+    wsem.name = 'WS'
+    dtpbem = tds.T.isel({lev_input:-1}) - tds.TSL
+    dtpbem.name = 'DTPB'
+    return xr.merge([wsem,dtpbem]).squeeze(drop=True)
+    
 
 
 def add_soil(ads):
@@ -491,6 +544,7 @@ def update_attrs(ds):
         except:
             pass
     return ds
+
 
 
 # variables in a-file required

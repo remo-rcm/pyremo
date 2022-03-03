@@ -132,10 +132,23 @@ def remap(gds, domain_info, vc, surflib):
     Returns
     -------
     Forcing Data : xarray.core.Dataset
-        Dataset containing the atmospheric forcing data interpolated to the
-        target domain.
+        Dataset containing the atmospheric and surface forcing data interpolated to the
+        target domain. The dynamic fields are `T`, `U`, `V`, `QD`, `QW`, `PS`, `QDBL`,
+        `TSW`, `TSI` and `SEAICE`.
 
     """
+    
+#   'U'     , UR       , code=131, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_RIGHT)
+#   CALL add(BOUNDARY_TABLE, 'V'     , VR       , code=132, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_TOP)
+#   CALL add(BOUNDARY_TABLE, 'T'     , TR       , code=130, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'QD'    , QDR      , code=133, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'QW'    , QWR      , code=153, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'PS'    , PSR      , code=134, adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'QDBL'  , QDBLR    , code=84 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'TSW'   , TSWECHR  , code=55 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+
+#   CALL add(BOUNDARY_TABLE, 'TSI'   , TSIECHR  , code=56 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+#   CALL add(BOUNDARY_TABLE, 'SEAICE'
 
     ## curvilinear coordinaetes
     # remove time dimension if there is one
@@ -283,7 +296,7 @@ def remap(gds, domain_info, vc, surflib):
 
 
 
-def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
+def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=None):
     """remapping workflow for double nesting
 
     This function should be similar to the ones in the
@@ -291,20 +304,21 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
 
     Parameters
     ----------
-    gds : xarray.Dataset
-        Input model dataset containing atmospheric variables for
-        downscaling, including SST. The dataset must fullfil CF conventions
-        containing: `ta`, `ua`, `va`, `ps`, `tos`, `orog` and `sftlf`.
+    tds : xarray.Dataset
+        REMO output t-file containing 3D atmospheric and 2D soil fields.
 
-    domain_info : dict
+    domain_info_hm : dict
         A dictionary containing the domain information of the target domain.
 
-    domain_info : pandas.DataFrame
+    vc : pandas.DataFrame
         A table with the vertical coordinate coefficients `ak` and `bk`.
 
     surflib : xarray.Dataset
         The surface library containing the target grid land sea mask `BLA` and
         orography `FIB`.
+    add_soil:
+        If True, soil fields will be added to the output forcing dataset. If
+        add_soil == "initial", only the first timestep will contain the soild fields.
 
     Returns
     -------
@@ -351,6 +365,27 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     dtpbeh = interp_horiz_remo_cm(addem.DTPB, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
                          phiem, lamem, phihm, lamhm, 'DTPB')
     dtpbeh.name = 'DTPB'
+    tsleh = interp_horiz_remo_cm(tds.TSL, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, 'TSL')
+    tsleh.name = 'TSLEH'
+    tsneh = interp_horiz_remo_cm(tds.TSN, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, 'TSN')
+
+    td3eh = interp_horiz_remo_cm(tds.TD3, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, 'TD3')
+
+    td4eh = interp_horiz_remo_cm(tds.TD4, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, 'TD4')
+
+    td5eh = interp_horiz_remo_cm(tds.TD5, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, 'TD5')
+    
+    tdeh = interp_horiz_remo_cm(tds.TD, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, 'TD')
+    
+    tdcleh = interp_horiz_remo_cm(tds.TDCL, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
+                         phiem, lamem, phihm, lamhm, 'TDCL')
+
     
     pseh.name = 'PSEH'
     #return pseh
@@ -436,7 +471,8 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     lamem = tds.RLA.squeeze(drop=True)
     
     ads = xr.merge(
-        [thm, uhm_corr, vhm_corr, pshm, arfhm, water_content, pseh, dtpbeh, akbkhm]
+        [thm, uhm_corr, vhm_corr, pshm, arfhm, water_content, pseh, dtpbeh, tsleh, tsneh, 
+         td3eh, td4eh, td5eh, tdeh, tdcleh, akbkhm]
     )
 
     grid = get_grid(domain_info_hm)
@@ -465,11 +501,19 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib):
     #return uhm_corr
     #return xr.merge([thm, pshm, uhm_corr, vhm_corr, qdhm, fibeh, ficeh, arfeh, ps1hm])
 
-def derive_soil_temperatures(ads):
+def add_soil_temperatures(ads):
     dpeh = ads.PSEH - pr.physics.pressure(ads.PSEH, ads.hyai[-2], ads.hybi[-2])
     dphm = ads.PS - pr.physics.pressure(ads.PS, ads.hyai[-2], ads.hybi[-2])
-    tslhm = ads.T.isel(lev=-1) - ads.DTPB*dphm/dpeh
-    return tslhm
+    ads['TSL'] = ads.T.isel(lev=-1) - ads.DTPB*dphm/dpeh
+    zdts = ads.TSL - ads.TSLEH
+    ads['TSN'] = ads.TSN + zdts
+    ads['TD3'] = ads.TD3 + zdts
+    ads['TD4'] = ads.TD4 + zdts
+    ads['TD5'] = ads.TD5 + zdts
+    ads['TD'] = ads.TD + zdts
+    ads['TDCL'] = ads.TDCL + zdts
+    return ads
+
 #  dpeh(ij) = pseh(ij) - GETP(akem(KEEM),bkem(KEEM),pseh(ij),akem(1))
 #  dphm(ij) = pshm(ij) - GETP(akhm(KEHM),bkhm(KEHM),pshm(ij),akhm(1))
 
@@ -497,6 +541,11 @@ def addem_remo(tds):
     dtpbem = tds.T.isel({lev_input:-1}) - tds.TSL
     dtpbem.name = 'DTPB'
     return xr.merge([wsem,dtpbem]).squeeze(drop=True)
+
+
+def add_surflib(ads, surflib):
+    surflib = surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])
+    return xr.merge((ads, surflib.drop('rotated_pole')))
     
 
 

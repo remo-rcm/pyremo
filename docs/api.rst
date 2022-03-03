@@ -52,7 +52,7 @@ Pressure interpolation
    prsint.pressure_interpolation
 
    
-CF-Preprocessor
+CF preprocessor
 ===============
 
 .. autosummary::
@@ -64,13 +64,22 @@ CF-Preprocessor
    preproc.to_tar
 
 ECMWF cmorizer (ERA5)
--------------------------
+---------------------
 
 .. autosummary::
    :toctree: generated/
 
    preproc.ERA5
-   
+
+Double nesting preprocessor
+---------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   preproc.remap_remo
+
+
 Converting ECMWF data
 ^^^^^^^^^^^^^^^^^^^^^
 

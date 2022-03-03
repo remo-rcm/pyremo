@@ -14,7 +14,7 @@ from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_
 try:
     import cmor
 except:
-    warn("no python cmor available")
+    warn("no python cmor package available, consider installing it")
 
 from ..core import codes
 
@@ -43,9 +43,9 @@ units_convert_rules = {
     "kg/kg": (lambda x: x, "1"),
 }
 
-coordinate = cx.cordex_cmor_table('coordinate')
-formula_terms = cx.cordex_cmor_table('formula_terms')
-cv = cx.cordex_cmor_table('CV')
+#coordinate = cx.cordex_cmor_table('coordinate')
+#formula_terms = cx.cordex_cmor_table('formula_terms')
+#cv = cx.cordex_cmor_table('CV')
 
 def ensure_cftime(func):
     def wrapper(date, **kwargs):
@@ -142,6 +142,10 @@ def _load_table(table):
 
 
 def _setup(table):
+    # trigger table downloads
+    coordinate = cx.cordex_cmor_table('coordinate')
+    formula_terms = cx.cordex_cmor_table('formula_terms')
+    cv = cx.cordex_cmor_table('CV')
     cmor.setup(set_verbosity=cmor.CMOR_NORMAL, netcdf_file_action=cmor.CMOR_REPLACE)
     cmor.dataset_json(table)
 

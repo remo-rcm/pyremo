@@ -26,7 +26,7 @@ import sphinx_rtd_theme
 from pyremo import __version__
 
 
-autodoc_mock_imports = ["cordex", "pint", "pydruint", "pyintorg"]
+autodoc_mock_imports = ["cordex", "pint", "pydruint", "pyintorg", "cmor"]
 
 # -- General configuration ---------------------------------------------
 
@@ -128,7 +128,8 @@ add_module_names = False
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
+html_static_path = []
 
 
 # -- Options for HTMLHelp output ---------------------------------------

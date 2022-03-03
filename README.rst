@@ -2,6 +2,9 @@
 pyremo
 ======
 
+.. image:: https://zenodo.org/badge/282037812.svg
+   :target: https://zenodo.org/badge/latestdoi/282037812
+
 .. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml
 
@@ -14,17 +17,15 @@ pyremo
 .. image:: https://readthedocs.org/projects/pyremo/badge/?version=latest
         :target: https://pyremo.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
+        
+.. image:: https://anaconda.org/conda-forge/pyremo/badges/installer/conda.svg
+    :target: https://anaconda.org/conda-forge/pyremo
 
 .. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo/badge
    :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo
    :alt: CodeFactor
 
-
-
-Common Remo python tools
-
-* Free software: MIT license
-* Documentation: https://pyremo.readthedocs.io.
+Python tools for the regional climate model `REMO <https://www.remo-rcm.de>`_
 
 Features
 --------
@@ -38,25 +39,53 @@ Features
 Installation
 ------------
 
+We recommend installing `pyremo` with conda:
+
+.. code-block:: console
+
+    conda install -c conda-forge pyremo
+    
+
+Installation from source
+------------------------
+
 You can install the package directly from github using pip:
 
 
 .. code-block:: console
 
-    pip install git+https://github.com/remo-rcm/pyremo
+    pip install git+https://github.com/euro-cordex/pyremo
 
 
-If you want to contribute, I recommend cloning the repository and installing the package in development mode, e.g.
+If you want to contribute, please fork the repository to your github account
+and install it in development mode, e.g.
 
 
 .. code-block:: console
 
-    git clone https://github.com/remo-rcm/pyremo
+    git clone https://github.com/<your-account>/pyremo
     cd pyremo
     pip install -e .
 
 
-This will install the package but you can still edit it and you don't need the package in your :code:`PYTHONPATH`
+This will install the package but you can still edit it and you don't need the package in your :code:`PYTHONPATH`.
+Please get in contact as early as possible, e.g., using `draft pull requests <https://github.blog/2019-02-14-introducing-draft-pull-requests>`_.
+
+Additional requirements
+-----------------------
+
+There are two sub-packages that have additional private dependencies, .e.g, the preprocessing module :code:`preproc` will require the installation
+of the legacy source code for preprocessing which is packaged in 
+
+* https://gitlab.dkrz.de/remo/pyintorg
+
+For the pressure interpolation :code:`prsint`, you will need to install the additional package:
+
+* https://gitlab.dkrz.de/remo/pydruint
+
+Note, that you will have to install these packages from source which will require a fortran compiler (e.g. :code:`gfortran`). If you require access to those 
+packages, please request access to the REMO group in the DRKZ gitlab.
+
 
 Credits
 -------

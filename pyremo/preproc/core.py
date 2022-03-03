@@ -13,7 +13,7 @@ xr.set_options(keep_attrs=True)
 try:
     from pyintorg import interface as intf
 except:
-    print(
+    warnings.warn(
         "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://git.gerics.de/python/pyintorg.git"
     )
 

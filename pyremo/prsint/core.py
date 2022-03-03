@@ -1,14 +1,14 @@
 import xarray as xr
+import warnings
 
 from . import _defaults as dftl
 
 try:
     from pydruint import _druint_verip
 except ModuleNotFoundError:
-    print(
+    warnings.warn(
         "The pressure interpolation requires installation of https://git.gerics.de/REMO/pydruint"
     )
-    raise Exception("Module not found: pydruint")
 
 
 # def prsint(ds, plevs=dftls.plevs, variables=dftl.variables,

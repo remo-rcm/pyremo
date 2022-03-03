@@ -52,8 +52,11 @@ Pressure interpolation
    prsint.pressure_interpolation
 
    
-CF preprocessor
-===============
+REMO preprocessor
+=================
+
+CMIP (CF) preprocessor
+----------------------
 
 .. autosummary::
    :toctree: generated/
@@ -63,14 +66,6 @@ CF preprocessor
    preproc.to_netcdf
    preproc.to_tar
 
-ECMWF cmorizer (ERA5)
----------------------
-
-.. autosummary::
-   :toctree: generated/
-
-   preproc.ERA5
-
 Double nesting preprocessor
 ---------------------------
 
@@ -78,6 +73,15 @@ Double nesting preprocessor
    :toctree: generated/
 
    preproc.remap_remo
+
+
+ECMWF cmorizer (ERA5)
+---------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   preproc.ERA5
 
 
 Converting ECMWF data

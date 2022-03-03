@@ -99,7 +99,7 @@ def to_tar(files, tar_file, mode="w"):
     return tar_file
 
 
-def broadcast_coords(ds, coords=('lon', 'lat')):
+def broadcast_coords(ds, coords=("lon", "lat")):
     """broadcast 1d global coordinates"""
     lat2d, lon2d = xr.broadcast(ds[coords[1]], ds[coords[0]])
     lam, phi = lon2d, lat2d
@@ -137,18 +137,18 @@ def remap(gds, domain_info, vc, surflib):
         `TSW`, `TSI` and `SEAICE`.
 
     """
-    
-#   'U'     , UR       , code=131, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_RIGHT)
-#   CALL add(BOUNDARY_TABLE, 'V'     , VR       , code=132, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_TOP)
-#   CALL add(BOUNDARY_TABLE, 'T'     , TR       , code=130, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
-#   CALL add(BOUNDARY_TABLE, 'QD'    , QDR      , code=133, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
-#   CALL add(BOUNDARY_TABLE, 'QW'    , QWR      , code=153, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
-#   CALL add(BOUNDARY_TABLE, 'PS'    , PSR      , code=134, adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
-#   CALL add(BOUNDARY_TABLE, 'QDBL'  , QDBLR    , code=84 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
-#   CALL add(BOUNDARY_TABLE, 'TSW'   , TSWECHR  , code=55 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
 
-#   CALL add(BOUNDARY_TABLE, 'TSI'   , TSIECHR  , code=56 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
-#   CALL add(BOUNDARY_TABLE, 'SEAICE'
+    #   'U'     , UR       , code=131, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_RIGHT)
+    #   CALL add(BOUNDARY_TABLE, 'V'     , VR       , code=132, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_TOP)
+    #   CALL add(BOUNDARY_TABLE, 'T'     , TR       , code=130, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+    #   CALL add(BOUNDARY_TABLE, 'QD'    , QDR      , code=133, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+    #   CALL add(BOUNDARY_TABLE, 'QW'    , QWR      , code=153, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
+    #   CALL add(BOUNDARY_TABLE, 'PS'    , PSR      , code=134, adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+    #   CALL add(BOUNDARY_TABLE, 'QDBL'  , QDBLR    , code=84 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+    #   CALL add(BOUNDARY_TABLE, 'TSW'   , TSWECHR  , code=55 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+
+    #   CALL add(BOUNDARY_TABLE, 'TSI'   , TSIECHR  , code=56 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
+    #   CALL add(BOUNDARY_TABLE, 'SEAICE'
 
     ## curvilinear coordinaetes
     # remove time dimension if there is one
@@ -295,8 +295,9 @@ def remap(gds, domain_info, vc, surflib):
     return ads.transpose(..., "lev", "rlat", "rlon")
 
 
-
-def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=None):
+def remap_remo(
+    tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=False, 
+    add_static=False, lice=None):
     """remapping workflow for double nesting
 
     This function should be similar to the ones in the
@@ -317,97 +318,238 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=None):
         The surface library containing the target grid land sea mask ``BLA`` and
         orography ``FIB``.
     add_soil:
-        If ``True``, soil fields will be added to the output forcing dataset. If
-        ``add_soil == "initial"``, only the first timestep will contain the soild fields.
+        If ``True``, add dynamic soil fields to the output forcing dataset.
+    add_static:
+        If ``True``, add static soil fields from ``surflib`` to the output forcing dataset.
 
     Returns
     -------
-    Forcing Data : xarray.core.Dataset
-        Dataset containing the atmospheric and surface forcing data interpolated to the
-        target domain. The dynamic variables include ``T``, ``U``, ``V``, ``PS``, ``QD``, 
+    Forcing Dataset : xarray.Dataset
+        Dataset containing the forcing data interpolated to the
+        target domain. The dynamic variables include at least: ``T``, ``U``, ``V``, ``PS``, ``QD``,
         ``QW``, ``QDBL``, ``TSW``, ``TSI`` and ``SEAICE``.
 
     """
+    # check if we have to derive seaice from tsw
+    has_seaice = "SEAICE" in tds
+    if lice is None:
+        lice = "SEAICE" not in tds
     # rename coords so they dont conflict with hm coords
-    tds = tds.copy().rename({'rlon':'rlon_em', 'rlat':'rlat_em', 'lev':lev_input})
+    tds = tds.copy().rename({"rlon": "rlon_em", "rlat": "rlat_em", "lev": lev_input})
     ## curvilinear coordinaetes
     # remove time dimension if there is one
     fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
-    tds['FIB'] = tds.FIB * const.grav_const
+    tds["FIB"] = tds.FIB * const.grav_const
 
     blaem = tds.BLA
-    blahm=surflib.BLA.squeeze(drop=True)
+    blahm = surflib.BLA.squeeze(drop=True)
     phiem = tds.PHI.squeeze(drop=True)
     lamem = tds.RLA.squeeze(drop=True)
-    
+
     lamhm, phihm = geo_coords(domain_info_hm, fibhm.rlon, fibhm.rlat)
-    #lamhm = lamhm.isel(pos=0).squeeze(drop=True)
-    #phihm = phihm.isel(pos=0).squeeze(drop=True)
-    #return lamhm, phihm
-    indemi,indemj,dxemhm,dyemhm = intersect_regional(domain_info_em, domain_info_hm)
+    # lamhm = lamhm.isel(pos=0).squeeze(drop=True)
+    # phihm = phihm.isel(pos=0).squeeze(drop=True)
+    # return lamhm, phihm
+    indemi, indemj, dxemhm, dyemhm = intersect_regional(domain_info_em, domain_info_hm)
     indemi = indemi.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     indemj = indemj.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     dxemhm = dxemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     dyemhm = dyemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
-    #return indemi, indemj, dxemhm, dyemhm
+    # return indemi, indemj, dxemhm, dyemhm
 
     addem = addem_remo(tds)
     ## horizontal interpolation
-    teh = interpolate_horizontal_remo(tds.T, indemi,indemj,dxemhm,dyemhm, "T")
-    pseh = interpolate_horizontal_remo(tds.PS, indemi,indemj,dxemhm,dyemhm, "PS")
-    ueh = interpolate_horizontal_remo(tds.U, indemi,indemj,dxemhm,dyemhm, "U", 1)
-    uveh = interpolate_horizontal_remo(tds.U, indemi,indemj,dxemhm,dyemhm, "U", 2)
-    veh = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 4)
-    vueh = interpolate_horizontal_remo(tds.V, indemi,indemj,dxemhm,dyemhm, "V", 3)
-    qdeh = interpolate_horizontal_remo(tds.QD, indemi,indemj,dxemhm,dyemhm, "QD")
-    fibeh = interpolate_horizontal_remo(tds.FIB, indemi,indemj,dxemhm,dyemhm, "FIB")
+    teh = interpolate_horizontal_remo(tds.T, indemi, indemj, dxemhm, dyemhm, "T")
+    pseh = interpolate_horizontal_remo(tds.PS, indemi, indemj, dxemhm, dyemhm, "PS")
+    ueh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 1)
+    uveh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 2)
+    veh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 4)
+    vueh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 3)
+    qdeh = interpolate_horizontal_remo(tds.QD, indemi, indemj, dxemhm, dyemhm, "QD")
+    fibeh = interpolate_horizontal_remo(tds.FIB, indemi, indemj, dxemhm, dyemhm, "FIB")
+    
+    if has_seaice:
+        siceem = tds.SEAICE
+        sicehm = interp_horiz_remo_cm(
+            tds.SEAICE,
+            indemi,
+            indemj,
+            dxemhm,
+            dyemhm,
+            blaem,
+            blahm,
+            phiem,
+            lamem,
+            phihm,
+            lamhm,
+            "TSW",
+        )
+    else:
+        sicehm = None
+        siceem = None
+        
+    
+    tsweh = interp_horiz_remo_cm(
+        tds.TSW,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TSW",
+        lice,
+        siceem,
+        sicehm
+    )
     
     # TEMPERATUR - DIFFERENZ TP - TB HORIZONTAL INTERPOLIEREN
-    dtpbeh = interp_horiz_remo_cm(addem.DTPB, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, 'DTPB')
-    dtpbeh.name = 'DTPB'
-    tsleh = interp_horiz_remo_cm(tds.TSL, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, 'TSL')
-    tsleh.name = 'TSLEH'
-    tsneh = interp_horiz_remo_cm(tds.TSN, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, 'TSN')
+    dtpbeh = interp_horiz_remo_cm(
+        addem.DTPB,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "DTPB",
+    )
+    dtpbeh.name = "DTPB"
+    tsleh = interp_horiz_remo_cm(
+        tds.TSL,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TSL",
+    )
+    tsleh.name = "TSLEH"
+    tsneh = interp_horiz_remo_cm(
+        tds.TSN,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TSN",
+    )
 
-    td3eh = interp_horiz_remo_cm(tds.TD3, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, 'TD3')
+    td3eh = interp_horiz_remo_cm(
+        tds.TD3,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TD3",
+    )
 
-    td4eh = interp_horiz_remo_cm(tds.TD4, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, 'TD4')
+    td4eh = interp_horiz_remo_cm(
+        tds.TD4,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TD4",
+    )
 
-    td5eh = interp_horiz_remo_cm(tds.TD5, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, 'TD5')
-    
-    tdeh = interp_horiz_remo_cm(tds.TD, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, 'TD')
-    
-    tdcleh = interp_horiz_remo_cm(tds.TDCL, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, 'TDCL')
+    td5eh = interp_horiz_remo_cm(
+        tds.TD5,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TD5",
+    )
 
-    
-    pseh.name = 'PSEH'
-    #return pseh
-    #return ueh
+    tdeh = interp_horiz_remo_cm(
+        tds.TD,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TD",
+    )
+
+    tdcleh = interp_horiz_remo_cm(
+        tds.TDCL,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TDCL",
+    )
+
+    pseh.name = "PSEH"
+    # return pseh
+    # return ueh
     ficem = geopotential(
         tds.FIB, tds.T, tds.QD, tds.PS, tds.hyai, tds.hybi
     )  # .squeeze(drop=True)
 
-    ficeh = interpolate_horizontal_remo(ficem, indemi,indemj,dxemhm,dyemhm, "FIC")
+    ficeh = interpolate_horizontal_remo(ficem, indemi, indemj, dxemhm, dyemhm, "FIC")
 
     arfem = relative_humidity(tds.QD, tds.T, tds.PS, tds.hyai, tds.hybi, tds.QW)
-    arfeh = interpolate_horizontal_remo(arfem, indemi,indemj,dxemhm,dyemhm, "AREL HUM")
+    arfeh = interpolate_horizontal_remo(
+        arfem, indemi, indemj, dxemhm, dyemhm, "AREL HUM"
+    )
 
-     ## first pressure correction
+    ## first pressure correction
     kpbl = pbl_index(tds.hyai, tds.hybi)
 
     ps1hm = pressure_correction_em(
         pseh, teh, arfeh, fibeh, fibhm, tds.hyai, tds.hybi, kpbl
     )
-    ps1hm.name = 'PS1HM'
-    #return pseh, teh, arfeh, fibeh, fibhm
+    ps1hm.name = "PS1HM"
+    # return pseh, teh, arfeh, fibeh, fibhm
     ## vertical interpolation
     akhem = tds.hyam
     bkhem = tds.hybm
@@ -418,10 +560,10 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=None):
     thm = interpolate_vertical(
         teh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "T", kpbl
     )
-    #return thm
-    #return teh,thm, pseh, ps1hm
-    #return akhem, bkhem, akbkhm.akh, akbkhm.bkh
-    
+    # return thm
+    # return teh,thm, pseh, ps1hm
+    # return akhem, bkhem, akbkhm.akh, akbkhm.bkh
+
     arfhm = interpolate_vertical(
         arfeh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "RF", kpbl
     )
@@ -429,51 +571,94 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=None):
     ## second pressure correction and vertical interpolation of wind
     pshm = pressure_correction_ge(ps1hm, thm, arfhm, ficeh, fibhm, akbkhm.ak, akbkhm.bk)
     pshm.name = "PS"
-    #return ps1hm, pshm, thm, arfhm, ficeh, fibeh
-    #return pseh, pshm
-    #pseh_u = pseh.interp(rlon=pseh.rlon+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
-    #pshm_u = pshm.interp(rlon=pshm.rlon+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
-    #pseh_u[:,-1,:] = pseh[:,-1,:]
-    #pshm_u[:,-1,:] = pshm[:,-1,:]
+    # return ps1hm, pshm, thm, arfhm, ficeh, fibeh
+    # return pseh, pshm
+    # pseh_u = pseh.interp(rlon=pseh.rlon+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
+    # pshm_u = pshm.interp(rlon=pshm.rlon+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
+    # pseh_u[:,-1,:] = pseh[:,-1,:]
+    # pshm_u[:,-1,:] = pshm[:,-1,:]
     uhm = interpolate_vertical(
-        ueh, 
-        pseh.interp(rlon=pseh.rlon+0.5*domain_info_hm['dlon'], method='linear', kwargs={"fill_value": "extrapolate"}), 
-        pshm.interp(rlon=pshm.rlon+0.5*domain_info_hm['dlon'], method='linear', kwargs={"fill_value": "extrapolate"}),
-       # pseh, 
-       # pshm,
-        akhem, bkhem, akbkhm.akh, akbkhm.bkh, "U", kpbl
+        ueh,
+        pseh.interp(
+            rlon=pseh.rlon + 0.5 * domain_info_hm["dlon"],
+            method="linear",
+            kwargs={"fill_value": "extrapolate"},
+        ),
+        pshm.interp(
+            rlon=pshm.rlon + 0.5 * domain_info_hm["dlon"],
+            method="linear",
+            kwargs={"fill_value": "extrapolate"},
+        ),
+        # pseh,
+        # pshm,
+        akhem,
+        bkhem,
+        akbkhm.akh,
+        akbkhm.bkh,
+        "U",
+        kpbl,
     )
-    #pseh_v = pseh.interp(rlat=pseh.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
-    #pshm_v = pshm.interp(rlat=pshm.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
-    #pseh_v[:,:,-1] = pseh[:,:,-1]
-    #pshm_v[:,:,-1] = pshm[:,:,-1]
+    # pseh_v = pseh.interp(rlat=pseh.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
+    # pshm_v = pshm.interp(rlat=pshm.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
+    # pseh_v[:,:,-1] = pseh[:,:,-1]
+    # pshm_v[:,:,-1] = pshm[:,:,-1]
     vhm = interpolate_vertical(
         veh,
-        pseh.interp(rlat=pseh.rlat+0.5*domain_info_hm['dlat'], method='linear', kwargs={"fill_value": "extrapolate"}), 
-        pshm.interp(rlat=pshm.rlat+0.5*domain_info_hm['dlat'], method='linear', kwargs={"fill_value": "extrapolate"}),
-       # pseh_v, 
-       # pshm_v, 
-        akhem, bkhem, akbkhm.akh, akbkhm.bkh, "V", kpbl
+        pseh.interp(
+            rlat=pseh.rlat + 0.5 * domain_info_hm["dlat"],
+            method="linear",
+            kwargs={"fill_value": "extrapolate"},
+        ),
+        pshm.interp(
+            rlat=pshm.rlat + 0.5 * domain_info_hm["dlat"],
+            method="linear",
+            kwargs={"fill_value": "extrapolate"},
+        ),
+        # pseh_v,
+        # pshm_v,
+        akhem,
+        bkhem,
+        akbkhm.akh,
+        akbkhm.bkh,
+        "V",
+        kpbl,
     )
-    
+
     philuhm = domain_info_hm["ll_lon"]
     dlamhm = domain_info_hm["dlon"]
     dphihm = domain_info_hm["dlat"]
     uhm_corr, vhm_corr = correct_uv(
         uhm, vhm, pshm, akbkhm.ak, akbkhm.bk, lamhm, phihm, philuhm, dlamhm, dphihm
     )
-    
-    water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
-    #tsi = physics.tsi(tsw)
 
-    blaem=np.around(tds.BLA),
-    blahm=surflib.BLA.squeeze(drop=True)
+    water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
+    # tsi = physics.tsi(tsw)
+
+    blaem = (np.around(tds.BLA),)
+    blahm = surflib.BLA.squeeze(drop=True)
     phiem = tds.PHI.squeeze(drop=True)
     lamem = tds.RLA.squeeze(drop=True)
-    
+
     ads = xr.merge(
-        [thm, uhm_corr, vhm_corr, pshm, arfhm, water_content, pseh, dtpbeh, tsleh, tsneh, 
-         td3eh, td4eh, td5eh, tdeh, tdcleh, akbkhm]
+        [
+            thm,
+            uhm_corr,
+            vhm_corr,
+            pshm,
+            arfhm,
+            water_content,
+            pseh,
+            dtpbeh,
+            tsleh,
+            tsneh,
+            td3eh,
+            td4eh,
+            td5eh,
+            tdeh,
+            tdcleh,
+            tsweh,
+            akbkhm,
+        ]
     )
 
     grid = get_grid(domain_info_hm)
@@ -497,23 +682,33 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=None):
     # transpose to remo convention
     return ads.transpose(..., "lev", "rlat", "rlon")
 
-    
-    
-    #return uhm_corr
-    #return xr.merge([thm, pshm, uhm_corr, vhm_corr, qdhm, fibeh, ficeh, arfeh, ps1hm])
+    # return uhm_corr
+    # return xr.merge([thm, pshm, uhm_corr, vhm_corr, qdhm, fibeh, ficeh, arfeh, ps1hm])
 
-def add_soil_temperatures(ads):
-    dpeh = ads.PSEH - pr.physics.pressure(ads.PSEH, ads.hyai[-2], ads.hybi[-2])
-    dphm = ads.PS - pr.physics.pressure(ads.PS, ads.hyai[-2], ads.hybi[-2])
-    ads['TSL'] = ads.T.isel(lev=-1) - ads.DTPB*dphm/dpeh
-    zdts = ads.TSL - ads.TSLEH
-    ads['TSN'] = ads.TSN + zdts
-    ads['TD3'] = ads.TD3 + zdts
-    ads['TD4'] = ads.TD4 + zdts
-    ads['TD5'] = ads.TD5 + zdts
-    ads['TD'] = ads.TD + zdts
-    ads['TDCL'] = ads.TDCL + zdts
-    return ads
+
+def update_soil_temperatures(ds):
+    """Update land and soil temperatures in the input dataset.
+    
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Dataset containing ``T``, ``PS``, ``PSEH``, ``DTPB`` and ``TSL``
+    
+    """
+    # BERECHNUNG DER SCHICHTDICKE DER PRANDTL-SCHICHT
+    dpeh = ds.PSEH - pr.physics.pressure(ds.PSEH, ds.hyai[-2], ds.hybi[-2])
+    dphm = ds.PS - pr.physics.pressure(ds.PS, ds.hyai[-2], ds.hybi[-2])
+    
+    ads["TSL"] = ds.T.isel(lev=-1) - ds.DTPB * dphm / dpeh
+    zdts = ads.TSL - ds.TSLEH
+    ads["TSN"] = ds.TSN + zdts
+    ads["TD3"] = ds.TD3 + zdts
+    ads["TD4"] = ds.TD4 + zdts
+    ads["TD5"] = ds.TD5 + zdts
+    ads["TD"] = ds.TD + zdts
+    ads["TDCL"] = ds.TDCL + zdts
+    return ds
+
 
 #  dpeh(ij) = pseh(ij) - GETP(akem(KEEM),bkem(KEEM),pseh(ij),akem(1))
 #  dphm(ij) = pshm(ij) - GETP(akhm(KEHM),bkhm(KEHM),pshm(ij),akhm(1))
@@ -535,19 +730,19 @@ def add_soil_temperatures(ads):
 #   tdclhm(ij) = tdcleh(ij) + zdts(ij)
 # ENDDO
 
+
 def addem_remo(tds):
     # ws auf relative bodenfeucht umrechnen
-    wsem = tds.WS.where(tds.WS < 1.e9, 0.0) / tds.WSMX
-    wsem.name = 'WS'
-    dtpbem = tds.T.isel({lev_input:-1}) - tds.TSL
-    dtpbem.name = 'DTPB'
-    return xr.merge([wsem,dtpbem]).squeeze(drop=True)
+    wsem = tds.WS.where(tds.WS < 1.0e9, 0.0) / tds.WSMX
+    wsem.name = "WS"
+    dtpbem = tds.T.isel({lev_input: -1}) - tds.TSL
+    dtpbem.name = "DTPB"
+    return xr.merge([wsem, dtpbem]).squeeze(drop=True)
 
 
 def add_surflib(ads, surflib):
     surflib = surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])
-    return xr.merge((ads, surflib.drop('rotated_pole')))
-    
+    return xr.merge((ads, surflib.drop("rotated_pole")))
 
 
 def add_soil(ads):
@@ -594,7 +789,6 @@ def update_attrs(ds):
         except:
             pass
     return ds
-
 
 
 # variables in a-file required

@@ -379,12 +379,15 @@ def interp_horiz_cm(
 
 
 def interp_horiz_remo_cm(da, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, name, keep_attrs=False):
+                         phiem, lamem, phihm, lamhm, name, lice=None, siceem=None, sicehm=None, keep_attrs=False):
     """main interface"""
     em_dims = list(horizontal_dims(da))
     hm_dims = list(horizontal_dims(indemj))
     input_core_dims = [em_dims] + 4*[hm_dims] + [em_dims]+ [hm_dims] + 2*[em_dims] + 2*[hm_dims] + [[]]
-    print(hm_dims)
+    ice_args = ()
+    if lice is False:
+        input_core_dims += [[]] + [em_dims] + [hm_dims]
+        ice_args = (lice, siceem, sicehm)
     #return
     result = xr.apply_ufunc(
         intf.interp_horiz_remo_2d_cm,  # first the function
@@ -400,6 +403,7 @@ def interp_horiz_remo_cm(da, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
         phihm.isel(pos=0)* 1.0 / 57.296,
         lamhm.isel(pos=0)* 1.0 / 57.296,
         name,
+        *ice_args,
         input_core_dims=input_core_dims,  # list with one entry per arg
         output_core_dims=[hm_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time, lev

@@ -311,20 +311,21 @@ def remap_remo(tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=None):
         A dictionary containing the domain information of the target domain.
 
     vc : pandas.DataFrame
-        A table with the vertical coordinate coefficients `ak` and `bk`.
+        A table with the vertical coordinate coefficients ``ak`` and ``bk``.
 
     surflib : xarray.Dataset
-        The surface library containing the target grid land sea mask `BLA` and
-        orography `FIB`.
+        The surface library containing the target grid land sea mask ``BLA`` and
+        orography ``FIB``.
     add_soil:
-        If True, soil fields will be added to the output forcing dataset. If
-        add_soil == "initial", only the first timestep will contain the soild fields.
+        If ``True``, soil fields will be added to the output forcing dataset. If
+        ``add_soil == "initial"``, only the first timestep will contain the soild fields.
 
     Returns
     -------
     Forcing Data : xarray.core.Dataset
-        Dataset containing the atmospheric forcing data interpolated to the
-        target domain.
+        Dataset containing the atmospheric and surface forcing data interpolated to the
+        target domain. The dynamic variables include ``T``, ``U``, ``V``, ``PS``, ``QD``, 
+        ``QW``, ``QDBL``, ``TSW``, ``TSI`` and ``SEAICE``.
 
     """
     # rename coords so they dont conflict with hm coords

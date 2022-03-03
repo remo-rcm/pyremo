@@ -17,10 +17,7 @@ except:
         "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://git.gerics.de/python/pyintorg.git"
     )
 
-
-lev_i = "lev_i"
-lev = "lev"
-lev_gm = "lev_input"
+from .constants import lev_i, lev, lev_gm
 
 
 class const:
@@ -386,21 +383,22 @@ def interp_horiz_remo_cm(da, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
     """main interface"""
     em_dims = list(horizontal_dims(da))
     hm_dims = list(horizontal_dims(indemj))
-    input_core_dims = [em_dims] + 4*[hm_dims] + [[]]
+    input_core_dims = [em_dims] + 4*[hm_dims] + [em_dims]+ [hm_dims] + 2*[em_dims] + 2*[hm_dims] + [[]]
+    print(hm_dims)
     #return
     result = xr.apply_ufunc(
         intf.interp_horiz_remo_2d_cm,  # first the function
         da,  # now arguments in the order expected
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
+        indemi.isel(pos=0),
+        indemj.isel(pos=0),
+        dxemhm.isel(pos=0),
+        dyemhm.isel(pos=0),
         blaem,
         blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
+        phiem* 1.0 / 57.296,
+        lamem* 1.0 / 57.296,
+        phihm.isel(pos=0)* 1.0 / 57.296,
+        lamhm.isel(pos=0)* 1.0 / 57.296,
         name,
         input_core_dims=input_core_dims,  # list with one entry per arg
         output_core_dims=[hm_dims],  # returned data has 3 dimensions

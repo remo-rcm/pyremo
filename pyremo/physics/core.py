@@ -32,6 +32,8 @@ def GQD(ex, px):
 # FGEE(tx) = B1*EXP(B2E*(tx - B3)/(tx - B4E))
 # FGQD(ge, p) = RDRd*ge/(p - EMRdrd*ge)
 
+# These functions seem to compute vapour pressure, e.g.:
+# https://en.wikipedia.org/wiki/Tetens_equation
 
 def fg(tx, b2, b4):
     """statement function dummy.
@@ -93,7 +95,7 @@ def fgqd(ge, p):
     return C.RDRd * ge / (p - C.EMRdrd * ge)
 
 
-def relative_humidity(t, qd, ps, ak, bk):
+def relative_humidity(t, qd, p):
     """computes relative humidity from temperature, pressure and specific humidty (qd)
 
     This might be similar to https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.relative_humidity_from_specific_humidity.html
@@ -114,7 +116,6 @@ def relative_humidity(t, qd, ps, ak, bk):
         *relhum:*
             relative humidity ([%],3d)
     """
-    p = pressure_at_model_levels(ps, ak, bk)
     return qd / fgqd(fgew(t), p)
 
 
@@ -286,7 +287,9 @@ def compute_arfgm(t, qd, p, qw=0.0):
             relative humidity ([%],3d)
     """
     # return fgqd(fgee(t),p)
-    gqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
+    #gqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
+    fge = np.where(t >= C.B3, fgew(t), fgee(t))
+    gqd = fgqd(fge, p)
     relhum = qd / gqd
     return np.where(relhum > 1.0, (gqd + qw) / gqd, (qd + qw) / gqd)
 
@@ -298,9 +301,9 @@ def specific_humidity(t, relhum, p):
     """
     # p = ak + bk * ps#pressure_at_model_levels(ps, ak, bk)
     fge = np.where(t >= C.B3, fgew(t), fgee(t))
-    zgqd = fgqd(fge, p)
-    zqdw = relhum * zgqd
-    return np.where(relhum < 1.0, zqdw, zgqd)
+    gqd = fgqd(fge, p)
+    qdw = relhum * gqd
+    return np.where(relhum < 1.0, qdw, gqd)
 
 
 def liquid_water_content(t, relhum, p):
@@ -309,7 +312,20 @@ def liquid_water_content(t, relhum, p):
     implements algorithm from RemapToRemo addem.
     """
     # p = ak + bk * ps #pressure_at_model_levels(ps, ak, bk)
-    fge = xr.where(t >= C.B3, fgew(t), fgee(t))
-    zgqd = fgqd(fge, p)
-    zqdw = relhum * zgqd
-    return np.where(relhum < 1.0, 0.0, zqdw - zgqd)
+    fge = np.where(t >= C.B3, fgew(t), fgee(t))
+    gqd = fgqd(fge, p)
+    qdw = relhum * gqd
+    return np.where(relhum < 1.0, 0.0, qdw - gqd)
+
+
+def gqd(t, p):
+    fge = np.where(t >= C.B3, fgew(t), fgee(t))
+    return fgqd(fge, p)
+
+#    zqdwem = ARFem(ij, k)*zgqd
+#    IF ( ARFem(ij, k)<1.0_DP ) THEN
+#      QDEm(ij, k) = zqdwem
+#      QWEm(ij, k) = 0.
+#    ELSE
+#      QDEm(ij, k) = zgqd
+#      QWEm(ij, k) = z

@@ -18,6 +18,7 @@ New Features
 Internal Changes
 ~~~~~~~~~~~~~~~~
 - Added fortran extensions ``pyintorg`` and ``pydruint`` to extra dependencies.
+- Added ``CI-extensions.yaml`` for git actions testing with fortran extensions.
 
 v0.2.0 (24 February 2022)
 -------------------------

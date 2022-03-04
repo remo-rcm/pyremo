@@ -93,7 +93,7 @@ def fgqd(ge, p):
     return C.RDRd * ge / (p - C.EMRdrd * ge)
 
 
-def relative_humidity(t, qd, ps, ak, bk):
+def relative_humidity(t, qd, p, qw=None):
     """computes relative humidity from temperature, pressure and specific humidty (qd)
 
     This might be similar to https://unidata.github.io/MetPy/latest/api/generated/metpy.calc.relative_humidity_from_specific_humidity.html
@@ -114,7 +114,6 @@ def relative_humidity(t, qd, ps, ak, bk):
         *relhum:*
             relative humidity ([%],3d)
     """
-    p = pressure_at_model_levels(ps, ak, bk)
     return qd / fgqd(fgew(t), p)
 
 

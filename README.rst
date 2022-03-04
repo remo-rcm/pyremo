@@ -7,6 +7,9 @@ pyremo
 
 .. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml
+    
+.. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci-extensions.yaml/badge.svg
+    :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci-extensions.yaml
 
 .. image:: https://codecov.io/gh/remo-rcm/pyremo/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/remo-rcm/pyremo

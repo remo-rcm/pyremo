@@ -296,8 +296,8 @@ def remap(gds, domain_info, vc, surflib):
 
 
 def remap_remo(
-    tds, domain_info_em, domain_info_hm, vc, surflib, add_soil=False, 
-    add_static=False, lice=None):
+    tds, domain_info_em, domain_info_hm, vc, surflib, initial=False, 
+    lice=None):
     """remapping workflow for double nesting
 
     This function should be similar to the ones in the
@@ -317,10 +317,8 @@ def remap_remo(
     surflib : xarray.Dataset
         The surface library containing the target grid land sea mask ``BLA`` and
         orography ``FIB``.
-    add_soil:
-        If ``True``, add dynamic soil fields to the output forcing dataset.
-    add_static:
-        If ``True``, add static soil fields from ``surflib`` to the output forcing dataset.
+    initial:
+        If ``True``, add static and dynamic fields for initial conditions.
 
     Returns
     -------
@@ -336,6 +334,8 @@ def remap_remo(
         lice = "SEAICE" not in tds
     # rename coords so they dont conflict with hm coords
     tds = tds.copy().rename({"rlon": "rlon_em", "rlat": "rlat_em", "lev": lev_input})
+    grid = get_grid(domain_info_hm)
+    
     ## curvilinear coordinaetes
     # remove time dimension if there is one
     fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
@@ -357,10 +357,10 @@ def remap_remo(
     dyemhm = dyemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     # return indemi, indemj, dxemhm, dyemhm
 
-    addem = addem_remo(tds)
     ## horizontal interpolation
     teh = interpolate_horizontal_remo(tds.T, indemi, indemj, dxemhm, dyemhm, "T")
     pseh = interpolate_horizontal_remo(tds.PS, indemi, indemj, dxemhm, dyemhm, "PS")
+    pseh.name = "PSEH"
     ueh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 1)
     uveh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 2)
     veh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 4)
@@ -407,128 +407,12 @@ def remap_remo(
         sicehm
     )
     
-    # TEMPERATUR - DIFFERENZ TP - TB HORIZONTAL INTERPOLIEREN
-    dtpbeh = interp_horiz_remo_cm(
-        addem.DTPB,
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
-        blaem,
-        blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
-        "DTPB",
-    )
-    dtpbeh.name = "DTPB"
-    tsleh = interp_horiz_remo_cm(
-        tds.TSL,
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
-        blaem,
-        blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
-        "TSL",
-    )
-    tsleh.name = "TSLEH"
-    tsneh = interp_horiz_remo_cm(
-        tds.TSN,
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
-        blaem,
-        blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
-        "TSN",
-    )
-
-    td3eh = interp_horiz_remo_cm(
-        tds.TD3,
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
-        blaem,
-        blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
-        "TD3",
-    )
-
-    td4eh = interp_horiz_remo_cm(
-        tds.TD4,
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
-        blaem,
-        blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
-        "TD4",
-    )
-
-    td5eh = interp_horiz_remo_cm(
-        tds.TD5,
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
-        blaem,
-        blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
-        "TD5",
-    )
-
-    tdeh = interp_horiz_remo_cm(
-        tds.TD,
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
-        blaem,
-        blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
-        "TD",
-    )
-
-    tdcleh = interp_horiz_remo_cm(
-        tds.TDCL,
-        indemi,
-        indemj,
-        dxemhm,
-        dyemhm,
-        blaem,
-        blahm,
-        phiem,
-        lamem,
-        phihm,
-        lamhm,
-        "TDCL",
-    )
-
-    pseh.name = "PSEH"
+    if initial is True:
+        tds = addem_remo(tds)
+        soil = remap_soil(tds, indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm)
+    else:
+        soil = xr.Dataset()
+    
     # return pseh
     # return ueh
     ficem = geopotential(
@@ -648,21 +532,12 @@ def remap_remo(
             arfhm,
             water_content,
             pseh,
-            dtpbeh,
-            tsleh,
-            tsneh,
-            td3eh,
-            td4eh,
-            td5eh,
-            tdeh,
-            tdcleh,
             tsweh,
+            soil,
             akbkhm,
         ]
     )
-
-    grid = get_grid(domain_info_hm)
-
+    
     ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
     ads["rlon"] = grid.rlon
     ads["rlat"] = grid.rlat
@@ -672,6 +547,10 @@ def remap_remo(
     # rename for remo to recognize
     ads = ads.rename({"ak": "hyai", "bk": "hybi", "akh": "hyam", "bkh": "hybm"})
 
+    if initial is True:
+        ads = add_surflib(ads, surflib)
+        ads = update_soil_temperatures(ads)
+    
     # set global attributes
     ads.attrs = tds.attrs
 
@@ -685,6 +564,22 @@ def remap_remo(
     # return uhm_corr
     # return xr.merge([thm, pshm, uhm_corr, vhm_corr, qdhm, fibeh, ficeh, arfeh, ps1hm])
 
+    
+def remap_soil(tds, indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm):
+    args = (indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm)
+    
+    remap_vars = ["DTPB", "TSL", "TSN", "TD3", "TD4", "TD5", "TD", "TDCL", "WS"]
+    
+    #DTPB: TEMPERATUR - DIFFERENZ TP - TB HORIZONTAL INTERPOLIEREN
+    def remap_var(varname):
+        return interp_horiz_remo_cm(
+            tds[varname],
+            *args,
+            varname,
+        )
+    
+    return xr.merge([remap_var(var) for var in remap_vars])
+    
 
 def update_soil_temperatures(ds):
     """Update land and soil temperatures in the input dataset.
@@ -698,15 +593,16 @@ def update_soil_temperatures(ds):
     # BERECHNUNG DER SCHICHTDICKE DER PRANDTL-SCHICHT
     dpeh = ds.PSEH - pr.physics.pressure(ds.PSEH, ds.hyai[-2], ds.hybi[-2])
     dphm = ds.PS - pr.physics.pressure(ds.PS, ds.hyai[-2], ds.hybi[-2])
-    
-    ads["TSL"] = ds.T.isel(lev=-1) - ds.DTPB * dphm / dpeh
-    zdts = ads.TSL - ds.TSLEH
-    ads["TSN"] = ds.TSN + zdts
-    ads["TD3"] = ds.TD3 + zdts
-    ads["TD4"] = ds.TD4 + zdts
-    ads["TD5"] = ds.TD5 + zdts
-    ads["TD"] = ds.TD + zdts
-    ads["TDCL"] = ds.TDCL + zdts
+    ds["TSLEH"] = ds.TSL
+    ds["TSL"] = ds.T.isel(lev=-1) - ds.DTPB * dphm / dpeh
+    zdts = ds.TSL - ds.TSLEH
+    ds["TSN"] = ds.TSN + zdts
+    ds["TD3"] = ds.TD3 + zdts
+    ds["TD4"] = ds.TD4 + zdts
+    ds["TD5"] = ds.TD5 + zdts
+    ds["TD"] = ds.TD + zdts
+    ds["TDCL"] = ds.TDCL + zdts
+    ds["WS"] = ds.WS * ds.WSMX
     return ds
 
 
@@ -733,20 +629,18 @@ def update_soil_temperatures(ds):
 
 def addem_remo(tds):
     # ws auf relative bodenfeucht umrechnen
-    wsem = tds.WS.where(tds.WS < 1.0e9, 0.0) / tds.WSMX
-    wsem.name = "WS"
-    dtpbem = tds.T.isel({lev_input: -1}) - tds.TSL
-    dtpbem.name = "DTPB"
-    return xr.merge([wsem, dtpbem]).squeeze(drop=True)
+    tds = tds.copy()
+    tds["WS"] = tds.WS.where(tds.WS < 1.0e9, 0.0) / tds.WSMX
+    tds["DTPB"] = tds.T.isel({lev_input: -1}) - tds.TSL
+    return tds
+    #return xr.merge([wsem, dtpbem]).squeeze(drop=True)
 
 
 def add_surflib(ads, surflib):
     surflib = surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])
+    surflib['rlon'] = ads.rlon
+    surflib['rlat'] = ads.rlat
     return xr.merge((ads, surflib.drop("rotated_pole")))
-
-
-def add_soil(ads):
-    return None
 
 
 def remap_sst(tos, lamem, phiem, lamgm, phigm, blagm, blaem):

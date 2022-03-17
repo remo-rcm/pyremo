@@ -238,9 +238,11 @@ def remap(gds, domain_info, vc, surflib):
     philuem = domain_info["ll_lon"]
     dlamem = domain_info["dlon"]
     dphiem = domain_info["dlat"]
+
     uem_corr, vem_corr = correct_uv(
         uem, vem, psem, akbkem.ak, akbkem.bk, lamem, phiem, philuem, dlamem, dphiem
     )
+
 
     tsw = remap_sst(
         gds.tos,
@@ -382,7 +384,7 @@ def remap_remo(
             lamem,
             phihm,
             lamhm,
-            "TSW",
+            "SICE",
         )
     else:
         sicehm = None
@@ -402,6 +404,24 @@ def remap_remo(
         phihm,
         lamhm,
         "TSW",
+        lice,
+        siceem,
+        sicehm
+    )
+    
+    tsieh = interp_horiz_remo_cm(
+        tds.TSI,
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        blaem,
+        blahm,
+        phiem,
+        lamem,
+        phihm,
+        lamhm,
+        "TSI",
         lice,
         siceem,
         sicehm
@@ -511,10 +531,13 @@ def remap_remo(
     philuhm = domain_info_hm["ll_lon"]
     dlamhm = domain_info_hm["dlon"]
     dphihm = domain_info_hm["dlat"]
+    
+    print('correct uv')
     uhm_corr, vhm_corr = correct_uv(
         uhm, vhm, pshm, akbkhm.ak, akbkhm.bk, lamhm, phihm, philuhm, dlamhm, dphihm
     )
-
+    print('correct uv done')
+    
     water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
     # tsi = physics.tsi(tsw)
 
@@ -533,6 +556,8 @@ def remap_remo(
             water_content,
             pseh,
             tsweh,
+            tsieh,
+            sicehm,
             soil,
             akbkhm,
         ]

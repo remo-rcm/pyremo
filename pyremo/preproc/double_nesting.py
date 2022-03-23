@@ -108,13 +108,14 @@ def retrieve_forcing_data(time=None, transpose=None):
     return ds
         
     
-    
 def deallocate():
     driver.deallocate_data()
+    
     
 def allocate():
     driver.allocate_data()
   
+
 def init(ds, em, hm, vc, surflib, order='F'):
     ds = update(ds)
     surflib = update(surflib)
@@ -144,7 +145,7 @@ def write_timestep(ds, path=None):
     filename = "a056000a{}.nc".format(ds.time.dt.strftime("%Y%m%d%H").data[0])
     filename = os.path.join(path, filename)
     ds.to_netcdf(filename)
-    print('writing to: {}'.format(filename))
+    #print('writing to: {}'.format(filename))
     return filename
 
 
@@ -156,6 +157,7 @@ def process_file(file, path=None, write=True):
     if write is True:
         return dn.write_timestep(dsa, path)
     return dsa
+
 
 def process_files(files, path=None, write=True):
     results = []

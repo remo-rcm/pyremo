@@ -14,7 +14,8 @@ v0.3.0 (Unreleased)
 New Features
 ~~~~~~~~~~~~
 
- 
+- Added double nesting preprocessor API (:pull:`34`).
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 - Added fortran extensions ``pyintorg`` and ``pydruint`` to extra dependencies.

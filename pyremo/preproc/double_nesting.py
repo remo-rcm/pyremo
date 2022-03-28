@@ -65,7 +65,6 @@ def load_grid(ds, hm, vc):
 
 def load_data(ds, order="F"):
     ds = ds.copy().rename({"SEAICE": "SICE"})
-    print(dynamics)
     for var in dynamics:
         load_variable(ds[var], mod=intorg.mo_nem, suffix="em", order=order)
 

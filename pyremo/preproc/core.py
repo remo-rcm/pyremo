@@ -259,8 +259,6 @@ def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=
     """main interface"""
     gcm_dims = list(horizontal_dims(lamgm))
     rcm_dims = list(horizontal_dims(lamem))
-    print(gcm_dims)
-    print(rcm_dims)
     input_core_dims = [
         gcm_dims,
         gcm_dims,
@@ -271,7 +269,6 @@ def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=
         rcm_dims,
         [],
     ]
-    print(input_core_dims)
     result = xr.apply_ufunc(
         intf.interp_horiz_2d,  # first the function
         da,  # now arguments in the order expected

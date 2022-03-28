@@ -16,3 +16,4 @@ def _importorskip(modname):
 
 
 has_pydruint, requires_pydruint = _importorskip("pydruint")
+has_pyintorg, requires_pyintorg = _importorskip("pyintorg")

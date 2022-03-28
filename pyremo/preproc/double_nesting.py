@@ -171,7 +171,7 @@ def process_file(file, em, hm, vc, surflib, initial=False, lice=False, path=None
     dsa = update_dataset(dsa, ds, hm)
     if initial is True:
         #dsa = xr.merge([dsa, surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])])
-        dsa = dsa.update(surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1]))
+        dsa = dsa.merge(surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1]))
     return dsa
     if write is True:
         return write_timestep(dsa, path)

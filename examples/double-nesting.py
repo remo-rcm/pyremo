@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=24
 #SBATCH --time=24:00:00
-#SBATCH --mem-per-cpu=1300
+#SBATCH --mem-per-cpu=2600
 #SBATCH --account=ch0636
 ##SBATCH --nice=1000
 
@@ -60,11 +60,10 @@ def main():
 if __name__ == "__main__":
     #client = Client(threads_per_worker=1, n_workers=24, dashboard_address=None)
     print('starting client...')
-    client = Client(threads_per_worker=1, n_workers=24,  dashboard_address=None)
-    print(client)
-
-    results = main()
-    results_ = dask.persist(*results)
-    progress(*results_)
-    results_ = dask.compute(*results_)
-    client.shutdown()
+    with Client(threads_per_worker=1, n_workers=24,  dashboard_address=None) as client:
+        print(client)
+        results = main()
+        results_ = dask.persist(*results)
+        progress(*results_)
+        results_ = dask.compute(*results_)
+        #client.shutdown()

@@ -3,11 +3,18 @@ import pyintorg.remo as intorg
 from pyintorg.remo import driver
 import numpy as np
 import xarray as xr
+from .utils import update_attrs, get_grid
+from pyremo import remo_domain
+import pyremo as pr
 
 dynamics = ['T', 'U', 'V', 'PS', 'QD', 'QW', 'QDBL', 'TSW', 'TSI', 'SICE']
 static = ['FIB', 'BLA']
 soil = ['TSL', 'TSN', 'TD3', 'TD4', 'TD5', 'TD', 'TDCL', 'SN', 'WL', 'WS', 'QDBL']
 
+output_variables = {'dynamics': dynamics,
+                    'initial': ['TSL', 'TSN', 'TD3', 'TD4', 'TD5', 'TD', 'TDCL', 'SN', 'WL', 'WS', 'QDBL']}
+
+print(dynamics)
 
 def update(ds):
     ds = ds.copy()
@@ -99,12 +106,16 @@ def retrieve_variable(mod, name, shape, order='C'):
     return xr.DataArray(array.copy().reshape(shape, order=order), dims=dims, name=name)
 
 
-def retrieve_forcing_data(time=None, transpose=None):
-    ds = xr.merge([retrieve_variable(intorg.mo_nhm, var, (403, 363)) for var in dynamics])
+def retrieve_variables(variables, time=None, transpose=None, crop=True):
+    ds = xr.merge([retrieve_variable(intorg.mo_nhm, var, (403, 363)) for var in variables])
     if time is not None:
         ds = ds.expand_dims(dim={'time': time}, axis=0)
     if transpose is not None:
         ds = ds.transpose(transpose)
+    if crop is True:
+        ds = ds.sel(rlon=ds.rlon[1:-1], rlat=ds.rlat[1:-1])
+    if 'SICE' in ds:
+        ds = ds.rename({'SICE': 'SEAICE'})
     return ds
         
     
@@ -130,11 +141,14 @@ def init(ds, em, hm, vc, surflib, order='F'):
     #deallocate()
 
     
-def remap_timestep(ds):
+def remap_timestep(ds, initial=False):
+    variables = output_variables['dynamics']
+    if initial is True:
+        variables += output_variables['initial']
     load_data(ds)
     load_soil(ds)
     intorg.driver.remap_remo()
-    dsa = retrieve_forcing_data(time=ds.time)
+    dsa = retrieve_variables(variables, time=ds.time)
     #deallocate()
     return dsa
 
@@ -142,25 +156,59 @@ def remap_timestep(ds):
 def write_timestep(ds, path=None):
     if path is None:
         path = "./"
-    filename = "a056000a{}.nc".format(ds.time.dt.strftime("%Y%m%d%H").data[0])
+    filename = "a000000a{}.nc".format(ds.time.dt.strftime("%Y%m%d%H").data[0])
     filename = os.path.join(path, filename)
     ds.to_netcdf(filename)
-    #print('writing to: {}'.format(filename))
+    print('writing to: {}'.format(filename))
     return filename
 
 
-def process_file(file, path=None, write=True):
+def process_file(file, em, hm, vc, surflib, initial=False, lice=False, path=None, write=True):
     ds = pr.preprocess(xr.open_dataset(file))
-    dn.init(ds, em, hm, vc, surflib)
-    dsa = dn.remap_timestep(ds)
-    dn.deallocate()
+    init(ds, em, hm, vc, surflib)
+    dsa = remap_timestep(ds, initial)
+    deallocate()
+    dsa = update_dataset(dsa, ds, hm)
+    if initial is True:
+        #dsa = xr.merge([dsa, surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])])
+        dsa = dsa.update(surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1]))
+    return dsa
     if write is True:
-        return dn.write_timestep(dsa, path)
+        return write_timestep(dsa, path)
     return dsa
 
 
-def process_files(files, path=None, write=True):
+def process_files(files, em, hm, vc, surflib, initial=False, lice=False, path=None, 
+                  write=True, parallel=False, compute=True):
     results = []
-    for f in files:
-        results.append(dask.delayed(process_file)(f, path, write))
-    return results
+    if parallel is True:
+        import dask
+        for f in files:
+            results.append(dask.delayed(process_file)(f, em, hm, vc, surflib, initial, lice, path, write))
+        if compute is True:
+            return dask.compute(*results)
+        return results
+    else:
+        for f in files:
+            results.append(process_file(f, em, hm, vc, surflib, initial, lice, path, write))
+        return results
+
+
+def update_dataset(dsa, ds, hm):
+    """add grid and meta data"""
+    dsa = dsa.update(get_grid(hm))
+    dsa = update_attrs(dsa)
+    for key, value in ds.attrs.items():
+        dsa.attrs[key+'_forcing'] = value
+    dsa.attrs['CORDEX_domain'] = hm.get('short_name', 'UNKNOWN')
+    dsa.attrs['domain'] = hm.get('long_name', 'UNKNOWN')
+    return dsa
+
+
+def remap(files, em, hm, vc, surflib, initial=False, 
+          lice=None, path=None, write=True, parallel=False, compute=True):
+    if not isinstance(files, (list, tuple)):
+        files = [files]
+    return process_files(files, em, hm, vc, surflib, initial, lice, path, write, parallel, compute)
+    
+    

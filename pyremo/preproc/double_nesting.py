@@ -11,10 +11,8 @@ dynamics = ['T', 'U', 'V', 'PS', 'QD', 'QW', 'QDBL', 'TSW', 'TSI', 'SICE']
 static = ['FIB', 'BLA']
 soil = ['TSL', 'TSN', 'TD3', 'TD4', 'TD5', 'TD', 'TDCL', 'SN', 'WL', 'WS', 'QDBL']
 
-output_variables = {'dynamics': dynamics,
-                    'initial': ['TSL', 'TSN', 'TD3', 'TD4', 'TD5', 'TD', 'TDCL', 'SN', 'WL', 'WS', 'QDBL']}
-
-print(dynamics)
+output_variables = {'dynamics': ['T', 'U', 'V', 'PS', 'QD', 'QW', 'QDBL', 'TSW', 'TSI', 'SICE'],
+                    'initial': ['TSL', 'TSN', 'TD3', 'TD4', 'TD5', 'TD', 'TDCL', 'SN', 'WL', 'WS', 'QDBL', 'GLAC']}
 
 def update(ds):
     ds = ds.copy()
@@ -50,6 +48,7 @@ def load_grid(ds, hm, vc):
     
 def load_data(ds, order='F'):
     ds = ds.copy().rename({'SEAICE': 'SICE'})
+    print(dynamics)
     for var in dynamics:
         load_variable(ds[var], mod=intorg.mo_nem, suffix="em", order=order)
         
@@ -93,8 +92,10 @@ def load_surflib(ds, order):
         
 def load_variable(da, mod, suffix, order):
     fvar = "{}{}".format(da.name.lower(), suffix)
+    print(fvar)
     #setattr(mod, fvar, da.to_numpy().T.reshape(get_fshape(da), order=order).astype(np.float64))
     np.copyto(getattr(mod, fvar),  da.to_numpy().T.reshape(get_fshape(da), order=order).astype(np.float64))
+    print(getattr(mod, fvar))
     
     
 def retrieve_variable(mod, name, shape, order='C'):
@@ -106,8 +107,8 @@ def retrieve_variable(mod, name, shape, order='C'):
     return xr.DataArray(array.copy().reshape(shape, order=order), dims=dims, name=name)
 
 
-def retrieve_variables(variables, time=None, transpose=None, crop=True):
-    ds = xr.merge([retrieve_variable(intorg.mo_nhm, var, (403, 363)) for var in variables])
+def retrieve_variables(variables, dims, time=None, transpose=None, crop=True):
+    ds = xr.merge([retrieve_variable(intorg.mo_nhm, var, dims) for var in variables])
     if time is not None:
         ds = ds.expand_dims(dim={'time': time}, axis=0)
     if transpose is not None:
@@ -141,14 +142,14 @@ def init(ds, em, hm, vc, surflib, order='F'):
     #deallocate()
 
     
-def remap_timestep(ds, initial=False):
+def remap_timestep(ds, hm, initial=False):
     variables = output_variables['dynamics']
     if initial is True:
         variables += output_variables['initial']
     load_data(ds)
     load_soil(ds)
     intorg.driver.remap_remo()
-    dsa = retrieve_variables(variables, time=ds.time)
+    dsa = retrieve_variables(variables, dims=(hm['nlat']+2, hm['nlon']+2), time=ds.time)
     #deallocate()
     return dsa
 
@@ -164,9 +165,15 @@ def write_timestep(ds, path=None):
 
 
 def process_file(file, em, hm, vc, surflib, initial=False, lice=False, path=None, write=True):
-    ds = pr.preprocess(xr.open_dataset(file))
+    if isinstance(file, str):
+        ds = pr.preprocess(xr.open_dataset(file))
+    else:
+        ds = file
+    if isinstance(surflib, str):
+        surflib = pr.preprocess(xr.open_dataset(surflib))
+    
     init(ds, em, hm, vc, surflib)
-    dsa = remap_timestep(ds, initial)
+    dsa = remap_timestep(ds, hm, initial)
     deallocate()
     dsa = update_dataset(dsa, ds, hm)
     if initial is True:

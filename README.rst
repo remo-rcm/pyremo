@@ -7,6 +7,9 @@ pyremo
 
 .. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml
+    
+.. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci-extensions.yaml/badge.svg
+    :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci-extensions.yaml
 
 .. image:: https://codecov.io/gh/remo-rcm/pyremo/branch/master/graph/badge.svg
   :target: https://codecov.io/gh/remo-rcm/pyremo
@@ -71,10 +74,10 @@ and install it in development mode, e.g.
 This will install the package but you can still edit it and you don't need the package in your :code:`PYTHONPATH`.
 Please get in contact as early as possible, e.g., using `draft pull requests <https://github.blog/2019-02-14-introducing-draft-pull-requests>`_.
 
-Additional requirements
------------------------
+Fortran extensions
+------------------
 
-There are two sub-packages that have additional private dependencies, .e.g, the preprocessing module :code:`preproc` will require the installation
+There are two sub-packages that are extra private dependencies and contain Fortran extensions. For example, the preprocessing module :code:`preproc` will require the installation
 of the legacy source code for preprocessing which is packaged in 
 
 * https://gitlab.dkrz.de/remo/pyintorg
@@ -84,8 +87,11 @@ For the pressure interpolation :code:`prsint`, you will need to install the addi
 * https://gitlab.dkrz.de/remo/pydruint
 
 Note, that you will have to install these packages from source which will require a fortran compiler (e.g. :code:`gfortran`). If you require access to those 
-packages, please request access to the REMO group in the DRKZ gitlab.
+packages, please request access to the REMO group in the DRKZ gitlab. If you have access, you can install those extension using, e.g.
 
+.. code-block:: console
+
+    pip install pyremo[extensions]
 
 Credits
 -------

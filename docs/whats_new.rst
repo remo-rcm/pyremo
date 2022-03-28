@@ -14,6 +14,7 @@ v0.3.0 (Unreleased)
 New Features
 ~~~~~~~~~~~~
 
+- Added ``python3.10`` support (:pull:`46`).
  
 Internal Changes
 ~~~~~~~~~~~~~~~~

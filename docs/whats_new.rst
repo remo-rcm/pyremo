@@ -19,7 +19,8 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 - Added fortran extensions ``pyintorg`` and ``pydruint`` to extra dependencies.
 - Added ``CI-extensions.yaml`` for git actions testing with fortran extensions.
-- Included tests for ``pyremo.prsint`` with fortran extension (:pull:`43`). 
+- Included tests for ``pyremo.prsint`` with fortran extension (:pull:`43`).
+- Pinned ``sphinx`` and ``jinja`` dependencies (:pull:`45`).
 
 v0.2.0 (24 February 2022)
 -------------------------

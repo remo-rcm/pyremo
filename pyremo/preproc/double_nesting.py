@@ -268,6 +268,40 @@ def remap(
     parallel=False,
     compute=True,
 ):
+    """remapping workflow for double nesting
+
+    This function should be similar to the ones in the
+    legacy fortran preprocessor intorg.
+
+    Parameters
+    ----------
+    files : list of filenames, xarray.Dataset
+        REMO output t-file data containing 3D atmospheric and 2D soil fields.
+        
+    em : dict
+        A dictionary containing the domain information of the source domain.
+
+    hm : dict
+        A dictionary containing the domain information of the target domain.
+
+    vc : pandas.DataFrame
+        A table with the vertical coordinate coefficients ``ak`` and ``bk``.
+
+    surflib : filename or xarray.Dataset
+        The surface library containing the target grid land sea mask ``BLA`` and
+        orography ``FIB``.
+        
+    initial:
+        If ``True``, add static and dynamic fields for initial conditions.
+
+    Returns
+    -------
+    Forcing Data : filename or xarray.Dataset
+        Dataset containing the forcing data interpolated to the
+        target domain. The dynamic variables include at least: ``T``, ``U``, ``V``, ``PS``, ``QD``,
+        ``QW``, ``QDBL``, ``TSW``, ``TSI`` and ``SEAICE``.
+
+    """
     if not isinstance(files, (list, tuple)):
         files = [files]
     return process_files(

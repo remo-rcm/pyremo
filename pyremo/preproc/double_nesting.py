@@ -92,10 +92,7 @@ def load_surflib(ds, order):
         
 def load_variable(da, mod, suffix, order):
     fvar = "{}{}".format(da.name.lower(), suffix)
-    print(fvar)
-    #setattr(mod, fvar, da.to_numpy().T.reshape(get_fshape(da), order=order).astype(np.float64))
     np.copyto(getattr(mod, fvar),  da.to_numpy().T.reshape(get_fshape(da), order=order).astype(np.float64))
-    print(getattr(mod, fvar))
     
     
 def retrieve_variable(mod, name, shape, order='C'):
@@ -139,7 +136,6 @@ def init(ds, em, hm, vc, surflib, order='F'):
     load_static(ds, order=order)
     load_surflib(surflib, order=order)
     load_options()
-    #deallocate()
 
     
 def remap_timestep(ds, hm, initial=False):
@@ -150,14 +146,15 @@ def remap_timestep(ds, hm, initial=False):
     load_soil(ds)
     intorg.driver.remap_remo()
     dsa = retrieve_variables(variables, dims=(hm['nlat']+2, hm['nlon']+2), time=ds.time)
-    #deallocate()
     return dsa
 
 
-def write_timestep(ds, path=None):
+def write_timestep(ds, expid=None, path=None):
     if path is None:
         path = "./"
-    filename = "a000000a{}.nc".format(ds.time.dt.strftime("%Y%m%d%H").data[0])
+    if expid is None:
+        expid=0
+    filename = "a{expid:06d}a{date}.nc".format(expid=int(expid), date=ds.time.dt.strftime("%Y%m%d%H").data[0])
     filename = os.path.join(path, filename)
     ds.to_netcdf(filename)
     print('writing to: {}'.format(filename))
@@ -179,7 +176,6 @@ def process_file(file, em, hm, vc, surflib, initial=False, lice=False, path=None
     if initial is True:
         #dsa = xr.merge([dsa, surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])])
         dsa = dsa.merge(surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1]))
-    return dsa
     if write is True:
         return write_timestep(dsa, path)
     return dsa

@@ -14,7 +14,7 @@ try:
     from pyintorg import interface as intf
 except:
     warnings.warn(
-        "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://git.gerics.de/python/pyintorg.git"
+        "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://gitlab.dkrz.de/remo/pyintorg.git"
     )
 
 from .constants import lev_i, lev, lev_gm

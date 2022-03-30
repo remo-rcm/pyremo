@@ -7,7 +7,7 @@ try:
     from pydruint import _druint_verip
 except ModuleNotFoundError:
     warnings.warn(
-        "The pressure interpolation requires installation of https://git.gerics.de/REMO/pydruint"
+        "The pressure interpolation requires installation of https://gitlab.dkrz.de/remo/pydruint.git"
     )
 
 

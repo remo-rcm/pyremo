@@ -18,6 +18,8 @@ New Features
  
 Internal Changes
 ~~~~~~~~~~~~~~~~
+
+- Tutorial `data source <https://github.com/remo-rcm/pyremo-data>`_ is now on github (:pull:`47`).
 - Added fortran extensions ``pyintorg`` and ``pydruint`` to extra dependencies.
 - Added ``CI-extensions.yaml`` for git actions testing with fortran extensions.
 - Included tests for ``pyremo.prsint`` with fortran extension (:pull:`43`).

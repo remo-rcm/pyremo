@@ -99,3 +99,4 @@ Tutorial
    :toctree: generated/
 
    tutorial.open_dataset
+   tutorial.load_dataset

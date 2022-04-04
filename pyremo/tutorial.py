@@ -80,7 +80,7 @@ def open_dataset(
     ----------
     name : str
         Name of the file containing the dataset.
-        e.g. 'air_temperature'
+        e.g. 'remo_EUR-44'
     cache_dir : path-like, optional
         The directory in which to search for and write cached data.
     cache : bool, optional

@@ -448,7 +448,16 @@ def convert_units(ds):
     return ds
 
 
-def gfile(datasets, ref_ds=None, tos=None, time_range=None):
+def check_lev(ds):
+    try:
+        if ds.lev.positive == "down":
+            ds = ds.reindex(lev=ds.lev[::-1])
+    except:
+        warnings.warn("could not determine positive attribute of vertical axis.")
+    return ds
+
+
+def open_datasets(datasets, ref_ds=None, time_range=None):
     """Creates a virtual gfile"""
     if ref_ds is None:
         try:
@@ -465,26 +474,31 @@ def gfile(datasets, ref_ds=None, tos=None, time_range=None):
             da = da.sel(time=time_range)
         except:
             da = open_mfdataset(f, chunks={})[var]
-        try:
-            if da.lev.positive == "down":
-                da = da.reindex(lev=da.lev[::-1])
-        except:
-            pass
-        # print(var)
-        # print(da)
-        da[lon] = ref_ds[lon]
-        da[lat] = ref_ds[lat]
+        da = check_lev(da)
+        #da[lon] = ref_ds[lon]
+        #da[lat] = ref_ds[lat]
         dsets.append(da)
+    return xr.merge(dsets, compat="override", join="override")
 
-    ds = xr.merge(dsets)
+
+def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
+    """Creates a virtual gfile"""
+
+    if isinstance(ds, dict):
+        ds = open_datasets(ds, ref_ds, time_range)
+    else:
+        if time_range is None:
+            time_range = ds.time
+        ds = ds.sel(time=time_range)
     if tos is not None:
-        ds["tos"] = map_sst(tos, ref_ds.sel(time=time_range))
-    ds["akgm"], ds["bkgm"] = get_vc(ref_ds)
+        ds["tos"] = map_sst(tos, ds.sel(time=time_range))
+    ds["akgm"], ds["bkgm"] = get_vc(ds)
     ds = ds.rename({"lev": lev_gm})
     ds = convert_units(ds)
     if "sftlf" in ds:
         ds["sftlf"] = np.around(ds.sftlf)
-    ds.attrs = ref_ds.attrs
+    if attrs is None:
+        attrs = ds.attrs
     return ds
 
 

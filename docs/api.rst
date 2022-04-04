@@ -91,11 +91,11 @@ Cmorization
    cmor.prepare_variable
    cmor.cmorize_variable
 
+
 Tutorial
 ========
 
 .. autosummary::
    :toctree: generated/
 
-   tutorial.load_dataset
    tutorial.open_dataset

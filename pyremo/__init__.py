@@ -11,7 +11,7 @@ from . import physics
 from .core.domain import domain_info, remo_domain
 from .core.remo_ds import open_remo_dataset, update_meta_info, preprocess
 from .core.cal import parse_dates, parse_absolute_time
-from .core import remo_tutorial as tutorial, remo_ds, data
+from .core import remo_ds, data
 from .tables import domains, vc
 from .core import codes
 

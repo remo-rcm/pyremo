@@ -59,8 +59,14 @@ extlinks = {
 
 autosummary_generate = True
 
-napoleon_use_param = True
+#napoleon_use_param = True
+
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+napoleon_use_param = False
 napoleon_use_rtype = False
+napoleon_preprocess_types = True
+
 
 numpydoc_class_members_toctree = True
 numpydoc_show_class_members = False

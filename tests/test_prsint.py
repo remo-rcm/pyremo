@@ -5,9 +5,11 @@ import pytest
 
 from . import requires_pydruint
 
+
 @pytest.fixture
 def tfile():
     return pr.tutorial.load_dataset()
+
 
 @requires_pydruint
 def test_prsint(tfile):

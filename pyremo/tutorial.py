@@ -74,7 +74,7 @@ def open_dataset(
 
     Available datasets:
 
-    * ``"remo_EUR-44"``: remo example output on EUR-44 domain 
+    * ``"remo_EUR-44"``: remo example output on EUR-44 domain
 
     Parameters
     ----------
@@ -144,16 +144,22 @@ def load_dataset(*args, **kwargs):
 
 
 def mpi_esm():
-    files = ["ta_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
-            "ua_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
-            "va_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
-            "hus_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
-            "ps_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
-            "orog_fx_MPI-ESM1-2-HR_historical_r1i1p1f1_gn",
-            "sftlf_fx_MPI-ESM1-2-HR_historical_r1i1p1f1_gn"]
-    
-    return xr.merge([open_dataset(f) for f in files], compat="override", join="override")
+    files = [
+        "ta_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
+        "ua_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
+        "va_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
+        "hus_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
+        "ps_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
+        "orog_fx_MPI-ESM1-2-HR_historical_r1i1p1f1_gn",
+        "sftlf_fx_MPI-ESM1-2-HR_historical_r1i1p1f1_gn",
+    ]
+
+    return xr.merge(
+        [open_dataset(f) for f in files], compat="override", join="override"
+    )
 
 
 def mpi_esm_tos():
-    return open_dataset("tos_Oday_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_19781231-19790102")
+    return open_dataset(
+        "tos_Oday_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_19781231-19790102"
+    )

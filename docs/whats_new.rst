@@ -25,6 +25,12 @@ Internal Changes
 - Included tests for ``pyremo.prsint`` with fortran extension (:pull:`43`).
 - Pinned ``sphinx`` and ``jinja`` dependencies (:pull:`45`).
 
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+- Updated cmor API of ``cmor.cmorize_variable`` to use actual filenames of tables (:pull:`48`).
+
+
 v0.2.0 (24 February 2022)
 -------------------------
 

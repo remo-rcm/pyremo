@@ -398,6 +398,37 @@ def get_vc(ds):
     return xr.DataArray(ak, dims="lev_2"), xr.DataArray(bk, dims="lev_2")
 
 
+def get_vc(ds):
+    """Reads the vertical hybrid coordinate from a dataset."""
+    ak_valid = ["ap_bnds", "a_bnds"]
+    bk_valid = ["b_bnds"]
+    ak_bnds = None
+    bk_bnds = None
+    for ak_name in ak_valid:
+        if ak_name in ds:
+            ak_bnds = ds[ak_name]
+            print("using {} for akgm".format(ak_name))
+    for bk_name in bk_valid:
+        if bk_name in ds:
+            bk_bnds = ds[bk_name]
+            print("using {} for bkgm".format(bk_name))
+    #    if not all([ak_bnds, bk_bnds]):
+    #        print('could not identify vertical coordinate, tried: {}, {}'.format(ak_valid, bk_valid))
+    #        raise Exception('incomplete input dataset')
+    #        ak_bnds, bk_bnds  = (ak_bnds[:1], bk_bnds[:,1])
+    nlev = ak_bnds.shape[0]
+    ak = np.zeros([nlev + 1], dtype=np.float64)
+    bk = np.ones([nlev + 1], dtype=np.float64)
+    if ds.lev.positive == "down":
+        ak[:-1] = np.flip(ak_bnds[:, 1])
+        bk[:-1] = np.flip(bk_bnds[:, 1])
+    else:
+        ak[1:] = np.flip(ak_bnds[:, 1])
+        bk[1:] = np.flip(bk_bnds[:, 1])
+
+    return xr.DataArray(ak, dims="lev_2"), xr.DataArray(bk, dims="lev_2")
+
+
 def map_sst(tos, ref_ds, resample="6H", regrid=True):
     from datetime import timedelta as td
     import xesmf as xe
@@ -407,12 +438,15 @@ def map_sst(tos, ref_ds, resample="6H", regrid=True):
     tos_times = (ref_ds.time.min() - td(days=1), ref_ds.time.max() + td(days=1))
     tos = tos.sel(time=slice(tos_times[0], tos_times[1]))
     # return tos_res
-    tos = tos.resample(time=resample).interpolate("linear").chunk({"time": 1})
+    #tos = tos.resample(time=resample).interpolate("linear").chunk({"time": 1})
+    tos = tos.resample(time=resample).interpolate("linear")
     tos = tos.sel(time=ref_ds.time)
+
     if regrid:
         regridder = xe.Regridder(tos, ref_ds, "nearest_s2d")
         tos = regridder(tos)
     tos.attrs.update(attrs)
+    
     return tos
 
 
@@ -451,6 +485,7 @@ def convert_units(ds):
 def check_lev(ds):
     try:
         if ds.lev.positive == "down":
+            print("inverting vertical coordinate")
             ds = ds.reindex(lev=ds.lev[::-1])
     except:
         warnings.warn("could not determine positive attribute of vertical axis.")
@@ -490,9 +525,10 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         if time_range is None:
             time_range = ds.time
         ds = ds.sel(time=time_range)
+        ds = check_lev(ds)
     if tos is not None:
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
-    ds["akgm"], ds["bkgm"] = get_vc(ds)
+    #ds["akgm"], ds["bkgm"] = get_vc(ds)
     ds = ds.rename({"lev": lev_gm})
     ds = convert_units(ds)
     if "sftlf" in ds:

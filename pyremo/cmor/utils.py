@@ -23,6 +23,10 @@ def _get_pole(ds):
     return None
 
 
+def _get_grid_definitions(CORDEX_domain, **kwargs):
+    return cx.cordex_domain(CORDEX_domain, add_vertices=True, **kwargs)
+
+
 def _get_cordex_pole(CORDEX_domain):
     return cx.cordex_domain(CORDEX_domain).rotated_latitude_longitude
 

@@ -42,7 +42,7 @@ def _encode_time(time):
 
 
 def _read_cmor_table(table):
-    return _read_json_file(cx.cordex_cmor_table(table))
+    return _read_json_file(table)
 
 
 def _read_json_file(filename):

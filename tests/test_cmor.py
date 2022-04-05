@@ -17,7 +17,7 @@ def test_cmorizer():
     filename = prcmor.cmorize_variable(
         surflib,
         "orog",
-        "fx",
+        cx.cordex_cmor_table("fx"),
         cx.cordex_cmor_table("remo_example"),
         CORDEX_domain="EUR-11",
         time_units=None,

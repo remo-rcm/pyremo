@@ -1,6 +1,7 @@
 import os
 
 import xarray as xr
+import cf_xarray as cfxr
 import cordex as cx
 from cordex import cmor as cxcmor
 import datetime as dt
@@ -180,13 +181,13 @@ def _define_time(ds, table_id, time_cell_method=None):
         if time_cell_method is None:
             warn('no time_cell_method given, assuming: point')
             time_cell_method = "point"
-        time_values = _encode_time(ds.time).to_numpy()
+        time_encode = _encode_time(ds.time)
         time_axis_name = _get_time_axis_name(time_cell_method)
         return cmor.axis(
             time_axis_name,
-            coord_vals=time_values,
-            cell_bounds=_get_bnds(time_values),
-            units=ds.time.encoding["units"],
+            coord_vals=time_encode.to_numpy(),
+            cell_bounds=_get_bnds(time_encode.to_numpy()),
+            units=time_encode.attrs["units"],
         )
     else:
         cmorTime = None
@@ -253,16 +254,16 @@ def prepare_variable(
         remo_name = varinfo["variable"]
         cf_name = varinfo["cf_name"]
         if is_ds is True:
-            var_ds = ds[remo_name]
+            var_ds = ds[[remo_name]]#.to_dataset()
         else:
-            var_ds = ds
-        var_ds.name = cf_name
+            var_ds = ds.to_dataset()
+        var_ds = var_ds.rename({remo_name: cf_name})
     elif allow_derive is True:
-        try:
-            # assume it's a dataset with input variables for derivation.
-            var_ds = derivator.derive(ds, varname)
-        except:
-            raise Exception("could not find or derive variable: {}".format(varname))
+        #try:
+        # assume it's a dataset with input variables for derivation.
+        var_ds = derivator.derive(ds, varname)
+        #except:
+        #    raise Exception("could not find or derive variable: {}".format(varname))
     else:
         raise Exception(
             "could not find {} in remo table, try allow_derive=True".format(varname)
@@ -291,7 +292,6 @@ def adjust_frequency(ds, cfvarinfo, input_freq=None):
         return resample
     return ds
     
-
 
 def cmorize_variable(
     ds, varname, cmor_table, dataset_table, inpath=".", allow_units_convert=False, 
@@ -355,6 +355,7 @@ def cmorize_variable(
     #return ds_prep
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
+    return ds_prep
     table_ids = _setup(dataset_table, cmor_table, inpath=inpath)
     time_cell_method = _strip_time_cell_method(cfvarinfo)
     cmorTime, cmorGrid = _define_grid(ds_prep, table_ids, time_cell_method)

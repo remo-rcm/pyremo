@@ -2,6 +2,7 @@ import os
 
 import xarray as xr
 import cordex as cx
+from cordex import cmor as cxcmor
 import datetime as dt
 import cftime as cfdt
 import json
@@ -46,10 +47,6 @@ units_convert_rules = {
 }
 
 
-#coordinate = cx.cordex_cmor_table('coordinate')
-#formula_terms = cx.cordex_cmor_table('formula_terms')
-#cv = cx.cordex_cmor_table('CV')
-
 def ensure_cftime(func):
     def wrapper(date, **kwargs):
         return func(_to_cftime(date), **kwargs)
@@ -73,25 +70,6 @@ def to_cftime(date, calendar="proleptic_gregorian"):
         date.microsecond,
         calendar=calendar,
     )
-
-
-# def _seasons_list():
-#     # dummy leap year to allow input X-02-29 (leap day)
-#     seasons = [('DJF', (dt.date(Y,  1,  1),  dt.date(Y,  2, 29))),
-#            ('MAM', (dt.date(Y,  3, 1),  dt.date(Y,  5, 31))),
-#            ('JJA', (dt.date(Y,  6, 1),  dt.date(Y,  8, 31))),
-#            ('SON', (dt.date(Y,  9, 1),  dt.date(Y, 11, 30))),
-#            ('DJF', (dt.date(Y, 12, 1),  dt.date(Y, 12, 31)))]
-#     return seasons
-
-
-# def _get_season(date):
-#     """determine the meteorological season of a date"""
-#     if isinstance(date, dt.datetime):
-#         date = date.date()
-#     date = date.replace(year=Y)
-#     return next(season for season, (start, end) in _seasons_list()
-#                 if start <= date <= end)
 
 
 def _get_loffset(time):
@@ -145,10 +123,6 @@ def _load_table(table):
 
 
 def _setup(dataset_table, mip_table, grid_table="CMIP6_grids.json", inpath='.'):
-    # trigger table downloads
-    #coordinate = cx.cordex_cmor_table('coordinate')
-    #formula_terms = cx.cordex_cmor_table('formula_terms')
-    #cv = cx.cordex_cmor_table('CV')
     cmor.setup(inpath, set_verbosity=cmor.CMOR_NORMAL, netcdf_file_action=cmor.CMOR_REPLACE,
               exit_control=cmor.CMOR_EXIT_ON_MAJOR, logfile=None)
     cmor.dataset_json(dataset_table)
@@ -358,7 +332,7 @@ def cmorize_variable(
     Example for cmorization of a dataset that contains REMO output::
 
         $ filename = pr.cmor.cmorize_variable(ds, 'tas', 'Amon',
-                                  cx.cordex_cmor_table('remo_example'),
+                                  cx.tables.cordex_cmor_table('remo_example'),
                                   CORDEX_domain='EUR-11')
 
     """

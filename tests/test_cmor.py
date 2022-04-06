@@ -4,6 +4,7 @@ from pyremo import cmor as prcmor
 import cftime as cfdt
 import datetime as dt
 import cordex as cx
+from cordex.tables import cordex_cmor_table, cmip6_cmor_table
 
 
 def test_cftime():
@@ -17,8 +18,8 @@ def test_cmorizer():
     filename = prcmor.cmorize_variable(
         surflib,
         "orog",
-        cx.cordex_cmor_table("fx"),
-        cx.cordex_cmor_table("remo_example"),
+        cmor_table=cmip6_cmor_table("CMIP6_fx"),
+        dataset_table=cordex_cmor_table("CORDEX_remo_example"),
         CORDEX_domain="EUR-11",
         time_units=None,
         allow_units_convert=True,

@@ -1,5 +1,8 @@
+import os
+
 import xarray as xr
 import cordex as cx
+from cordex import cmor as cxcmor
 import datetime as dt
 import cftime as cfdt
 import json
@@ -8,7 +11,7 @@ from warnings import warn
 
 from .derived import derivator
 
-from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_cordex_pole, _get_time_cell_method, _get_cfvarinfo, _strip_time_cell_method
+from .utils import _get_varinfo, _get_pole, _set_time_units, _encode_time, _get_cordex_pole, _get_time_cell_method, _get_cfvarinfo, _strip_time_cell_method, _get_grid_definitions
 
 
 try:
@@ -43,9 +46,6 @@ units_convert_rules = {
     "kg/kg": (lambda x: x, "1"),
 }
 
-#coordinate = cx.cordex_cmor_table('coordinate')
-#formula_terms = cx.cordex_cmor_table('formula_terms')
-#cv = cx.cordex_cmor_table('CV')
 
 def ensure_cftime(func):
     def wrapper(date, **kwargs):
@@ -70,25 +70,6 @@ def to_cftime(date, calendar="proleptic_gregorian"):
         date.microsecond,
         calendar=calendar,
     )
-
-
-# def _seasons_list():
-#     # dummy leap year to allow input X-02-29 (leap day)
-#     seasons = [('DJF', (dt.date(Y,  1,  1),  dt.date(Y,  2, 29))),
-#            ('MAM', (dt.date(Y,  3, 1),  dt.date(Y,  5, 31))),
-#            ('JJA', (dt.date(Y,  6, 1),  dt.date(Y,  8, 31))),
-#            ('SON', (dt.date(Y,  9, 1),  dt.date(Y, 11, 30))),
-#            ('DJF', (dt.date(Y, 12, 1),  dt.date(Y, 12, 31)))]
-#     return seasons
-
-
-# def _get_season(date):
-#     """determine the meteorological season of a date"""
-#     if isinstance(date, dt.datetime):
-#         date = date.date()
-#     date = date.replace(year=Y)
-#     return next(season for season, (start, end) in _seasons_list()
-#                 if start <= date <= end)
 
 
 def _get_loffset(time):
@@ -138,59 +119,42 @@ def _crop_to_cordex_domain(ds, domain):
 
 
 def _load_table(table):
-    cmor.load_table(cx.cordex_cmor_table(table))
+    cmor.load_table(table)
 
 
-def _setup(table):
-    # trigger table downloads
-    coordinate = cx.cordex_cmor_table('coordinate')
-    formula_terms = cx.cordex_cmor_table('formula_terms')
-    cv = cx.cordex_cmor_table('CV')
-    cmor.setup(set_verbosity=cmor.CMOR_NORMAL, netcdf_file_action=cmor.CMOR_REPLACE)
-    cmor.dataset_json(table)
+def _setup(dataset_table, mip_table, grid_table="CMIP6_grids.json", inpath='.'):
+    cmor.setup(inpath, set_verbosity=cmor.CMOR_NORMAL, netcdf_file_action=cmor.CMOR_REPLACE,
+              exit_control=cmor.CMOR_EXIT_ON_MAJOR, logfile=None)
+    cmor.dataset_json(dataset_table)
+    grid_id = cmor.load_table(grid_table)
+    table_id = cmor.load_table(mip_table)
+    cmor.set_table(grid_id)
+    return (grid_id, table_id)
 
 def _get_time_axis_name(time_cell_method):
     """Get the name of the CMOR time coordinate"""
     return time_axis_names[time_cell_method]
 
 
-def _define_axes(ds, table, time_cell_method=None):
-    _load_table(table)
-    if "time" in ds:
-        if time_cell_method is None:
-            warn('no time_cell_method given, assuming: point')
-            time_cell_method = "point"
-        time_values = _encode_time(ds.time).values
-        time_axis_name = _get_time_axis_name(time_cell_method)
-        cmorTime = cmor.axis(
-            time_axis_name,
-            coord_vals=time_values,
-            cell_bounds=_get_bnds(time_values),
-            units=ds.time.encoding["units"],
-        )
-    else:
-        cmorTime = None
+def _define_axes(ds, table_id, lat_vertices=None, lon_vertices=None):
+    cmor.set_table(table_id)
     cmorLat = cmor.axis(
-        "gridlatitude",
-        coord_vals=ds.rlat.values,
-        cell_bounds=_get_bnds(ds.rlat.values),
+        table_entry="grid_latitude",
+        coord_vals=ds.rlat.to_numpy(),
         units=ds.rlat.units,
     )
     cmorLon = cmor.axis(
-        "gridlongitude",
-        coord_vals=ds.rlon.values,
-        cell_bounds=_get_bnds(ds.rlon.values),
+        table_entry="grid_longitude",
+        coord_vals=ds.rlon.to_numpy(),
         units=ds.rlon.units,
     )
-    return cmorTime, cmorLat, cmorLon
-
-
-def _define_grid(ds, table, time_cell_method="point", grid_table="grids"):
-    cmorTime, cmorLat, cmorLon = _define_axes(ds, table, time_cell_method=time_cell_method)
-    _load_table(grid_table)
-
+    
     cmorGrid = cmor.grid(
-        [cmorLat, cmorLon], latitude=ds.lat.values, longitude=ds.lon.values
+        [cmorLat, cmorLon], 
+        latitude=ds.lat.to_numpy(), 
+        longitude=ds.lon.to_numpy(),
+        latitude_vertices = lat_vertices,
+        longitude_vertices = lon_vertices,
     )
 
     pole = _get_pole(ds)
@@ -206,11 +170,38 @@ def _define_grid(ds, table, time_cell_method="point", grid_table="grids"):
         list(pole_dict.values()),
         ["", "", ""],
     )
+      
+    return cmorGrid
+
+
+def _define_time(ds, table_id, time_cell_method=None):
+    cmor.set_table(table_id)
+    if "time" in ds:
+        if time_cell_method is None:
+            warn('no time_cell_method given, assuming: point')
+            time_cell_method = "point"
+        time_values = _encode_time(ds.time).to_numpy()
+        time_axis_name = _get_time_axis_name(time_cell_method)
+        return cmor.axis(
+            time_axis_name,
+            coord_vals=time_values,
+            cell_bounds=_get_bnds(time_values),
+            units=ds.time.encoding["units"],
+        )
+    else:
+        cmorTime = None
+
+        
+def _define_grid(ds, table_ids, time_cell_method="point"):
+    
+    cmorGrid = _define_axes(ds, table_ids[0])
+    cmorTime = _define_time(ds, table_ids[1], time_cell_method)
+    
     return cmorTime, cmorGrid
 
 
-def _cmor_write(da, table, cmorTime, cmorGrid, file_name=True):
-    cmor.load_table(cx.cordex_cmor_table(table))
+def _cmor_write(da, table_id, cmorTime, cmorGrid, file_name=True):
+    cmor.set_table(table_id)
     if cmorTime is None:
         coords = [cmorGrid]
     else:
@@ -227,7 +218,7 @@ def _units_convert(da, table_file):
     Maybe metpy can do this also: https://unidata.github.io/MetPy/latest/tutorials/unit_tutorial.html
     
     """
-    with open(cx.cordex_cmor_table(table_file)) as f:
+    with open(table_file) as f:
         table = json.load(f)
     units = da.units
     cf_units = table["variable_entry"][da.name]["units"]
@@ -303,8 +294,9 @@ def adjust_frequency(ds, cfvarinfo, input_freq=None):
 
 
 def cmorize_variable(
-    ds, varname, cmor_table, dataset_table, allow_units_convert=False, 
-    allow_resample=False, input_freq=None, CORDEX_domain=None, **kwargs
+    ds, varname, cmor_table, dataset_table, inpath=".", allow_units_convert=False, 
+    allow_resample=False, input_freq=None, CORDEX_domain=None, vertices=None,
+    **kwargs
 ):
     """Cmorizes a variable.
 
@@ -318,6 +310,9 @@ def cmorize_variable(
         Filepath to cmor table.
     dataset_table: str
         Filepath to dataset cmor table.
+    inpath: str
+        Path to cmor tables, if ``inpath == "."`, inpath is the path
+        to ``cmor_table``.
     allow_units_convert: bool
         Allow units to be converted if they do not agree with the
         units in the cmor table.
@@ -337,7 +332,7 @@ def cmorize_variable(
     Example for cmorization of a dataset that contains REMO output::
 
         $ filename = pr.cmor.cmorize_variable(ds, 'tas', 'Amon',
-                                  cx.cordex_cmor_table('remo_example'),
+                                  cx.tables.cordex_cmor_table('remo_example'),
                                   CORDEX_domain='EUR-11')
 
     """
@@ -347,6 +342,8 @@ def cmorize_variable(
             CORDEX_domain = ds.CORDEX_domain
         except:
             warn("could not identify CORDEX domain")
+    if inpath == ".":
+        inpath = os.path.dirname(cmor_table)
     ds_prep = prepare_variable(ds, varname, **kwargs)
     cfvarinfo = _get_cfvarinfo(varname, cmor_table)
     #time_cell_method = _get_time_cell_method(varname, cmor_table)
@@ -358,7 +355,8 @@ def cmorize_variable(
     #return ds_prep
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
-    _setup(dataset_table)
+    table_ids = _setup(dataset_table, cmor_table, inpath=inpath)
     time_cell_method = _strip_time_cell_method(cfvarinfo)
-    cmorTime, cmorGrid = _define_grid(ds_prep, cmor_table, time_cell_method)
-    return _cmor_write(ds_prep[varname], cmor_table, cmorTime, cmorGrid)
+    cmorTime, cmorGrid = _define_grid(ds_prep, table_ids, time_cell_method)
+
+    return _cmor_write(ds_prep[varname], table_ids[1], cmorTime, cmorGrid)

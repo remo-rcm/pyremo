@@ -15,6 +15,7 @@ New Features
 ~~~~~~~~~~~~
 
 - Added ``python3.10`` support (:pull:`46`).
+- Updated cmorization module for use with CMIP6 (:pull:`48`) and CORDEX vocabulary. The underlying tables are only used for testing and should not yet be uses for actual data publication, see also `here <https://github.com/euro-cordex/py-cordex/pull/55>`_.
  
 Internal Changes
 ~~~~~~~~~~~~~~~~
@@ -24,6 +25,12 @@ Internal Changes
 - Added ``CI-extensions.yaml`` for git actions testing with fortran extensions.
 - Included tests for ``pyremo.prsint`` with fortran extension (:pull:`43`).
 - Pinned ``sphinx`` and ``jinja`` dependencies (:pull:`45`).
+
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+- Updated cmor API of ``cmor.cmorize_variable`` to use actual filenames of tables (:pull:`48`).
+
 
 v0.2.0 (24 February 2022)
 -------------------------

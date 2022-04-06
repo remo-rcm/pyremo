@@ -75,6 +75,7 @@ def open_dataset(
     Available datasets:
 
     * ``"remo_EUR-44"``: remo example output on EUR-44 domain
+    * ``"remo_EUR-11_TEMP2"``: remo 2m temperature time series on EUR-11 domain
 
     Parameters
     ----------

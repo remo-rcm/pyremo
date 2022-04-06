@@ -38,7 +38,7 @@ import cordex as cx
 from ..tables import domains
 
 
-def remo_domain(short_name, dummy=False):
+def remo_domain(short_name, **kwargs):
     """Creates an xarray dataset containg the domain grid definitions.
 
     Parameters
@@ -56,7 +56,7 @@ def remo_domain(short_name, dummy=False):
         Dataset containing the coordinates.
 
     """
-    return cx.cordex_domain(short_name, dummy, tables=domains.table)
+    return cx.cordex_domain(short_name, tables=domains.table, **kwargs)
 
 
 def domain_info(short_name):

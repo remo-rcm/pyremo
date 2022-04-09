@@ -87,6 +87,7 @@ def parse_dates(ds, use_cftime=False):
     use_cftime: bool
         Use cftime objects instead of datetime objects.
     """
+    ds = ds.copy()
     ds["time"] = parse_absolute_time(ds.time, use_cftime=use_cftime)
     return ds
 

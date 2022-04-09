@@ -24,6 +24,8 @@ from ..core import codes
 
 xr.set_options(keep_attrs=True)
 
+# time offsets relative to left labeling for resampling.
+# we want the time label to be the center.
 loffsets = {"3H": dt.timedelta(hours=1, minutes=30), 
             "6H": dt.timedelta(hours=3),
             "D" : dt.timedelta(hours=12)}
@@ -36,6 +38,7 @@ time_axis_names = {"point" : "time1",
 freq_map = {
             "1hr" : "H",
             "3hr" : "3H",
+            "3hrPt" : "3H",
             "6hr" : "6H",
             "day" : "D"}
 
@@ -46,6 +49,12 @@ units_convert_rules = {
     "mm": (lambda x: x * 1.0 / 86400.0, "kg m-2 s-1"),
     "kg/kg": (lambda x: x, "1"),
 }
+
+
+def resample_both_closed(ds, hfreq, op, **kwargs):
+    rolling = getattr(ds.rolling(time=hfreq+1, center=True), op)()
+    freq = "{}H".format(hfreq)
+    return rolling.resample(time=freq, loffset=0.5*pd.Timedelta(hfreq, "H")).nearest()
 
 
 def ensure_cftime(func):
@@ -86,9 +95,9 @@ def _clear_time_axis(ds):
 def _resample(
     ds, time, time_cell_method="point", label="left", time_offset=True, **kwargs
 ):
-    """Resample a REMO variable."""
+    """Resample a variable."""
     if time_cell_method == "point":
-        return ds.resample(time=time, label=label, **kwargs).nearest()#.interpolate("nearest")
+        return ds.resample(time=time, label=label, **kwargs).nearest()#.interpolate("nearest") # use as_freq?
     elif time_cell_method == "mean":
         if time_offset is True:
             loffset = _get_loffset(time)
@@ -344,18 +353,24 @@ def cmorize_variable(
             warn("could not identify CORDEX domain")
     if inpath == ".":
         inpath = os.path.dirname(cmor_table)
+        
     ds_prep = prepare_variable(ds, varname, **kwargs)
+    
     cfvarinfo = _get_cfvarinfo(varname, cmor_table)
-    #time_cell_method = _get_time_cell_method(varname, cmor_table)
-    ds_prep = adjust_frequency(ds_prep, cfvarinfo, input_freq)
+    if cfvarinfo is None:
+        raise Exception('{} not found in {}'.format(varname, cmor_table))
+        
+    if "time" in ds:
+        ds_prep = adjust_frequency(ds_prep, cfvarinfo, input_freq)
+    return ds_prep
     pole = _get_pole(ds_prep)
     if pole is None:
         pole = _get_cordex_pole(CORDEX_domain)
         ds_prep = xr.merge([ds_prep, pole])
-    #return ds_prep
+
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
-    return ds_prep
+
     table_ids = _setup(dataset_table, cmor_table, inpath=inpath)
     time_cell_method = _strip_time_cell_method(cfvarinfo)
     cmorTime, cmorGrid = _define_grid(ds_prep, table_ids, time_cell_method)

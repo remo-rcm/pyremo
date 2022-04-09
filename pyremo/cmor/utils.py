@@ -57,7 +57,7 @@ def _read_json_file(filename):
 
 def _get_cfvarinfo(cf_varname, table):
     data = _read_cmor_table(table)
-    return data['variable_entry'][cf_varname]
+    return data['variable_entry'].get(cf_varname, None)
 
 
 def _get_time_cell_method(cf_varname, table):

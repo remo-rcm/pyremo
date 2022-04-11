@@ -7,6 +7,7 @@ channels:
 dependencies:
   - python
   - xarray
+  - cf_xarray
   - docutils==0.16
   - nbconvert
   - numpydoc
@@ -17,7 +18,7 @@ dependencies:
   - ipython
   - py-cordex
   - cftime
-  - sphinx==4.2.0
+  - sphinx #==4.2.0
   - sphinx_rtd_theme==1.0.0
   - jinja2==3.0.0
 #

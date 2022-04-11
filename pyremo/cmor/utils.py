@@ -2,6 +2,7 @@
 import xarray as xr
 import cordex as cx
 import json
+from warnings import warn
 
 from ..core import codes
 
@@ -20,6 +21,7 @@ def _get_pole(ds):
     for pol in pol_names:
         if pol in ds:
             return ds[pol]
+    warn("no grid_mapping found in dataset, tried: {}".format(pol_names))
     return None
 
 
@@ -29,11 +31,6 @@ def _get_grid_definitions(CORDEX_domain, **kwargs):
 
 def _get_cordex_pole(CORDEX_domain):
     return cx.cordex_domain(CORDEX_domain).rotated_latitude_longitude
-
-
-def _set_time_units(time, units):
-    time.encoding["units"] = units
-    return time
 
 
 def _encode_time(time):
@@ -57,7 +54,7 @@ def _read_json_file(filename):
 
 def _get_cfvarinfo(cf_varname, table):
     data = _read_cmor_table(table)
-    return data['variable_entry'][cf_varname]
+    return data['variable_entry'].get(cf_varname, None)
 
 
 def _get_time_cell_method(cf_varname, table):

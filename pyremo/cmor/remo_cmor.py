@@ -307,9 +307,9 @@ def prepare_variable(
     """prepares a variable for cmorization."""
     is_ds = isinstance(ds, xr.Dataset)
 
-    pole = _get_pole(ds)
-    if pole is None:
-        pole = _get_cordex_pole(CORDEX_domain)
+    #pole = _get_pole(ds)
+    #if pole is None:
+    #    pole = _get_cordex_pole(CORDEX_domain)
     varinfo = _get_varinfo(varname)
     if varinfo is not None:
         remo_name = varinfo["variable"]
@@ -448,18 +448,20 @@ def cmorize_variable(
     
     if cfvarinfo is None:
         raise Exception('{} not found in {}'.format(varname, cmor_table)) 
-    if "time" in ds and allow_resample is True:
-        ds_prep = adjust_frequency(ds_prep, cfvarinfo, input_freq)
-        warn('adding time bounds')
+    if "time" in ds:
+        if allow_resample is True:
+            ds_prep = adjust_frequency(ds_prep, cfvarinfo, input_freq)
         ds_prep = _set_time_encoding(ds_prep, time_units, ds)
         if "time" not in ds.cf.bounds:
+            warn('adding time bounds')
             ds_prep = _add_time_bounds(ds_prep)
     #return ds_prep
-    pole = _get_pole(ds_prep)
+    pole = _get_pole(ds)
+
     if pole is None:
         warn('adding pole from archive specs: {}'.format(CORDEX_domain))
         pole = _get_cordex_pole(CORDEX_domain)
-        ds_prep = xr.merge([ds_prep, pole])
+    ds_prep = xr.merge([ds_prep, pole])
 
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)

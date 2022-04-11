@@ -59,6 +59,7 @@ def test_cmorizer_subdaily(table):
         CORDEX_domain="EUR-11",
         time_units=None,
         allow_units_convert=True,
+        allow_resample=True
     )
     output = xr.open_dataset(filename)
     assert 'tas' in output

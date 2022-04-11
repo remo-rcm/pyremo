@@ -369,21 +369,37 @@ def cmorize_variable(
     Parameters
     ----------
     ds : xr.Dataset
-        REMO Dataset.
+        REMO Dataset containing at least the variable that should be cmorized.
     varname: str
-        CF name of the variable that should be cmorized.
+        CF name of the variable that should be cmorized. The corresponding REMO variable
+        will be looked up from the code table.
     cmor_table : str
         Filepath to cmor table.
     dataset_table: str
         Filepath to dataset cmor table.
     inpath: str
-        Path to cmor tables, if ``inpath == "."`, inpath is the path
-        to ``cmor_table``.
+        Path to cmor tables, if ``inpath == "."``, inpath is the path
+        to ``cmor_table``. This is required to find additional cmor tables, 
+        like ``CMIP6_coordinates``, ``CMIP6_grids`` etc.
     allow_units_convert: bool
         Allow units to be converted if they do not agree with the
-        units in the cmor table.
-    resample: bool
-        Allow to resample data. Handles both downsampling and upsampling.
+        units in the cmor table. Defaults to ``False`` to make the user aware of having
+        correct ``units`` attributes set.
+    allow_resample: bool
+        Allow to resample temporal data to the frequency required from the cmor table.
+        Handles both downsampling and upsampling. Defaults to ``False`` to make users aware
+        of the correct frequency input.
+    input_freq: str
+        The frequency of the input dataset in pandas notation. It ``None`` and the dataset
+        contains a time axis, the frequency will be determined automatically using 
+        ``pandas.infer_freq`` if possible.
+    CORDEX_domain: str
+        Cordex domain short name. If ``None``, the domain will be determined by the ``CORDEX_domain``
+        global attribute if available.
+    time_units: str
+        Time units of the cmorized dataset (``ISO 8601``).
+        If ``None``, time units will be set to default (``"days since 1949-12-01T00:00:00"``).
+        If ``time_units='input'``, the original time units of the input dataset are used.
     **kwargs:
         Argumets passed to prepare_variable.
 
@@ -396,10 +412,24 @@ def cmorize_variable(
     Example
     -------
     Example for cmorization of a dataset that contains REMO output::
-
-        $ filename = pr.cmor.cmorize_variable(ds, 'tas', 'Amon',
-                                  cx.tables.cordex_cmor_table('remo_example'),
-                                  CORDEX_domain='EUR-11')
+ 
+        $ import pyremo as pr
+        $ import cordex as cx
+        $ from cordex.tables import cordex_cmor_table, cmip6_cmor_table
+        $ from pyremo import cmor as prcmor
+        $
+        $ ds = pr.tutorial.open_dataset("remo_EUR-11_TEMP2_1hr")
+        $ eur11 = cx.cordex_domain("EUR-11")
+        $ ds = ds.assign_coords({"lon": eur11.lon, "lat": eur11.lat})
+        $ filename = prcmor.cmorize_variable(
+            ds,
+            "tas",
+            cmor_table=cmip6_cmor_table("CMIP6_3hr"),
+            dataset_table=cordex_cmor_table("CORDEX_remo_example"),
+            CORDEX_domain="EUR-11",
+            time_units=None,
+            allow_units_convert=True,
+            )
 
     """
     ds = ds.copy()
@@ -408,7 +438,7 @@ def cmorize_variable(
         try:
             CORDEX_domain = ds.CORDEX_domain
         except:
-            warn("could not identify CORDEX domain")
+            warn("could not identify CORDEX domain, try to set the 'CORDEX_domain' argument")
     if inpath == ".":
         inpath = os.path.dirname(cmor_table)
         
@@ -418,7 +448,7 @@ def cmorize_variable(
     
     if cfvarinfo is None:
         raise Exception('{} not found in {}'.format(varname, cmor_table)) 
-    if "time" in ds:
+    if "time" in ds and allow_resample is True:
         ds_prep = adjust_frequency(ds_prep, cfvarinfo, input_freq)
         warn('adding time bounds')
         ds_prep = _set_time_encoding(ds_prep, time_units, ds)
@@ -427,6 +457,7 @@ def cmorize_variable(
     #return ds_prep
     pole = _get_pole(ds_prep)
     if pole is None:
+        warn('adding pole from archive specs: {}'.format(CORDEX_domain))
         pole = _get_cordex_pole(CORDEX_domain)
         ds_prep = xr.merge([ds_prep, pole])
 

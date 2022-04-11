@@ -21,6 +21,7 @@ def _get_pole(ds):
     for pol in pol_names:
         if pol in ds:
             return ds[pol]
+    warn("no grid_mapping found in dataset, tried: {}".format(pol_names))
     return None
 
 
@@ -30,8 +31,6 @@ def _get_grid_definitions(CORDEX_domain, **kwargs):
 
 def _get_cordex_pole(CORDEX_domain):
     return cx.cordex_domain(CORDEX_domain).rotated_latitude_longitude
-
-
 
 
 def _encode_time(time):

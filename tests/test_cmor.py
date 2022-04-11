@@ -43,11 +43,12 @@ def test_cmorizer_mon():
         allow_units_convert=True,
     )
     output = xr.open_dataset(filename)
+    assert output.dims['time'] == 12
     assert 'tas' in output
 
 
-@pytest.mark.parametrize('table', ["CMIP6_day", "CMIP6_3hr"])
-def test_cmorizer_subdaily(table):
+@pytest.mark.parametrize('table, tdim', [("CMIP6_day", 3), ("CMIP6_3hr", 17)])
+def test_cmorizer_subdaily(table, tdim):
     ds = pr.tutorial.open_dataset("remo_EUR-11_TEMP2_1hr")
     eur11 = cx.cordex_domain("EUR-11")
     ds = ds.assign_coords({"lon": eur11.lon, "lat": eur11.lat})
@@ -63,3 +64,4 @@ def test_cmorizer_subdaily(table):
     )
     output = xr.open_dataset(filename)
     assert 'tas' in output
+    assert output.dims['time'] == tdim

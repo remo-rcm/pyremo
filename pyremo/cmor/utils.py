@@ -2,6 +2,7 @@
 import xarray as xr
 import cordex as cx
 import json
+from warnings import warn
 
 from ..core import codes
 
@@ -31,9 +32,6 @@ def _get_cordex_pole(CORDEX_domain):
     return cx.cordex_domain(CORDEX_domain).rotated_latitude_longitude
 
 
-def _set_time_units(time, units):
-    time.encoding["units"] = units
-    return time
 
 
 def _encode_time(time):

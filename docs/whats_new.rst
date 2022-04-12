@@ -15,7 +15,7 @@ New Features
 ~~~~~~~~~~~~
 
 - Added ``python3.10`` support (:pull:`46`).
-- Updated cmorization module for use with CMIP6 (:pull:`48`, :pull:`49`) and CORDEX vocabulary. The underlying tables are only used for testing and should not yet be uses for actual data publication, see also `here <https://github.com/euro-cordex/py-cordex/pull/55>`_.
+- Updated cmorization module for use with CMIP6 (:pull:`48`, :pull:`49`, :pull:`50`) and CORDEX vocabulary. The underlying tables are only used for testing and should not yet be uses for actual data publication, see also `here <https://github.com/euro-cordex/py-cordex/pull/55>`_.
  
 Internal Changes
 ~~~~~~~~~~~~~~~~

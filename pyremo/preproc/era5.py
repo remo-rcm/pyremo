@@ -240,7 +240,7 @@ def _convert_files(files, dask=False):
 #    f_split.sort()
 
 
-def _get_row_by_date(code, date, df):
+def _get_row_by_date_(code, date, df):
     """returns a dataframe entry depending on code and data
 
     This subroutine is used to find the ERA5 grib file
@@ -298,6 +298,46 @@ def _get_row_by_date(code, date, df):
 #    return result
 
 
+def _get_row_by_date(code, date, df, frequency='hourly', era_id='E5', use_E1=True):
+    """Find a row in an ERA5 catalog dataframe.
+    
+    The path to a file should be uniquely identified by code, date, frequency
+    and era_id. If this selection is not unique, we assume, there are some files
+    with the same content (which is the case with some data downloaded later).
+    If the date is between 2000 and 2006, ERA5.1 date can be used (if available)
+    identified by ``era_id=='E1'``.
+    
+    """
+    date = pd.to_datetime(date)
+    era_id_sel = era_id
+    if use_E1 is True:
+        if (date >= pd.to_datetime('2000-01-01T00:00:00') and 
+            date <= pd.to_datetime('2006-12-31T23:00:00')):
+            era_id_sel = 'E1'
+    #lt = "model_level"
+    sel = df.set_index(['code', 'frequency', 'time']).loc[(code, frequency)]
+    
+    # try to select era5.1 if possible
+    if not sel[sel.era_id==era_id_sel].empty:
+        sel = sel[sel.era_id==era_id_sel]
+    else:
+        sel = sel[sel.era_id==era_id]
+    
+    if not sel.level_type.nunique()==1:
+        if code in levelmap:
+            sel = sel[sel['level_type']==levelmap[code]]
+        else:
+            raise Exception("non unique selection: {}, {}".format(code, sel.level_type.unique()))
+        
+    # time index should be unique now...
+    if not sel.index.is_unique:
+        sel = sel[~sel.index.duplicated(keep='first')]
+    sel = sel.sort_index()
+    # select date index
+    ix = sel.index.get_indexer([date], method="pad")
+    return sel.iloc[ix]
+
+
 def _get_file_by_date(code, date, df):
     """returns a filepath depending on code and data
 
@@ -305,7 +345,7 @@ def _get_file_by_date(code, date, df):
     that contains the code and date.
 
     """
-    return _get_row_by_date(code, date, df).path
+    return _get_row_by_date(code, date, df).path.values[0]
 
 
 def _get_timestep(code, date, df, gaussian=True):
@@ -524,7 +564,8 @@ class ERA5:
         if df is None:
             df = _open_catalog(catalog_url).df
         df["time"] = pd.to_datetime(df.validation_date)
-        self.df = df.set_index(["validation_date"])
+        self.df = df
+        #self.df = df.set_index(["validation_date"])
         
 
     def to_xarray(self, idents, dates, parallel=False, cf_meta=True):

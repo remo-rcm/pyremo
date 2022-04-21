@@ -14,12 +14,14 @@ v0.3.0 (Unreleased)
 New Features
 ~~~~~~~~~~~~
 
+- ERA5 cmorizer includes ERA5.1 to work with DKRZ data pool (:pull:`52`).
 - Added ``python3.10`` support (:pull:`46`).
 - Updated cmorization module for use with CMIP6 (:pull:`48`, :pull:`49`, :pull:`51`) and CORDEX vocabulary. The underlying tables are only used for testing and should not yet be uses for actual data publication, see also `here <https://github.com/euro-cordex/py-cordex/pull/55>`_.
  
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- ERA5 cmorizer works with pandas datatables (:pull:`52`).
 - Tutorial `data source <https://github.com/remo-rcm/pyremo-data>`_ is now on github (:pull:`47`).
 - Added fortran extensions ``pyintorg`` and ``pydruint`` to extra dependencies.
 - Added ``CI-extensions.yaml`` for git actions testing with fortran extensions.

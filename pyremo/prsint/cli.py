@@ -2,7 +2,7 @@
 import argparse
 import xarray as xr
 import numpy as np
-from ..core import remo_ds as rds
+from ..core import remo_ds as rds, codes
 from ..core.cal import parse_dates
 from . import _defaults as dflt
 from .core import pressure_interpolation
@@ -11,7 +11,7 @@ from .core import pressure_interpolation
 plev_prec = np.float64
 
 out_templates = {'input':'e{id}p_c{code:03d}_{date}.nc',
-                 'plevs':'e{id}p_c{code:03d}_{plev:04d}_{date}.nc'}
+                 'plev':'e{id}p_c{code:03d}_{plev:04d}_{date}.nc'}
 
 date_fmt = {'monthly': '%Y%m'}
 
@@ -24,7 +24,7 @@ def generate_filename(id, time, code, plev=None):
         # brutal hack if time axis is absolute
         date = str(int(time.values[0]))[:6]
     if plev is not None:
-        return out_templates['plevs'].format(id=id, code=code, plev=int(plev.values/100), date=date )
+        return out_templates['plev'].format(id=id, code=code, plev=int(plev.values/100), date=date )
     else:
         return out_templates['input'].format(id=id, code=code, date=date )
 
@@ -41,7 +41,7 @@ def prsint_from_file(filename, **args):
 def write_output_variable(data_array, format, id):
     if format=='input':
         write_output_variable_like_input(data_array, id)
-    elif format=='plevs':
+    elif format=='plev':
         write_output_variable_one_per_plev(data_array, id)
 
 
@@ -77,7 +77,7 @@ def prsint(args):
     files = args.input
     for f in args.input:
         output = prsint_from_file(f, plev=args.plev, vars=args.variables)
-        print(output)
+        write_output_variable(output, args.output, args.id)
     return 0
 
 
@@ -108,8 +108,8 @@ def prsint_parser():
         "--output",
         dest="output",
         help="output format",
-        choices=["plevs", "input"],
-        default="plevs",
+        choices=["plev", "input"],
+        default="plev",
     )
     parser.add_argument(
         "-id",

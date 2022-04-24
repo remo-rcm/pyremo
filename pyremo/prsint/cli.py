@@ -78,8 +78,7 @@ def prsint(args):
     for f in args.input:
         output = prsint_from_file(f, plev=args.plev, vars=args.variables)
         print(output)
-    
-    pass
+    return 0
 
 
 def prsint_parser():

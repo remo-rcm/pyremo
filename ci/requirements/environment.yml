@@ -10,6 +10,7 @@ dependencies:
   - regionmask 
   - setuptools
   - xarray
+  - dask
   - cf_xarray
   - netCDF4
 # for testing

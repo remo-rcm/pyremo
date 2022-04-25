@@ -27,10 +27,3 @@ def test_prsint(tfile):
         keep_attrs=True,
     )
     np.testing.assert_array_equal(np.array(plev) * 100.0, t_plev.plev)
-
-
-@requires_pydruint
-def test_entrypoint():
-    exit_status = os.system('prsint --help')
-    assert exit_status == 0
-

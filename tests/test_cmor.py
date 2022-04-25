@@ -26,9 +26,9 @@ def test_cmorizer_fx():
         allow_units_convert=True,
     )
     output = xr.open_dataset(filename)
-    assert 'orog' in output
-    
-    
+    assert "orog" in output
+
+
 def test_cmorizer_mon():
     ds = pr.tutorial.open_dataset("remo_EUR-11_TEMP2_mon")
     eur11 = cx.cordex_domain("EUR-11")
@@ -43,11 +43,11 @@ def test_cmorizer_mon():
         allow_units_convert=True,
     )
     output = xr.open_dataset(filename)
-    assert output.dims['time'] == 12
-    assert 'tas' in output
+    assert output.dims["time"] == 12
+    assert "tas" in output
 
 
-@pytest.mark.parametrize('table, tdim', [("CMIP6_day", 3), ("CMIP6_3hr", 17)])
+@pytest.mark.parametrize("table, tdim", [("CMIP6_day", 3), ("CMIP6_3hr", 17)])
 def test_cmorizer_subdaily(table, tdim):
     ds = pr.tutorial.open_dataset("remo_EUR-11_TEMP2_1hr")
     eur11 = cx.cordex_domain("EUR-11")
@@ -60,8 +60,8 @@ def test_cmorizer_subdaily(table, tdim):
         CORDEX_domain="EUR-11",
         time_units=None,
         allow_units_convert=True,
-        allow_resample=True
+        allow_resample=True,
     )
     output = xr.open_dataset(filename)
-    assert 'tas' in output
-    assert output.dims['time'] == tdim
+    assert "tas" in output
+    assert output.dims["time"] == tdim

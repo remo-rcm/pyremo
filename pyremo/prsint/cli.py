@@ -4,6 +4,7 @@ import xarray as xr
 import numpy as np
 from ..core import remo_ds as rds, codes
 from ..core.cal import parse_dates
+from ..core.utilities import encode
 from . import _defaults as dflt
 from .core import pressure_interpolation
 
@@ -29,16 +30,17 @@ def generate_filename(id, time, code, plev=None):
         return out_templates['input'].format(id=id, code=code, date=date )
 
 
-def prsint_from_file(filename, **args):
+def prsint_from_file(filename, varname, **args):
     ds = xr.open_dataset(filename)
     ds = rds.update_meta_info(ds)
     #ds = parse_dates(ds)
-    result = pressure_interpolation(ds.T, plev=args['plev'], t=ds.T, ps=ds.PS,
+    result = pressure_interpolation(ds[varname], plev=args['plev'], t=ds.T, ps=ds.PS,
                                    orog=ds.FIB, a=ds.hyai, b=ds.hybi, keep_attrs=True)
     return result
 
 
 def write_output_variable(data_array, format, id):
+    data_array = encode(data_array)
     if format=='input':
         write_output_variable_like_input(data_array, id)
     elif format=='plev':
@@ -66,18 +68,12 @@ def write_output_variable_one_per_plev(data_array, id):
         plev_data.to_netcdf(filename)
 
 
-
-def write_to_file(ds):
-    pass
-
-
 def prsint(args):
-    #pressure_interpolation(ds.T, plev=[200, 400, 500, 800, 950],
-    #                       t=ds.T, ps=ds.PS, orog=ds.FIB, a=ds.hyai, b=ds.hybi, keep_attrs=True)
     files = args.input
     for f in args.input:
-        output = prsint_from_file(f, plev=args.plev, vars=args.variables)
-        write_output_variable(output, args.output, args.id)
+        for var in args.variables:
+            output = prsint_from_file(f, varname=var, plev=args.plev, )
+            write_output_variable(output, args.output, args.id)
     return 0
 
 

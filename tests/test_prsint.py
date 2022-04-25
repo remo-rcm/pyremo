@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pyremo as pr
 from pyremo.prsint import pressure_interpolation

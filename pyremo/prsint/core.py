@@ -1,7 +1,7 @@
 import xarray as xr
 import warnings
 
-from . import _defaults as dftl
+from ..core.utilities import horizontal_dims
 
 try:
     from pydruint import _druint_verip
@@ -9,15 +9,6 @@ except ModuleNotFoundError:
     warnings.warn(
         "The pressure interpolation requires installation of https://git.gerics.de/REMO/pydruint"
     )
-
-
-# def prsint(ds, plevs=dftls.plevs, variables=dftl.variables,
-#        t='T', ps='PS', fib='FIB', ak='hyai', bk='hybi', time='time'):
-#    tda = ds[t]
-#    psda = ds[ps]
-#    fibda = ds[fib]
-#    akda = ds[ak]
-#    bkda = ds[bk]
 
 
 def druint(data, t, ps, fib, plev, ak, bk, varname):
@@ -83,6 +74,11 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
     plev_dims = list(spatial_dims(da))
     plev_dims.append("plev")
     nlev = a.dims[0]
+
+    t_dims = list(spatial_dims(t)) + ['lev']
+    ps_dims = list(spatial_dims(ps))
+    orog_dims = list(spatial_dims(orog))
+    
     result = xr.apply_ufunc(
         druint,  # first the function
         da,  # now arguments in the order expected by 'druint'
@@ -95,9 +91,9 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
         da.name,
         input_core_dims=[
             lev_dims,
-            lev_dims,
-            srf_dims,
-            srf_dims,
+            t_dims,
+            ps_dims,
+            orog_dims,
             ["plev"],
             [nlev],
             [nlev],
@@ -105,15 +101,13 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
         ],  # list with one entry per arg
         output_core_dims=[plev_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
-        exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
+        #exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
         output_dtypes=[da.dtype],
+        keep_attrs=keep_attrs
     )
 
     result.name = da.name
-    # result = result.to_dataset()
-    if keep_attrs:
-        result.attrs = da.attrs
     result["plev"] = plev_coord(plev)
     result = result.transpose(..., "plev", *spatial_dims(da)[::-1])
     return result

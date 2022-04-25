@@ -258,5 +258,3 @@ def water_evapotranspiration_flux(evap):
     Computes water evapotranspiration flux ``evspsbl`` from surface evaporation.
     """
     return evap * (-1)
-
-

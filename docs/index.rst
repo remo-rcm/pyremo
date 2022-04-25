@@ -13,7 +13,7 @@ Welcome to pyremo's documentation!
    remo-dataset
    production-analysis
    preprocessing-cf
-   cmorization 
+   cmorization
    ar
    contributing
    authors

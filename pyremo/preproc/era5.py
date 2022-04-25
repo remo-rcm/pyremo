@@ -83,11 +83,13 @@ varmap = {
     155: "sd",
 }
 
-levelmap = {129: "surface",
-            130: "model_level",
-            131: "model_level",
-            132: "model_level",
-            133: "model_level",}
+levelmap = {
+    129: "surface",
+    130: "model_level",
+    131: "model_level",
+    132: "model_level",
+    133: "model_level",
+}
 
 
 codemap = {var: code for code, var in varmap.items()}
@@ -253,7 +255,7 @@ def _get_row_by_date_(code, date, df):
     right file with the right date.
     """
     # reduce the dataframe to only the code of interest.
-    sel = df[(df.code == code) & (df.frequency == 'hourly')]  # .loc[date]
+    sel = df[(df.code == code) & (df.frequency == "hourly")]  # .loc[date]
     level_type = sel.level_type.unique()
     result = None
     if len(level_type) > 1:
@@ -283,55 +285,62 @@ def _get_row_by_date_(code, date, df):
         result = sel.loc[date]
     except:
         pass
-#     if level_type == "model_level":
-#         # here we have year, month and day
-#         date = "{}-{}-{}".format(date[0:4], date[5:7], date[8:10])
-#     elif level_type == "surface":
-#         # here we use only year and month to find the
-#         date = "{}-{}-01".format(date[0:4], date[5:7])
+    #     if level_type == "model_level":
+    #         # here we have year, month and day
+    #         date = "{}-{}-{}".format(date[0:4], date[5:7], date[8:10])
+    #     elif level_type == "surface":
+    #         # here we use only year and month to find the
+    #         date = "{}-{}-01".format(date[0:4], date[5:7])
     # now locate our date of interest
     if result is None:
-        raise Exception('search was not successful for code {} and date {}'.format(code, date))
+        raise Exception(
+            "search was not successful for code {} and date {}".format(code, date)
+        )
     return result
+
+
 #    if len(result.path.unique()) != 1:
 #        raise Exception("selection was not unique for {}: {}".format(code, sel.path))
 #    return result
 
 
-def _get_row_by_date(code, date, df, frequency='hourly', era_id='E5', use_E1=True):
+def _get_row_by_date(code, date, df, frequency="hourly", era_id="E5", use_E1=True):
     """Find a row in an ERA5 catalog dataframe.
-    
+
     The path to a file should be uniquely identified by code, date, frequency
     and era_id. If this selection is not unique, we assume, there are some files
     with the same content (which is the case with some data downloaded later).
     If the date is between 2000 and 2006, ERA5.1 date can be used (if available)
     identified by ``era_id=='E1'``.
-    
+
     """
     date = pd.to_datetime(date)
     era_id_sel = era_id
     if use_E1 is True:
-        if (date >= pd.to_datetime('2000-01-01T00:00:00') and 
-            date <= pd.to_datetime('2006-12-31T23:00:00')):
-            era_id_sel = 'E1'
-    #lt = "model_level"
-    sel = df.set_index(['code', 'frequency', 'time']).loc[(code, frequency)]
-    
+        if date >= pd.to_datetime("2000-01-01T00:00:00") and date <= pd.to_datetime(
+            "2006-12-31T23:00:00"
+        ):
+            era_id_sel = "E1"
+    # lt = "model_level"
+    sel = df.set_index(["code", "frequency", "time"]).loc[(code, frequency)]
+
     # try to select era5.1 if possible
-    if not sel[sel.era_id==era_id_sel].empty:
-        sel = sel[sel.era_id==era_id_sel]
+    if not sel[sel.era_id == era_id_sel].empty:
+        sel = sel[sel.era_id == era_id_sel]
     else:
-        sel = sel[sel.era_id==era_id]
-    
-    if not sel.level_type.nunique()==1:
+        sel = sel[sel.era_id == era_id]
+
+    if not sel.level_type.nunique() == 1:
         if code in levelmap:
-            sel = sel[sel['level_type']==levelmap[code]]
+            sel = sel[sel["level_type"] == levelmap[code]]
         else:
-            raise Exception("non unique selection: {}, {}".format(code, sel.level_type.unique()))
-        
+            raise Exception(
+                "non unique selection: {}, {}".format(code, sel.level_type.unique())
+            )
+
     # time index should be unique now...
     if not sel.index.is_unique:
-        sel = sel[~sel.index.duplicated(keep='first')]
+        sel = sel[~sel.index.duplicated(keep="first")]
     sel = sel.sort_index()
     # select date index
     ix = sel.index.get_indexer([date], method="pad")
@@ -565,8 +574,7 @@ class ERA5:
             df = _open_catalog(catalog_url).df
         df["time"] = pd.to_datetime(df.validation_date)
         self.df = df
-        #self.df = df.set_index(["validation_date"])
-        
+        # self.df = df.set_index(["validation_date"])
 
     def to_xarray(self, idents, dates, parallel=False, cf_meta=True):
         """Create an xarray dataset from ERA5 GRIB data at DKRZ.
@@ -674,15 +682,16 @@ class ERA5:
         variables = ["orog", "sftlf"]
         if date is None:
             date = "1979-01-01T00:00:00"
-        return (
-            self.to_xarray(variables, date, cf_meta=cf_meta)
-            .drop("time")
-            .squeeze()
-        )
+        return self.to_xarray(variables, date, cf_meta=cf_meta).drop("time").squeeze()
 
     def gfile(
-        self, dates, parallel=False, cf_meta=True, clean_coords=True, add_fx=True,
-        fx_date = None, 
+        self,
+        dates,
+        parallel=False,
+        cf_meta=True,
+        clean_coords=True,
+        add_fx=True,
+        fx_date=None,
     ):
         """Create an ERA5 gfile dataset.
 
@@ -714,7 +723,11 @@ class ERA5:
         """
         gds = self._dynamics(dates, parallel=parallel, cf_meta=cf_meta)
         if add_fx is True:
-            gds = xr.merge([gds, self._fx(date=fx_date, cf_meta=cf_meta)], join='override', compat='override')
+            gds = xr.merge(
+                [gds, self._fx(date=fx_date, cf_meta=cf_meta)],
+                join="override",
+                compat="override",
+            )
         if clean_coords is True:
             gds = _clean_coords(gds)
         return gds

@@ -47,7 +47,7 @@ EMRdrd = 1.0 - RDRd
 
 
 # def soil_layers(state):
-##    if 'TD' not in state:
+# if 'TD' not in state:
 #    tswem = state['TSW']
 #    tslem = state['TSL']
 #    td3ge = state.get('TD3', None)

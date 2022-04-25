@@ -1,12 +1,6 @@
 import warnings
 
-
 import xarray as xr
-
-from . import _defaults as dftl
-
-from ..core.utilities import horizontal_dims
-
 
 try:
     from pydruint import _druint_verip
@@ -73,17 +67,16 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
         Returns data array interpolated to pressure levels.
 
     """
-    srf_dims = list(spatial_dims(da))
     lev_dims = list(spatial_dims(da))
     lev_dims.append("lev")
     plev_dims = list(spatial_dims(da))
     plev_dims.append("plev")
     nlev = a.dims[0]
 
-    t_dims = list(spatial_dims(t)) + ['lev']
+    t_dims = list(spatial_dims(t)) + ["lev"]
     ps_dims = list(spatial_dims(ps))
     orog_dims = list(spatial_dims(orog))
-    
+
     result = xr.apply_ufunc(
         druint,  # first the function
         da,  # now arguments in the order expected by 'druint'
@@ -106,10 +99,10 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
         ],  # list with one entry per arg
         output_core_dims=[plev_dims],  # returned data has 3 dimensions
         vectorize=True,  # loop over non-core dims, in this case: time
-        #exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
+        # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
         output_dtypes=[da.dtype],
-        keep_attrs=keep_attrs
+        keep_attrs=keep_attrs,
     )
 
     result.name = da.name

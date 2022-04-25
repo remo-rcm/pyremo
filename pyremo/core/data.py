@@ -1,5 +1,8 @@
 import os
 
+from . import domain as dm
+from . import remo_ds as rds
+
 DKRZ_URL = "https://swift.dkrz.de/v1/dkrz_ffd3ca9004324ad28243244b834f92b1/remo/data"
 
 flake_EUR_11_glcc = os.path.join(
@@ -11,10 +14,6 @@ flake_EUR_44_glcc = os.path.join(
 tutorial_data = os.path.join(DKRZ_URL, "example/e056111t2006010100.nc")
 
 bodlib_tpl = os.path.join(DKRZ_URL, "surface-library/lib_{}_frac.nc")
-
-from . import domain as dm
-from . import remo_ds as rds
-from .remo_ds import open_remo_dataset
 
 
 def _get_file(url):

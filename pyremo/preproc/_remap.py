@@ -6,8 +6,6 @@ import xarray as xr
 
 import pyremo as pr
 
-xr.set_options(keep_attrs=True)
-
 from . import physics
 from .core import (
     const,
@@ -23,6 +21,9 @@ from .core import (
     relative_humidity,
     rotate_uv,
 )
+
+xr.set_options(keep_attrs=True)
+
 
 # variables that should have a mask with fill values
 fillvars = ["TSW", "SEAICE", "TSI"]
@@ -69,7 +70,6 @@ def to_netcdf(
                 ds[var].encoding["_FillValue"] = None
         dsets.append(ds)
     # dsets = [dset.expand_dims('time') for dset in datasets]
-    writer = xr.save_mfdataset(dsets, paths, **kwargs)
     if tempfiles is not None:
         for f in tempfiles:
             os.remove(f)
@@ -81,7 +81,7 @@ def to_tar(files, tar_file, mode="w"):
 
     try:
         from tqdm.notebook import tqdm
-    except:
+    except Exception:
 
         def tqdm(x):
             return x
@@ -131,26 +131,25 @@ def remap(gds, domain_info, vc, surflib):
 
     """
 
-    ## curvilinear coordinaetes
+    # curvilinear coordinaetes
     # remove time dimension if there is one
     fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
 
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
-    ## broadcast 1d global coordinates
+    # broadcast 1d global coordinates
     lamgm, phigm = gm_coords(gds)
 
-    ## horizontal interpolation
+    # horizontal interpolation
     tge = interpolate_horizontal(gds.ta, lamem, phiem, lamgm, phigm, "T")
     psge = interpolate_horizontal(gds.ps, lamem, phiem, lamgm, phigm, "PS")
     uge = interpolate_horizontal(gds.ua, lamem, phiem, lamgm, phigm, "U", 1)
     uvge = interpolate_horizontal(gds.ua, lamem, phiem, lamgm, phigm, "U", 2)
     vge = interpolate_horizontal(gds.va, lamem, phiem, lamgm, phigm, "V", 2)
     vuge = interpolate_horizontal(gds.va, lamem, phiem, lamgm, phigm, "V", 1)
-    qdge = interpolate_horizontal(gds.hus, lamem, phiem, lamgm, phigm, "QD")
     fibge = interpolate_horizontal(gds.orog, lamem, phiem, lamgm, phigm, "FIB")
 
-    ## geopotential
+    # geopotential
     #     if "time" in gds.hus.dims:
     #         hus = gds.hus.isel(time=0)
     #     else:
@@ -177,22 +176,20 @@ def remap(gds, domain_info, vc, surflib):
         arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm)
     arfge = interpolate_horizontal(arfgm, lamem, phiem, lamgm, phigm, "AREL HUM")
 
-    ## wind vector rotation
+    # wind vector rotation
     uge_rot, vge_rot = rotate_uv(
         uge, vge, uvge, vuge, lamem, phiem, domain_info["pollon"], domain_info["pollat"]
     )
 
-    ## first pressure correction
+    # first pressure correction
     kpbl = pbl_index(gds.akgm, gds.bkgm)
     ps1em = pressure_correction_em(
         psge, tge, arfge, fibge, fibem, gds.akgm, gds.bkgm, kpbl
     )
 
-    ## vertical interpolation
+    # vertical interpolation
     akhgm = 0.5 * (gds.akgm[:-1] + gds.akgm[1:])
     bkhgm = 0.5 * (gds.bkgm[:-1] + gds.bkgm[1:])
-    dakgm = gds.akgm[1:] - gds.akgm[:-1]
-    dbkgm = gds.bkgm[1:] - gds.bkgm[:-1]
 
     akbkem = get_akbkem(vc)
 
@@ -204,7 +201,7 @@ def remap(gds, domain_info, vc, surflib):
         arfge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "RF", kpbl
     )
 
-    ## second pressure correction and vertical interpolation of wind
+    # second pressure correction and vertical interpolation of wind
     psem = pressure_correction_ge(ps1em, tem, arfem, ficge, fibem, akbkem.ak, akbkem.bk)
     psem.name = "PS"
 
@@ -215,7 +212,7 @@ def remap(gds, domain_info, vc, surflib):
         vge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "V", kpbl
     )
 
-    ## wind vector correction
+    # wind vector correction
     philuem = domain_info["ll_lon"]
     dlamem = domain_info["dlon"]
     dphiem = domain_info["dlat"]
@@ -317,7 +314,7 @@ def update_attrs(ds):
             # da.attrs['layer'] = attrs['layer']
             da.attrs["grid_mapping"] = "rotated_latitude_longitude"
             da.attrs["coordinates"] = "lon lat"
-        except:
+        except Exception:
             pass
     return ds
 

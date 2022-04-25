@@ -67,7 +67,7 @@ and install it in development mode, e.g.
 .. code-block:: console
 
     git clone https://github.com/<your-account>/pyremo
-    cd pyremo
+    #cd pyremo
     pip install -e .
 
 

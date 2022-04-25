@@ -7,8 +7,7 @@ This module contains functions to work with REMO datasets.
 """
 
 # flake8: noqa
-from . import codes
-from . import cal
+from . import cal, codes
 from .cal import parse_dates
 
 

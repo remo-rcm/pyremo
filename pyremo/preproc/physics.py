@@ -1,8 +1,9 @@
 # from pyremo.physics import specific_humidity, liquid_water_content
 
-import pyremo.physics as prp
-import xarray as xr
 import numpy as np
+import xarray as xr
+
+import pyremo.physics as prp
 
 zds3 = (3.25 - 0.0) / (3.5 - 0.0)
 zds4 = (19.2 - 17.5) / (64.0 - 17.5)

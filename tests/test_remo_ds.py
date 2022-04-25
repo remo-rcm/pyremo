@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-import pyremo as pr
-
 import pytest
+
+import pyremo as pr
 
 
 def test_remo_ds():

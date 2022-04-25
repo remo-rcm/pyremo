@@ -1,29 +1,27 @@
-import os
-
-import xarray as xr
-import numpy as np
-import cf_xarray as cfxr
-import cordex as cx
-from cordex import cmor as cxcmor
 import datetime as dt
-import cftime as cfdt
 import json
-from dateutil import relativedelta as reld
+import os
 from warnings import warn
 
+import cf_xarray as cfxr
+import cftime as cfdt
+import cordex as cx
+import numpy as np
+import xarray as xr
+from cordex import cmor as cxcmor
+from dateutil import relativedelta as reld
+
 from .derived import derivator
-
 from .utils import (
-    _get_varinfo,
-    _get_pole,
     _encode_time,
-    _get_cordex_pole,
-    _get_time_cell_method,
     _get_cfvarinfo,
-    _strip_time_cell_method,
+    _get_cordex_pole,
     _get_grid_definitions,
+    _get_pole,
+    _get_time_cell_method,
+    _get_varinfo,
+    _strip_time_cell_method,
 )
-
 
 try:
     import cmor

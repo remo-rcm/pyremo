@@ -1,12 +1,9 @@
 import os
-
-import pandas as pd
+import tarfile
 from pathlib import Path
-
 from warnings import warn
 
-import tarfile
-
+import pandas as pd
 import parse
 
 file_pattern = "e{usr_nr:3d}{exp_nr:3d}{type:1}{date}"

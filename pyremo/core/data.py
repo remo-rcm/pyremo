@@ -12,9 +12,9 @@ tutorial_data = os.path.join(DKRZ_URL, "example/e056111t2006010100.nc")
 
 bodlib_tpl = os.path.join(DKRZ_URL, "surface-library/lib_{}_frac.nc")
 
+from . import domain as dm
 from . import remo_ds as rds
 from .remo_ds import open_remo_dataset
-from . import domain as dm
 
 
 def _get_file(url):

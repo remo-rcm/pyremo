@@ -1,7 +1,8 @@
-import xarray as xr
-import cordex as cx
 import json
 from warnings import warn
+
+import cordex as cx
+import xarray as xr
 
 from ..core import codes
 

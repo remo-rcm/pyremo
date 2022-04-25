@@ -1,11 +1,13 @@
+import datetime as dt
+
+import cftime as cfdt
+import cordex as cx
 import pytest
 import xarray as xr
+from cordex.tables import cmip6_cmor_table, cordex_cmor_table
+
 import pyremo as pr
 from pyremo import cmor as prcmor
-import cftime as cfdt
-import datetime as dt
-import cordex as cx
-from cordex.tables import cordex_cmor_table, cmip6_cmor_table
 
 
 def test_cftime():

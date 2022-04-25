@@ -18,9 +18,9 @@ def plot_seasons(
     Creates a 2x2 seasonal mean plot from a seasons coordinate that is required in the input dataset.
 
     """
-    from matplotlib import pyplot as plt
     import cartopy.crs as ccrs
     import cartopy.feature as cf
+    from matplotlib import pyplot as plt
 
     if projection is None:
         projection = ccrs.PlateCarree()

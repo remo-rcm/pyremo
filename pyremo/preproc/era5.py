@@ -8,8 +8,9 @@ https://confluence.ecmwf.int/display/OIFS/How+to+convert+GRIB+to+netCDF
 import os
 import subprocess
 import tempfile
-import xarray as xr
+
 import pandas as pd
+import xarray as xr
 
 try:
     from tqdm import tqdm
@@ -29,7 +30,6 @@ except:
 #
 
 from cordex import ecmwf as ectable
-
 
 xr.set_options(keep_attrs=True)
 

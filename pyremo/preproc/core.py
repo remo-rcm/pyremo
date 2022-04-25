@@ -4,9 +4,10 @@ This module wraps the pyintorg interfaces into xr.apply_ufunc.
 
 """
 
-import xarray as xr
-import numpy as np
 import warnings
+
+import numpy as np
+import xarray as xr
 
 xr.set_options(keep_attrs=True)
 
@@ -400,6 +401,7 @@ def get_vc(ds):
 
 def map_sst(tos, ref_ds, resample="6H", regrid=True):
     from datetime import timedelta as td
+
     import xesmf as xe
 
     # tos_res = tos

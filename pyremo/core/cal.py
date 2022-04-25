@@ -4,6 +4,7 @@
 import datetime as dt
 import math
 
+
 # roundTime from here:
 # https://stackoverflow.com/questions/3463930/how-to-round-the-minute-of-a-datetime-object-python
 def roundTime(datetime=None, roundTo=60):

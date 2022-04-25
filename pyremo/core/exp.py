@@ -1,12 +1,11 @@
 """Module for working and parsing Remo output files.
 """
 import os
+from pathlib import Path
 
 import pandas as pd
-from pathlib import Path
-from tqdm import tqdm
-
 import parse
+from tqdm import tqdm
 
 file_pattern = "e{usr_nr:3d}{exp_nr:3d}{type:1}{date}"
 efile_pattern = "e{usr_nr:3d}{exp_nr:3d}{type:1}_c{code:3d}_{date}"

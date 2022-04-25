@@ -1,11 +1,12 @@
 """Console script for pyremo."""
 import argparse
-import sys, os
-
-# from .prsint import _defaults as dflt
+import os
+import sys
 
 import dask
 from dask.distributed import Client
+
+# from .prsint import _defaults as dflt
 
 
 def create_parser():
@@ -83,10 +84,10 @@ def prsint():
 
 
 def main_analysis():
-    from .analysis._parser import args
-    from .analysis import analysis, obs, plot
-
     import xarray as xr
+
+    from .analysis import analysis, obs, plot
+    from .analysis._parser import args
 
     time_range = slice(args.time_range[0], args.time_range[1])
     output_path = os.path.realpath(args.output_path)

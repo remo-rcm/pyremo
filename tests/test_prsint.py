@@ -1,8 +1,8 @@
-import os
 import numpy as np
+import pytest
+
 import pyremo as pr
 from pyremo.prsint import pressure_interpolation
-import pytest
 
 from . import requires_pydruint
 

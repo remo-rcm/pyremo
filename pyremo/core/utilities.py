@@ -1,5 +1,3 @@
-
-
 def horizontal_dims(da):
     """Returns the names of the horizontal dimensions."""
     for dim in da.dims:
@@ -10,9 +8,8 @@ def horizontal_dims(da):
     return (lon_dim, lat_dim)
 
 
-
 def encode(ds, coord_fill_value=None):
     """Encode a dataset for writing to NetCDF."""
     for coord in ds.coords:
-        ds.coords[coord].encoding['_FillValue'] = coord_fill_value
+        ds.coords[coord].encoding["_FillValue"] = coord_fill_value
     return ds

@@ -4,7 +4,7 @@ Useful for:
 * building tutorials in the documentation.
 * stolen from xarray!
 """
-### code stolen from xarray, I am sorry!
+# code stolen from xarray, I am sorry!
 import os
 import pathlib
 

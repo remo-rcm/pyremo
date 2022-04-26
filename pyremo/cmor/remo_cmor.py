@@ -1,47 +1,54 @@
-import os
-
-import xarray as xr
-import numpy as np
-import cf_xarray as cfxr
-import cordex as cx
-from cordex import cmor as cxcmor
 import datetime as dt
-import cftime as cfdt
 import json
-from dateutil import relativedelta as reld
+import os
 from warnings import warn
 
-from .derived import derivator
+import cf_xarray as cfxr
+import cftime as cfdt
+import cordex as cx
+import numpy as np
+import pandas as pd
+import xarray as xr
 
-from .utils import _get_varinfo, _get_pole, _encode_time, _get_cordex_pole, _get_time_cell_method, _get_cfvarinfo, _strip_time_cell_method, _get_grid_definitions
+# trigger download of cmor tables
+from cordex import cmor as cxcmor
+
+from .derived import derivator
+from .utils import (
+    _encode_time,
+    _get_cfvarinfo,
+    _get_cordex_pole,
+    _get_pole,
+    _get_varinfo,
+    _strip_time_cell_method,
+)
+
+__all__ = ["cxcmor"]
+# from dateutil import relativedelta as reld
 
 
 try:
     import cmor
-except:
+except Exception:
     warn("no python cmor package available, consider installing it")
 
-from ..core import codes
+# from ..core import codes
 
 xr.set_options(keep_attrs=True)
 
 # time offsets relative to left labeling for resampling.
 # we want the time label to be the center.
-loffsets = {"3H": dt.timedelta(hours=1, minutes=30), 
-            "6H": dt.timedelta(hours=3),
-            "D" : dt.timedelta(hours=12)}
+loffsets = {
+    "3H": dt.timedelta(hours=1, minutes=30),
+    "6H": dt.timedelta(hours=3),
+    "D": dt.timedelta(hours=12),
+}
 
 
-time_axis_names = {"point" : "time1",
-                   "mean"  : "time"}
+time_axis_names = {"point": "time1", "mean": "time"}
 
 # map mip frequencies to pandas frequencies
-freq_map = {
-            "1hr" : "H",
-            "3hr" : "3H",
-            "3hrPt" : "3H",
-            "6hr" : "6H",
-            "day" : "D"}
+freq_map = {"1hr": "H", "3hr": "3H", "3hrPt": "3H", "6hr": "6H", "day": "D"}
 
 time_units_default = "days since 1949-12-01T00:00:00"
 time_dtype = np.double
@@ -55,22 +62,22 @@ units_convert_rules = {
 
 
 def resample_both_closed(ds, hfreq, op, **kwargs):
-    rolling = getattr(ds.rolling(time=hfreq+1, center=True), op)()
+    rolling = getattr(ds.rolling(time=hfreq + 1, center=True), op)()
     freq = "{}H".format(hfreq)
-    return rolling.resample(time=freq, loffset=0.5*pd.Timedelta(hfreq, "H")).nearest()
+    return rolling.resample(time=freq, loffset=0.5 * pd.Timedelta(hfreq, "H")).nearest()
 
 
 def _resample_op(ds, hfreq, op, **kwargs):
-    rolling = getattr(ds.rolling(time=hfreq+1, center=True), op)()
+    rolling = getattr(ds.rolling(time=hfreq + 1, center=True), op)()
     freq = "{}H".format(hfreq)
-    return rolling.resample(time=freq, loffset=0.5*pd.Timedelta(hfreq, "H")).nearest()
+    return rolling.resample(time=freq, loffset=0.5 * pd.Timedelta(hfreq, "H")).nearest()
 
 
-def ensure_cftime(func):
-    def wrapper(date, **kwargs):
-        return func(_to_cftime(date), **kwargs)
-
-    return wrapper
+# def ensure_cftime(func):
+#    def wrapper(date, **kwargs):
+#        return func(_to_cftime(date), **kwargs)
+#
+#    return wrapper
 
 
 def to_cftime(date, calendar="proleptic_gregorian"):
@@ -99,15 +106,18 @@ def _clear_time_axis(ds):
     """Delete timesteps with NaN arrays"""
     for data_var in ds.data_vars:
         ds = ds.dropna(dim="time", how="all")
-    return ds 
+    return ds
+
 
 def _resample(
     ds, time, time_cell_method="point", label="left", time_offset=True, **kwargs
 ):
     """Resample a variable."""
-    #freq = "{}H".format(hfreq)
+    # freq = "{}H".format(hfreq)
     if time_cell_method == "point":
-        return ds.resample(time=time, label=label, **kwargs).nearest()#.interpolate("nearest") # use as_freq?
+        return ds.resample(
+            time=time, label=label, **kwargs
+        ).nearest()  # .interpolate("nearest") # use as_freq?
     elif time_cell_method == "mean":
         if time_offset is True:
             loffset = _get_loffset(time)
@@ -142,14 +152,20 @@ def _load_table(table):
     cmor.load_table(table)
 
 
-def _setup(dataset_table, mip_table, grid_table="CMIP6_grids.json", inpath='.'):
-    cmor.setup(inpath, set_verbosity=cmor.CMOR_NORMAL, netcdf_file_action=cmor.CMOR_REPLACE,
-              exit_control=cmor.CMOR_EXIT_ON_MAJOR, logfile=None)
+def _setup(dataset_table, mip_table, grid_table="CMIP6_grids.json", inpath="."):
+    cmor.setup(
+        inpath,
+        set_verbosity=cmor.CMOR_NORMAL,
+        netcdf_file_action=cmor.CMOR_REPLACE,
+        exit_control=cmor.CMOR_EXIT_ON_MAJOR,
+        logfile=None,
+    )
     cmor.dataset_json(dataset_table)
     grid_id = cmor.load_table(grid_table)
     table_id = cmor.load_table(mip_table)
     cmor.set_table(grid_id)
     return (grid_id, table_id)
+
 
 def _get_time_axis_name(time_cell_method):
     """Get the name of the CMOR time coordinate"""
@@ -168,13 +184,13 @@ def _define_axes(ds, table_id, lat_vertices=None, lon_vertices=None):
         coord_vals=ds.rlon.to_numpy(),
         units=ds.rlon.units,
     )
-    
+
     cmorGrid = cmor.grid(
-        [cmorLat, cmorLon], 
-        latitude=ds.lat.to_numpy(), 
+        [cmorLat, cmorLon],
+        latitude=ds.lat.to_numpy(),
         longitude=ds.lon.to_numpy(),
-        latitude_vertices = lat_vertices,
-        longitude_vertices = lon_vertices,
+        latitude_vertices=lat_vertices,
+        longitude_vertices=lon_vertices,
     )
 
     pole = _get_pole(ds)
@@ -183,54 +199,52 @@ def _define_axes(ds, table_id, lat_vertices=None, lon_vertices=None):
         "grid_north_pole_longitude": pole.grid_north_pole_longitude,
         "north_pole_grid_longitude": 0.0,
     }
-    cmorGM = cmor.set_grid_mapping(
+    cmor.set_grid_mapping(
         cmorGrid,
         "rotated_latitude_longitude",
         list(pole_dict.keys()),
         list(pole_dict.values()),
         ["", "", ""],
     )
-      
+
     return cmorGrid
 
 
 def _define_time(ds, table_id, time_cell_method=None):
     cmor.set_table(table_id)
-    
+
     if time_cell_method is None:
-        warn('no time_cell_method given, assuming: point')
+        warn("no time_cell_method given, assuming: point")
         time_cell_method = "point"
-    
+
     # encode time and time bounds
-    time_bounds = cfxr.bounds_to_vertices(ds.cf.get_bounds('time'), 'bounds')
+    time_bounds = cfxr.bounds_to_vertices(ds.cf.get_bounds("time"), "bounds")
     time_bounds.encoding = ds.time.encoding
     time_axis_encode = _encode_time(ds.time).to_numpy()
     time_axis_name = _get_time_axis_name(time_cell_method)
-    
+
     if time_cell_method == "mean":
         time_bounds_encode = _encode_time(time_bounds).to_numpy()
     else:
         time_bounds_encode = None
 
-
     return cmor.axis(
         time_axis_name,
         coord_vals=time_axis_encode,
-        #cell_bounds=_get_bnds(time_encode.to_numpy()),
+        # cell_bounds=_get_bnds(time_encode.to_numpy()),
         cell_bounds=time_bounds_encode,
         units=ds.time.encoding["units"],
     )
 
 
-        
 def _define_grid(ds, table_ids, time_cell_method="point"):
-    
+
     cmorGrid = _define_axes(ds, table_ids[0])
-    if 'time' in ds:
+    if "time" in ds:
         cmorTime = _define_time(ds, table_ids[1], time_cell_method)
     else:
         cmorTime = None
-    
+
     return cmorTime, cmorGrid
 
 
@@ -247,10 +261,10 @@ def _cmor_write(da, table_id, cmorTime, cmorGrid, file_name=True):
 
 def _units_convert(da, table_file):
     """Convert units.
-    
+
     Convert units according to the rules in units_convert_rules dict.
     Maybe metpy can do this also: https://unidata.github.io/MetPy/latest/tutorials/unit_tutorial.html
-    
+
     """
     with open(table_file) as f:
         table = json.load(f)
@@ -263,16 +277,17 @@ def _units_convert(da, table_file):
         da.attrs["units"] = rule[1]
     return da
 
-def _convert_cmor_to_resample_frequency(cmor_table):
-    """Convert CMOR table name into resample frequency"""
-    return resample_frequency[cmor_table]
+
+# def _convert_cmor_to_resample_frequency(cmor_table):
+#    """Convert CMOR table name into resample frequency"""
+#    return resample_frequency[cmor_table]
 
 
 def _get_time_units(ds):
     """Determine time units of dataset"""
     try:
         return ds.time.encoding["units"]
-    except:
+    except Exception:
         return ds.time.units
     return None
 
@@ -293,9 +308,8 @@ def _set_time_encoding(ds, units, orig):
     ds.time.encoding["units"] = u
     ds.time.encoding["dtype"] = time_dtype
     return ds
-        
 
-    
+
 def prepare_variable(
     ds,
     varname,
@@ -307,23 +321,23 @@ def prepare_variable(
     """prepares a variable for cmorization."""
     is_ds = isinstance(ds, xr.Dataset)
 
-    #pole = _get_pole(ds)
-    #if pole is None:
+    # pole = _get_pole(ds)
+    # if pole is None:
     #    pole = _get_cordex_pole(CORDEX_domain)
     varinfo = _get_varinfo(varname)
     if varinfo is not None:
         remo_name = varinfo["variable"]
         cf_name = varinfo["cf_name"]
         if is_ds is True:
-            var_ds = ds[[remo_name]]#.to_dataset()
+            var_ds = ds[[remo_name]]  # .to_dataset()
         else:
             var_ds = ds.to_dataset()
         var_ds = var_ds.rename({remo_name: cf_name})
     elif allow_derive is True:
-        #try:
+        # try:
         # assume it's a dataset with input variables for derivation.
         var_ds = derivator.derive(ds, varname)
-        #except:
+        # except:
         #    raise Exception("could not find or derive variable: {}".format(varname))
     else:
         raise Exception(
@@ -334,35 +348,45 @@ def prepare_variable(
         var_ds = var_ds.squeeze(drop=True)
     if CORDEX_domain is not None:
         var_ds = _crop_to_cordex_domain(var_ds, CORDEX_domain)
-    #var_ds.attrs = ds.attrs
+    # var_ds.attrs = ds.attrs
     return var_ds
 
 
 def _add_time_bounds(ds):
-    ds = ds.cf.add_bounds('time')
-    ds['time_bounds'].encoding = ds.time.encoding
+    ds = ds.cf.add_bounds("time")
+    ds["time_bounds"].encoding = ds.time.encoding
     return ds
-
 
 
 def adjust_frequency(ds, cfvarinfo, input_freq=None):
-    if input_freq is None and 'time' in ds.coords:
+    if input_freq is None and "time" in ds.coords:
         input_freq = xr.infer_freq(ds.time)
     if input_freq is None:
-        warn('could not determine frequency of input data, will assume it is correct.')
+        warn("could not determine frequency of input data, will assume it is correct.")
         return ds
-    freq = freq_map[cfvarinfo['frequency']]
+    freq = freq_map[cfvarinfo["frequency"]]
     if freq != input_freq:
-        warn('resampling input data from {} to {}'.format(input_freq, freq))
-        resample = _resample(ds, freq, time_cell_method=_strip_time_cell_method(cfvarinfo))
+        warn("resampling input data from {} to {}".format(input_freq, freq))
+        resample = _resample(
+            ds, freq, time_cell_method=_strip_time_cell_method(cfvarinfo)
+        )
         return resample
     return ds
-    
+
 
 def cmorize_variable(
-    ds, varname, cmor_table, dataset_table, inpath=".", allow_units_convert=False, 
-    allow_resample=False, input_freq=None, CORDEX_domain=None, vertices=None,
-    time_units=None, **kwargs
+    ds,
+    varname,
+    cmor_table,
+    dataset_table,
+    inpath=".",
+    allow_units_convert=False,
+    allow_resample=False,
+    input_freq=None,
+    CORDEX_domain=None,
+    vertices=None,
+    time_units=None,
+    **kwargs
 ):
     """Cmorizes a variable.
 
@@ -379,7 +403,7 @@ def cmorize_variable(
         Filepath to dataset cmor table.
     inpath: str
         Path to cmor tables, if ``inpath == "."``, inpath is the path
-        to ``cmor_table``. This is required to find additional cmor tables, 
+        to ``cmor_table``. This is required to find additional cmor tables,
         like ``CMIP6_coordinates``, ``CMIP6_grids`` etc.
     allow_units_convert: bool
         Allow units to be converted if they do not agree with the
@@ -391,7 +415,7 @@ def cmorize_variable(
         of the correct frequency input.
     input_freq: str
         The frequency of the input dataset in pandas notation. It ``None`` and the dataset
-        contains a time axis, the frequency will be determined automatically using 
+        contains a time axis, the frequency will be determined automatically using
         ``pandas.infer_freq`` if possible.
     CORDEX_domain: str
         Cordex domain short name. If ``None``, the domain will be determined by the ``CORDEX_domain``
@@ -412,7 +436,7 @@ def cmorize_variable(
     Example
     -------
     Example for cmorization of a dataset that contains REMO output::
- 
+
         $ import pyremo as pr
         $ import cordex as cx
         $ from cordex.tables import cordex_cmor_table, cmip6_cmor_table
@@ -437,35 +461,38 @@ def cmorize_variable(
     if CORDEX_domain is None:
         try:
             CORDEX_domain = ds.CORDEX_domain
-        except:
-            warn("could not identify CORDEX domain, try to set the 'CORDEX_domain' argument")
+        except Exception:
+            warn(
+                "could not identify CORDEX domain, try to set the 'CORDEX_domain' argument"
+            )
     if inpath == ".":
         inpath = os.path.dirname(cmor_table)
-        
+    print("inpath:", inpath)
+
     ds_prep = prepare_variable(ds, varname, CORDEX_domain=CORDEX_domain, **kwargs)
-    
+
     cfvarinfo = _get_cfvarinfo(varname, cmor_table)
-    
+
     if cfvarinfo is None:
-        raise Exception('{} not found in {}'.format(varname, cmor_table)) 
+        raise Exception("{} not found in {}".format(varname, cmor_table))
     if "time" in ds:
         if allow_resample is True:
             ds_prep = adjust_frequency(ds_prep, cfvarinfo, input_freq)
         ds_prep = _set_time_encoding(ds_prep, time_units, ds)
         if "time" not in ds.cf.bounds:
-            warn('adding time bounds')
+            warn("adding time bounds")
             ds_prep = _add_time_bounds(ds_prep)
-    #return ds_prep
+    # return ds_prep
     pole = _get_pole(ds)
 
     if pole is None:
-        warn('adding pole from archive specs: {}'.format(CORDEX_domain))
+        warn("adding pole from archive specs: {}".format(CORDEX_domain))
         pole = _get_cordex_pole(CORDEX_domain)
     ds_prep = xr.merge([ds_prep, pole])
 
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
- 
+
     table_ids = _setup(dataset_table, cmor_table, inpath=inpath)
     time_cell_method = _strip_time_cell_method(cfvarinfo)
     cmorTime, cmorGrid = _define_grid(ds_prep, table_ids, time_cell_method)

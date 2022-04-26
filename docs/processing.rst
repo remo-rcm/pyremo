@@ -9,11 +9,10 @@ from these tutorials is based on some notebooks you can download directly from t
 .. note::
    Please note that for some tutorial you will need access to the DKRZ filesystem. For some tutorials
    there is tutorial data available from the DKRZ cloud, however. If you run into data access trouble,
-   you might be able to still to the tutorials by adapting pathes to your own data files. 
+   you might be able to still to the tutorials by adapting pathes to your own data files.
 
 .. toctree::
    :maxdepth: 2
 
    warm-start
    prsint
-

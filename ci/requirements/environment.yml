@@ -7,7 +7,7 @@ dependencies:
   - matplotlib-base
   - numpy
   - pooch
-  - regionmask 
+  - regionmask
   - setuptools
   - xarray
   - dask

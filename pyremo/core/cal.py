@@ -4,6 +4,7 @@
 import datetime as dt
 import math
 
+
 # roundTime from here:
 # https://stackoverflow.com/questions/3463930/how-to-round-the-minute-of-a-datetime-object-python
 def roundTime(datetime=None, roundTo=60):
@@ -12,7 +13,7 @@ def roundTime(datetime=None, roundTo=60):
     roundTo : Closest number of seconds to round to, default 1 minute.
     Author: Thierry Husson 2012 - Use it as you want but don't blame me.
     """
-    if datetime == None:
+    if datetime is None:
         datetime = dt.datetime.now()
     seconds = (datetime.replace(tzinfo=None) - datetime.min).seconds
     rounding = (seconds + roundTo / 2) // roundTo * roundTo

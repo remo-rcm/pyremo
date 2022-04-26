@@ -6,7 +6,7 @@ What's New
 .. ipython:: python
    :suppress:
 
-    import pyremo 
+    import pyremo
 
 v0.3.0 (Unreleased)
 -------------------------
@@ -18,10 +18,12 @@ New Features
 - ERA5 cmorizer includes ERA5.1 to work with DKRZ data pool (:pull:`52`).
 - Added ``python3.10`` support (:pull:`46`).
 - Updated cmorization module for use with CMIP6 (:pull:`48`, :pull:`49`, :pull:`51`) and CORDEX vocabulary. The underlying tables are only used for testing and should not yet be uses for actual data publication, see also `here <https://github.com/euro-cordex/py-cordex/pull/55>`_.
- 
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Added ``.pre-commit-config.yaml`` and ``linting.yaml`` to run linter checks (:pull:`55`).
+- Code is reformatted to apply to ``flake8`` and ``black`` conventions (:pull:`55`).
 - ERA5 cmorizer works with pandas datatables (:pull:`52`).
 - Tutorial `data source <https://github.com/remo-rcm/pyremo-data>`_ is now on github (:pull:`47`).
 - Added fortran extensions ``pyintorg`` and ``pydruint`` to extra dependencies.
@@ -50,7 +52,7 @@ New Features
   :pull:`23`, :pull:`25`, :pull:`26`).
 - Included production analysis (:pull:`33`).
 - Command line tool for remo analysis (:pull:`35`, :pull:`36`).
- 
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 - Tables are removed from the package and stored in an extra github repo.
@@ -61,7 +63,7 @@ Internal Changes
 
 Documentation
 ~~~~~~~~~~~~~
-- Lots of new python notebooks are rendered into the documentation. 
+- Lots of new python notebooks are rendered into the documentation.
 - Documentation now includes preprocessing and pressure interpolation examples.
 
 

@@ -13,7 +13,7 @@ def roundTime(datetime=None, roundTo=60):
     roundTo : Closest number of seconds to round to, default 1 minute.
     Author: Thierry Husson 2012 - Use it as you want but don't blame me.
     """
-    if datetime == None:
+    if datetime is None:
         datetime = dt.datetime.now()
     seconds = (datetime.replace(tzinfo=None) - datetime.min).seconds
     rounding = (seconds + roundTo / 2) // roundTo * roundTo

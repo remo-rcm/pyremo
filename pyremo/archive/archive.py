@@ -1,4 +1,5 @@
 import os
+import subprocess
 import tarfile
 from pathlib import Path
 from warnings import warn
@@ -15,7 +16,7 @@ patterns = [efile_pattern, file_pattern]
 
 try:
     from tqdm import tqdm
-except:
+except Exception:
 
     def tqdm(x):
         return x
@@ -84,7 +85,6 @@ def extract_files(tars, pattern=None, path=None, delayed=False, compute=False):
         def delay(x):
             return x
 
-        futures = None
     for tar in tars:
         if pattern is not None:
             filenames.append(delay(extract_file)(tar, path, pattern))
@@ -132,7 +132,7 @@ def _parse_filepathes(filepathes, parse_dates=True):
                 try:
                     finfo["date"] = pd.to_datetime(finfo["date"], format=dpat)
                     break
-                except:
+                except Exception:
                     pass
         finfos.append(finfo)
     return finfos
@@ -143,7 +143,7 @@ def get_data_catalog(dir, parse_dates=False, exclude=None):
     df = pd.DataFrame(_parse_filepathes(filepathes, parse_dates=parse_dates))
     try:
         df["code"] = df.code.astype(pd.Int64Dtype())
-    except:
+    except Exception:
         pass
     return df
 

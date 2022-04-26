@@ -13,7 +13,7 @@ import tarfile
 from hpc_scheduler import Scheduler
 
 from .file_conventions import REMO_2015_DISK_ARCHIVE, REMO_2015_TAPE_ARCHIVE
-from .ftp import check_ftp_path, check_ftp_path_list, download_file
+from .ftp import check_ftp_path_list, download_file
 
 # template for executing a PyREMO command in a batch script
 JOB_TEMPLATE = """

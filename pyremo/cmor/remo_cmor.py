@@ -7,28 +7,29 @@ import cf_xarray as cfxr
 import cftime as cfdt
 import cordex as cx
 import numpy as np
+import pandas as pd
 import xarray as xr
-from cordex import cmor as cxcmor
-from dateutil import relativedelta as reld
 
 from .derived import derivator
 from .utils import (
     _encode_time,
     _get_cfvarinfo,
     _get_cordex_pole,
-    _get_grid_definitions,
     _get_pole,
-    _get_time_cell_method,
     _get_varinfo,
     _strip_time_cell_method,
 )
 
+# from cordex import cmor as cxcmor
+# from dateutil import relativedelta as reld
+
+
 try:
     import cmor
-except:
+except Exception:
     warn("no python cmor package available, consider installing it")
 
-from ..core import codes
+# from ..core import codes
 
 xr.set_options(keep_attrs=True)
 
@@ -69,11 +70,11 @@ def _resample_op(ds, hfreq, op, **kwargs):
     return rolling.resample(time=freq, loffset=0.5 * pd.Timedelta(hfreq, "H")).nearest()
 
 
-def ensure_cftime(func):
-    def wrapper(date, **kwargs):
-        return func(_to_cftime(date), **kwargs)
-
-    return wrapper
+# def ensure_cftime(func):
+#    def wrapper(date, **kwargs):
+#        return func(_to_cftime(date), **kwargs)
+#
+#    return wrapper
 
 
 def to_cftime(date, calendar="proleptic_gregorian"):
@@ -195,7 +196,7 @@ def _define_axes(ds, table_id, lat_vertices=None, lon_vertices=None):
         "grid_north_pole_longitude": pole.grid_north_pole_longitude,
         "north_pole_grid_longitude": 0.0,
     }
-    cmorGM = cmor.set_grid_mapping(
+    cmor.set_grid_mapping(
         cmorGrid,
         "rotated_latitude_longitude",
         list(pole_dict.keys()),
@@ -274,16 +275,16 @@ def _units_convert(da, table_file):
     return da
 
 
-def _convert_cmor_to_resample_frequency(cmor_table):
-    """Convert CMOR table name into resample frequency"""
-    return resample_frequency[cmor_table]
+# def _convert_cmor_to_resample_frequency(cmor_table):
+#    """Convert CMOR table name into resample frequency"""
+#    return resample_frequency[cmor_table]
 
 
 def _get_time_units(ds):
     """Determine time units of dataset"""
     try:
         return ds.time.encoding["units"]
-    except:
+    except Exception:
         return ds.time.units
     return None
 
@@ -457,7 +458,7 @@ def cmorize_variable(
     if CORDEX_domain is None:
         try:
             CORDEX_domain = ds.CORDEX_domain
-        except:
+        except Exception:
             warn(
                 "could not identify CORDEX domain, try to set the 'CORDEX_domain' argument"
             )

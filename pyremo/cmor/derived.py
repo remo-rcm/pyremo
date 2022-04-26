@@ -5,8 +5,6 @@
 import inspect
 from warnings import warn
 
-import numpy as np
-
 from .. import physics
 
 # units are incompatible: kg m-2 s-1 and mm

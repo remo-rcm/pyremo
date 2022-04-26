@@ -62,5 +62,5 @@ def plot_seasons(
             transform=transform,
             add_colorbar=False,
         )
-    cbar = fig.colorbar(im, ax=axes)
+    fig.colorbar(im, ax=axes)
     return plt

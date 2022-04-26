@@ -4,9 +4,9 @@ import os
 import numpy as np
 import xarray as xr
 
-from ..archive import archive
-from ..core import codes
-from ..core.remo_ds import preprocess as remo_preprocess
+# from ..archive import archive
+# from ..core import codes
+# from ..core.remo_ds import preprocess as remo_preprocess
 
 soil_temps = ["TS", "TSL", "TEMP2", "TSN", "TD3", "TD4", "TD5"]
 
@@ -213,7 +213,7 @@ def _get_dataarrays(filenames, drop=None, chunks="auto", **kwargs):
                 ds.drop(drop)
             # grid_mapping = cx.preprocessing.get_grid_mapping(ds)
             # da.append(xr.merge(ds[v], grid_mapping))
-            except:
+            except Exception:
                 pass
         da.append(ds)
     return da

@@ -14,7 +14,7 @@ import xarray as xr
 
 try:
     from tqdm import tqdm
-except:
+except Exception:
 
     def tqdm(x):
         return x
@@ -46,7 +46,7 @@ def init_tempdir(dir=None):
     if dir is None:
         try:
             tempdir = os.path.join(os.environ["SCRATCH"], ".cdo_tmp")
-        except:
+        except Exception:
             tempdir = tempfile.mkdtemp()
     else:
         tempdir = dir
@@ -271,19 +271,19 @@ def _get_row_by_date_(code, date, df):
         # here we have year, month and day
         date = "{}-{}-{}".format(date[0:4], date[5:7], date[8:10])
         result = sel.loc[date]
-    except:
+    except Exception:
         pass
     try:
         # here we use only year and month to find the
         date = "{}-{}".format(date[0:4], date[5:7])
         result = sel.loc[date]
-    except:
+    except Exception:
         pass
     try:
         # here we use only year and month to find the
         date = "{}-{}-01".format(date[0:4], date[5:7])
         result = sel.loc[date]
-    except:
+    except Exception:
         pass
     #     if level_type == "model_level":
     #         # here we have year, month and day
@@ -438,8 +438,6 @@ def _rename_variable(ds, codes):
 
 
 def _gfile(date, df):
-    from . import core
-
     variables = ["ps"]
     temp_files = [_get_timestep(codemap[var], date, df) for var in variables]
     return temp_files

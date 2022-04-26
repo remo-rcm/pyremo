@@ -15,3 +15,22 @@ from .tables import domains, vc
 from .version import version
 
 __version__ = version
+
+__all__ = [
+    "physics",
+    "tutorial",
+    "codes",
+    "data",
+    "remo_ds",
+    "parse_absolute_time",
+    "parse_dates",
+    "domain_info",
+    "remo_domain",
+    "open_remo_dataset",
+    "preprocess",
+    "update_meta_info",
+    "domains",
+    "vc",
+    "version",
+    "",
+]

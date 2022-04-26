@@ -44,22 +44,18 @@ def get_data_catalog(dir, parse_dates=False, exclude=None):
                 try:
                     df["date"] = pd.to_datetime(df.date, format=dpat)
                     break
-                except:
+                except Exception:
                     pass
         df_all = df_all.append(df, ignore_index=True)
     try:
         df_all["code"] = df_all.code.astype(pd.Int64Dtype())
-    except:
+    except Exception:
         pass
     return df_all
 
 
 def move_data(sdir, tdir, **kwargs):
     """move remo data according to type to different directories"""
-    cat = get_data_catalog(tdir, **kwargs)
-    efiles = list(cat[cat.type.isin(["e", "m", "n"])].path)
-    tfiles = list(cat[cat.type.isin(["t"])].path)
-    ffiles = list(cat[cat.type.isin(["f", "g"])].path)
 
     efile_dir = os.path.join(tdir, "xe")
     tfile_dir = os.path.join(tdir, "xt")
@@ -68,7 +64,7 @@ def move_data(sdir, tdir, **kwargs):
     for dir in [efile_dir, tfile_dir, ffile_dir]:
         try:
             os.makedirs(dir)
-        except:
+        except Exception:
             print("Directory exists: {}".format(dir))
 
     return get_data_catalog(tdir)

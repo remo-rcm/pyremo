@@ -11,7 +11,7 @@ def _get_varinfo(name):
     # fails silently
     try:
         return codes.get_dict(name)
-    except:
+    except Exception:
         return None
 
 
@@ -64,5 +64,5 @@ def _get_time_cell_method(cf_varname, table):
 def _strip_time_cell_method(cfvarinfo):
     try:
         return cfvarinfo["cell_methods"].split("time:")[1].strip()
-    except:
+    except Exception:
         return None

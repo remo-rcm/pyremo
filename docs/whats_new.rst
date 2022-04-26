@@ -22,6 +22,8 @@ New Features
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Added ``.pre-commit-config.yaml`` and ``linting.yaml`` to run linter checks (:pull:`55`).
+- Code is reformatted to apply to ``flake8`` and ``black`` conventions (:pull:`55`).
 - ERA5 cmorizer works with pandas datatables (:pull:`52`).
 - Tutorial `data source <https://github.com/remo-rcm/pyremo-data>`_ is now on github (:pull:`47`).
 - Added fortran extensions ``pyintorg`` and ``pydruint`` to extra dependencies.

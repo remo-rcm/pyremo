@@ -24,6 +24,10 @@ pyremo
 .. image:: https://anaconda.org/conda-forge/pyremo/badges/installer/conda.svg
     :target: https://anaconda.org/conda-forge/pyremo
 
+.. image:: https://results.pre-commit.ci/badge/github/remo-rcm/pyremo/master.svg
+   :target: https://results.pre-commit.ci/latest/github/remo-rcm/pyremo/master
+   :alt: pre-commit.ci status
+
 .. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo/badge
    :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo
    :alt: CodeFactor

@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
+# trigger download of cmor tables
+from cordex import cmor as cxcmor
+
 from .derived import derivator
 from .utils import (
     _encode_time,
@@ -20,7 +23,7 @@ from .utils import (
     _strip_time_cell_method,
 )
 
-# from cordex import cmor as cxcmor
+__all__ = ["cxcmor"]
 # from dateutil import relativedelta as reld
 
 
@@ -464,6 +467,7 @@ def cmorize_variable(
             )
     if inpath == ".":
         inpath = os.path.dirname(cmor_table)
+    print("inpath:", inpath)
 
     ds_prep = prepare_variable(ds, varname, CORDEX_domain=CORDEX_domain, **kwargs)
 

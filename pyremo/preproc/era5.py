@@ -257,7 +257,6 @@ class ERA5:
         self.catalog_url = catalog_url
         self.show_cdo = show_cdo
         self.scratch = init_tempdir(scratch)
-        print("ERA5 tempdir:", self.scratch)
         self.df = df
         if self.df is None:
             self.df = _open_catalog(catalog_url).df
@@ -428,7 +427,6 @@ class ERA5:
                 return x
 
         for code, date in product(codes, dates):
-            print(code, date, gaussian)
             reg = delayed(self._get_timestep)(code, date, gaussian)
             timesteps[code].append(reg)
         return timesteps

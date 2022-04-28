@@ -93,8 +93,7 @@ levelmap = {
 
 
 codemap = {var: code for code, var in varmap.items()}
-
-show_cdo = False
+show_cdo = True
 
 
 def _get_attrs(code):
@@ -105,7 +104,8 @@ def _get_attrs(code):
     return attrs
 
 
-def _cdo_call(options="", op="", input="", output="temp"):
+# own cdo call here due to https://github.com/Try2Code/cdo-bindings/issues/34
+def _cdo_call(options="", op="", input="", output="temp", print_command=True):
     if output is None:
         output = ""
     elif output == "temp":
@@ -114,7 +114,7 @@ def _cdo_call(options="", op="", input="", output="temp"):
     if isinstance(input, list):
         input = " ".join(input)
     call = "{} {} {} {} {}".format(cdo_exe, options, op, input, output)
-    if show_cdo:
+    if print_command is True:
         print(call)
     stdout = subprocess.Popen(call, shell=True, stdout=subprocess.PIPE).stdout.read()
     if output:
@@ -555,7 +555,11 @@ class ERA5:
     """
 
     def __init__(
-        self, catalog_url="/pool/data/Catalogs/mistral-era5.json", df=None, scratch=None
+        self,
+        catalog_url="/pool/data/Catalogs/mistral-era5.json",
+        df=None,
+        scratch=None,
+        show_cdo=True,
     ):
         """
 

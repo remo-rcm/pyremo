@@ -70,6 +70,7 @@ def to_netcdf(
                 ds[var].encoding["_FillValue"] = None
         dsets.append(ds)
     # dsets = [dset.expand_dims('time') for dset in datasets]
+    xr.save_mfdataset(dsets, paths, **kwargs)
     if tempfiles is not None:
         for f in tempfiles:
             os.remove(f)
@@ -80,7 +81,7 @@ def to_tar(files, tar_file, mode="w"):
     import tarfile
 
     try:
-        from tqdm.notebook import tqdm
+        from tqdm import tqdm
     except Exception:
 
         def tqdm(x):

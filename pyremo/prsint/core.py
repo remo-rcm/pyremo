@@ -6,7 +6,7 @@ try:
     from pydruint import _druint_verip
 except ModuleNotFoundError:
     warnings.warn(
-        "The pressure interpolation requires installation of https://git.gerics.de/REMO/pydruint"
+        "The pressure interpolation requires installation of https://gitlab.dkrz.de/remo/pydruint"
     )
 
 
@@ -30,6 +30,13 @@ def plev_coord(plev):
     plev_coord.attrs = plev_attrs
     plev_coord.name = "plev"
     return plev_coord
+
+
+def vertical_dim(da):
+    for dim in da.dims:
+        if "lev" in dim:
+            return dim
+    return None
 
 
 def spatial_dims(da):
@@ -68,12 +75,12 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
 
     """
     lev_dims = list(spatial_dims(da))
-    lev_dims.append("lev")
+    lev_dims.append(vertical_dim(da))
     plev_dims = list(spatial_dims(da))
     plev_dims.append("plev")
     nlev = a.dims[0]
 
-    t_dims = list(spatial_dims(t)) + ["lev"]
+    t_dims = list(spatial_dims(t)) + [vertical_dim(t)]
     ps_dims = list(spatial_dims(ps))
     orog_dims = list(spatial_dims(orog))
 

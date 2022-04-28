@@ -322,7 +322,9 @@ def _get_row_by_date(code, date, df, frequency="hourly", era_id="E5", use_E1=Tru
         ):
             era_id_sel = "E1"
     # lt = "model_level"
-    sel = df.set_index(["code", "frequency", "time"]).loc[(code, frequency)]
+    sel = (
+        df.set_index(["code", "frequency", "time"]).sort_index().loc[(code, frequency)]
+    )
 
     # try to select era5.1 if possible
     if not sel[sel.era_id == era_id_sel].empty:

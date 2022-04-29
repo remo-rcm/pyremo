@@ -124,6 +124,11 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
+# html_theme = "sphinx_book_theme"
+html_title = ""
+
+# not sure about the license here...
+html_logo = "fig/remo-logo.png"
 
 # no module names prefix
 add_module_names = False

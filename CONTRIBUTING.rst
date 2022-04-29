@@ -38,7 +38,7 @@ and "help wanted" is open to whoever wants to implement it.
 Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
-Cordex Python Package could always use more documentation, whether as part of the
+The pyremo package could always use more documentation, whether as part of the
 official Cordex Python Package docs, in docstrings, or even on the web in blog posts,
 articles, and such.
 
@@ -57,7 +57,7 @@ If you are proposing a feature:
 Get Started!
 ------------
 
-Ready to contribute? Here's how to set up `cordex` for local development.
+Ready to contribute? Here's how to set up `pyremo` for local development.
 
 Forking
 ~~~~~~~
@@ -106,11 +106,11 @@ built version:
 .. code-block:: sh
 
    $ python  # start an interpreter
-   >>> import cordex
-   >>> cordex.__version__
+   >>> import pyremo
+   >>> pyremo.__version__
 
 The nice thing about the *editable* mode (that's the ``-e`` flag in the pip install command) is
-that you can not edit the code directly in the package and use it without having to reinstall
+that you can edit the code directly in the package and use it without having to reinstall
 the package. If you work a lot in Jupyter notebooks for development, you should check out
 the autoreload magic, e.g., add a cell in the top of your notebook containing:
 

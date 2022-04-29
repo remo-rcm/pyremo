@@ -467,7 +467,6 @@ def cmorize_variable(
             )
     if inpath == ".":
         inpath = os.path.dirname(cmor_table)
-    print("inpath:", inpath)
 
     ds_prep = prepare_variable(ds, varname, CORDEX_domain=CORDEX_domain, **kwargs)
 

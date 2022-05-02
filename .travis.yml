@@ -34,5 +34,3 @@ deploy:
 
 after_success:
   - coveralls
-
-

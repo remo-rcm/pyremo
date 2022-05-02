@@ -7,7 +7,7 @@ pyremo
 
 .. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci.yaml
-    
+
 .. image:: https://github.com/remo-rcm/pyremo/actions/workflows/ci-extensions.yaml/badge.svg
     :target: https://github.com/remo-rcm/pyremo/actions/workflows/ci-extensions.yaml
 
@@ -20,9 +20,13 @@ pyremo
 .. image:: https://readthedocs.org/projects/pyremo/badge/?version=latest
         :target: https://pyremo.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
-        
+
 .. image:: https://anaconda.org/conda-forge/pyremo/badges/installer/conda.svg
     :target: https://anaconda.org/conda-forge/pyremo
+
+.. image:: https://results.pre-commit.ci/badge/github/remo-rcm/pyremo/master.svg
+   :target: https://results.pre-commit.ci/latest/github/remo-rcm/pyremo/master
+   :alt: pre-commit.ci status
 
 .. image:: https://www.codefactor.io/repository/github/remo-rcm/pyremo/badge
    :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo
@@ -47,7 +51,7 @@ We recommend installing `pyremo` with conda:
 .. code-block:: console
 
     conda install -c conda-forge pyremo
-    
+
 
 Installation from source
 ------------------------
@@ -78,7 +82,7 @@ Fortran extensions
 ------------------
 
 There are two sub-packages that are extra private dependencies and contain Fortran extensions. For example, the preprocessing module :code:`preproc` will require the installation
-of the legacy source code for preprocessing which is packaged in 
+of the legacy source code for preprocessing which is packaged in
 
 * https://gitlab.dkrz.de/remo/pyintorg
 
@@ -86,12 +90,14 @@ For the pressure interpolation :code:`prsint`, you will need to install the addi
 
 * https://gitlab.dkrz.de/remo/pydruint
 
-Note, that you will have to install these packages from source which will require a fortran compiler (e.g. :code:`gfortran`). If you require access to those 
-packages, please request access to the REMO group in the DRKZ gitlab. If you have access, you can install those extension using, e.g.
+Note, that you will have to install these packages from source which will require a fortran compiler (e.g. :code:`gfortran`).
+If you require access to those packages, please request access to the REMO group in the DRKZ gitlab.
+If you have access, you can install those extension directly from the gitlab or by using, e.g.
 
 .. code-block:: console
 
-    pip install pyremo[extensions]
+    pip install pyremo[preproc] # install pyintorg
+    pip install pyremo[prsint] # install pydruint
 
 Credits
 -------

@@ -4,7 +4,7 @@ Useful for:
 * building tutorials in the documentation.
 * stolen from xarray!
 """
-### code stolen from xarray, I am sorry!
+# code stolen from xarray, I am sorry!
 import os
 import pathlib
 
@@ -75,6 +75,7 @@ def open_dataset(
     Available datasets:
 
     * ``"remo_EUR-44"``: remo example output on EUR-44 domain
+    * ``"remo_EUR-11_TEMP2"``: remo 2m temperature time series on EUR-11 domain
 
     Parameters
     ----------
@@ -161,6 +162,5 @@ def mpi_esm(**kwargs):
 
 def mpi_esm_tos(**kwargs):
     return open_dataset(
-        "tos_Oday_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_19781231-19790102",
-        **kwargs
+        "tos_Oday_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_19781231-19790102", **kwargs
     )

@@ -1,8 +1,8 @@
 import pandas as pd
 
 from ._resources import (
-    read_remo_domain_tables,
     read_remo_code_tables,
+    read_remo_domain_tables,
     read_remo_vc_tables,
 )
 

@@ -35,6 +35,7 @@ def GQD(ex, px):
 # These functions seem to compute vapour pressure, e.g.:
 # https://en.wikipedia.org/wiki/Tetens_equation
 
+
 def fg(tx, b2, b4):
     """statement function dummy.
 
@@ -287,7 +288,7 @@ def compute_arfgm(t, qd, p, qw=0.0):
             relative humidity ([%],3d)
     """
     # return fgqd(fgee(t),p)
-    #gqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
+    # gqd = np.where(t >= C.B3, fgqd(fgew(t), p), fgqd(fgee(t), p))
     fge = np.where(t >= C.B3, fgew(t), fgee(t))
     gqd = fgqd(fge, p)
     relhum = qd / gqd
@@ -321,6 +322,7 @@ def liquid_water_content(t, relhum, p):
 def gqd(t, p):
     fge = np.where(t >= C.B3, fgew(t), fgee(t))
     return fgqd(fge, p)
+
 
 #    zqdwem = ARFem(ij, k)*zgqd
 #    IF ( ARFem(ij, k)<1.0_DP ) THEN

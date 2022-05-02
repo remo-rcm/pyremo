@@ -2,9 +2,9 @@
 """
 
 
-import numpy as np
 import inspect
 from warnings import warn
+
 from .. import physics
 
 # units are incompatible: kg m-2 s-1 and mm

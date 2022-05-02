@@ -1,4 +1,4 @@
-.. currentmodule:: pyremo 
+.. currentmodule:: pyremo
 
 #############
 API reference
@@ -51,7 +51,7 @@ Pressure interpolation
 
    prsint.pressure_interpolation
 
-   
+
 CF-Preprocessor
 ===============
 
@@ -70,7 +70,7 @@ ECMWF cmorizer (ERA5)
    :toctree: generated/
 
    preproc.ERA5
-   
+
 Converting ECMWF data
 ^^^^^^^^^^^^^^^^^^^^^
 

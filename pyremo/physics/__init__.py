@@ -1,17 +1,17 @@
 # flake8: noqa
+from . import core
 from .physics import (
-    relative_humidity,
-    specific_humidity,
     liquid_water_content,
-    pressure,
     precipitation_flux,
-    water_vapour,
-    specific_humidity_from_dewpoint,
+    pressure,
+    relative_humidity,
     relative_humidity_from_dewpoint,
-    surface_runoff_flux,
-    surface_downwelling_shortwave_flux_in_air,
+    specific_humidity,
+    specific_humidity_from_dewpoint,
     surface_downwelling_longwave_flux_in_air,
+    surface_downwelling_shortwave_flux_in_air,
+    surface_runoff_flux,
     toa_incoming_shortwave_flux,
     water_evapotranspiration_flux,
+    water_vapour,
 )
-from . import core

@@ -702,18 +702,13 @@ def convert_units(ds):
 
 
 def check_lev(ds):
-    # print("inverting vertical coordinate: {},{}".format(ds.data_vars, ds.cf['vertical'].name))
-    try:
-        if ds.cf["vertical"].positive == "down":
-            print(
-                "inverting vertical coordinate: {},{}".format(
-                    ds.name, ds.cf["vertical"].name
-                )
-            )
-            kwargs = {ds.cf["vertical"].name: ds.cf["vertical"][::-1]}
-            ds = ds.reindex(**kwargs)
-    except Exception:
+    positive = ds.cf["vertical"].attrs.get("positive", None)
+    if positive is None:
         warnings.warn("could not determine positive attribute of vertical axis.")
+        return ds
+    elif positive == "down":
+        kwargs = {ds.cf["vertical"].name: ds.cf["vertical"][::-1]}
+        return ds.reindex(**kwargs)
     return ds
 
 
@@ -747,11 +742,12 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
     if isinstance(ds, dict):
         ds = open_datasets(ds, ref_ds, time_range)
     else:
+        ds = ds.copy()
         if time_range is None:
             time_range = ds.time
-            ds = ds.sel(time=time_range)
-            ds["akgm"], ds["bkgm"] = get_vc2(ds)
-            ds = check_lev(ds)
+        ds = ds.sel(time=time_range)
+        ds["akgm"], ds["bkgm"] = get_vc2(ds)
+        ds = check_lev(ds)
     if tos is not None:
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
     ds = ds.rename({"lev": lev_gm})

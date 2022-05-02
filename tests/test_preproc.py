@@ -16,9 +16,6 @@ def test_double_nesting(ds):
 
     em = pr.domain_info("EUR-44")
     hm = pr.domain_info("EUR-11")
-    hm_ds = pr.remo_domain("EUR-11")
-    em_ds = pr.remo_domain("EUR-44")
     vc = pr.vc.tables["vc_27lev"]
     surflib = pr.data.surflib("EUR-11", crop=False)
-    ads = process_file(ds, em, hm, vc, surflib, write=False)
-    print(ads)
+    process_file(ds, em, hm, vc, surflib, write=False)

@@ -1,3 +1,4 @@
+# flake8: noqa
 #!/usr/bin/env python
 # SBATCH --job-name=double-nesting
 # SBATCH --partition=shared
@@ -6,7 +7,7 @@
 # SBATCH --time=24:00:00
 # SBATCH --mem-per-cpu=2600
 # SBATCH --account=ch0636
-##SBATCH --nice=1000
+# SBATCH --nice=1000
 
 
 import glob
@@ -48,8 +49,8 @@ def main():
 
     em = pr.domain_info("EUR-11")
     hm = pr.domain_info("EUC-0275")
-    hm_ds = pr.remo_domain("EUC-0275")  # , dummy='topo')
-    em_ds = pr.remo_domain("EUR-11")  # , dummy='topo')
+    # hm_ds = pr.remo_domain("EUC-0275")  # , dummy='topo')
+    # em_ds = pr.remo_domain("EUR-11")  # , dummy='topo')
     vc = pr.vc.tables["vc_27lev"]
 
     data_dir = "/mnt/lustre01/scratch/g/g300046/197901/e056000t197901*"

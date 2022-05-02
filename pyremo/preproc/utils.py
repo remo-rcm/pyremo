@@ -1,4 +1,8 @@
+import os
+
 import cordex as cx
+import numpy as np
+import xarray as xr
 
 import pyremo as pr
 
@@ -29,9 +33,15 @@ def update_attrs(ds):
             # da.attrs['layer'] = attrs['layer']
             da.attrs["grid_mapping"] = "rotated_latitude_longitude"
             da.attrs["coordinates"] = "lon lat"
-        except:
+        except Exception:
             pass
     return ds
+
+
+def get_filename(date, expid="000000", template=None):
+    if template is None:
+        template = "x{}x{}.nc"
+    return template.format(expid, date.strftime(format="%Y%m%d%H"))
 
 
 def to_netcdf(
@@ -67,7 +77,7 @@ def to_netcdf(
                 ds[var].encoding["_FillValue"] = None
         dsets.append(ds)
     # dsets = [dset.expand_dims('time') for dset in datasets]
-    writer = xr.save_mfdataset(dsets, paths, **kwargs)
+    xr.save_mfdataset(dsets, paths, **kwargs)
     if tempfiles is not None:
         for f in tempfiles:
             os.remove(f)
@@ -78,8 +88,8 @@ def to_tar(files, tar_file, mode="w"):
     import tarfile
 
     try:
-        from tqdm.notebook import tqdm
-    except:
+        from tqdm import tqdm
+    except Exception:
 
         def tqdm(x):
             return x
@@ -91,7 +101,7 @@ def to_tar(files, tar_file, mode="w"):
     return tar_file
 
 
-def encode(ds, missval=1.0e20):
+def encode(ds, expand_time, missval=1.0e20):
     for var, da in ds.items():
         if var in expand_time:
             ds[var] = da.expand_dims("time")

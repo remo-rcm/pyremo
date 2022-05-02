@@ -235,15 +235,13 @@ def interpolate_horizontal_remo(
     else:
         return interp_horiz_remo_cm(
             da,
-            lamgm,
-            phigm,
-            lamem.isel(pos=igr),
-            phiem.isel(pos=igr),
-            indii.isel(pos=igr),
-            indjj.isel(pos=igr),
+            indemi.isel(pos=igr),
+            indemj.isel(pos=igr),
+            dxemhm.isel(pos=igr),
+            dyemhm.isel(pos=igr),
             name,
-            blagm,
             blaem,
+            blahm,
         )
 
 

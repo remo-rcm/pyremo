@@ -6,7 +6,6 @@ import xarray as xr
 from pyintorg.remo import driver
 
 import pyremo as pr
-from pyremo import remo_domain
 
 from .utils import get_grid, update_attrs
 

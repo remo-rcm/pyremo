@@ -7,7 +7,7 @@ import xarray as xr
 import pyremo as pr
 
 from . import physics
-from .constants import lev_gm, lev_input
+from .constants import lev_input
 from .core import (
     const,
     correct_uv,
@@ -18,7 +18,6 @@ from .core import (
     interpolate_horizontal,
     interpolate_horizontal_remo,
     interpolate_vertical,
-    interpolate_vertical_remo,
     intersect_regional,
     pbl_index,
     pressure_correction_em,
@@ -150,14 +149,14 @@ def remap(gds, domain_info, vc, surflib):
     #   CALL add(BOUNDARY_TABLE, 'TSI'   , TSIECHR  , code=56 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
     #   CALL add(BOUNDARY_TABLE, 'SEAICE'
 
-    ## curvilinear coordinaetes
+    # curvilinear coordinaetes
 
     # remove time dimension if there is one
     fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
 
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
-    ## broadcast 1d global coordinates
+    # broadcast 1d global coordinates
     lamgm, phigm = broadcast_coords(gds)
 
     # horizontal interpolation
@@ -232,7 +231,7 @@ def remap(gds, domain_info, vc, surflib):
         vge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "V", kpbl
     )
 
-    ## correct wind with potential divergence
+    # correct wind with potential divergence
     philuem = domain_info["ll_lon"]
     dlamem = domain_info["dlon"]
     dphiem = domain_info["dlat"]
@@ -335,7 +334,7 @@ def remap_remo(
     tds = tds.copy().rename({"rlon": "rlon_em", "rlat": "rlat_em", "lev": lev_input})
     grid = get_grid(domain_info_hm)
 
-    ## curvilinear coordinaetes
+    # curvilinear coordinaetes
     # remove time dimension if there is one
     fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
     tds["FIB"] = tds.FIB * const.grav_const
@@ -356,15 +355,15 @@ def remap_remo(
     dyemhm = dyemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     # return indemi, indemj, dxemhm, dyemhm
 
-    ## horizontal interpolation
+    # horizontal interpolation
     teh = interpolate_horizontal_remo(tds.T, indemi, indemj, dxemhm, dyemhm, "T")
     pseh = interpolate_horizontal_remo(tds.PS, indemi, indemj, dxemhm, dyemhm, "PS")
     pseh.name = "PSEH"
     ueh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 1)
-    uveh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 2)
+    # uveh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 2)
     veh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 4)
-    vueh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 3)
-    qdeh = interpolate_horizontal_remo(tds.QD, indemi, indemj, dxemhm, dyemhm, "QD")
+    # vueh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 3)
+    # qdeh = interpolate_horizontal_remo(tds.QD, indemi, indemj, dxemhm, dyemhm, "QD")
     fibeh = interpolate_horizontal_remo(tds.FIB, indemi, indemj, dxemhm, dyemhm, "FIB")
 
     if has_seaice:
@@ -454,7 +453,7 @@ def remap_remo(
         arfem, indemi, indemj, dxemhm, dyemhm, "AREL HUM"
     )
 
-    ## first pressure correction
+    # first pressure correction
     kpbl = pbl_index(tds.hyai, tds.hybi)
 
     ps1hm = pressure_correction_em(
@@ -462,11 +461,11 @@ def remap_remo(
     )
     ps1hm.name = "PS1HM"
     # return pseh, teh, arfeh, fibeh, fibhm
-    ## vertical interpolation
+    # vertical interpolation
     akhem = tds.hyam
     bkhem = tds.hybm
-    dakem = tds.hyai[1:] - tds.hyai[:-1]
-    dbkem = tds.hybi[1:] - tds.hybi[:-1]
+    # dakem = tds.hyai[1:] - tds.hyai[:-1]
+    # dbkem = tds.hybi[1:] - tds.hybi[:-1]
     akbkhm = get_akbkem(vc)
 
     thm = interpolate_vertical(
@@ -480,7 +479,7 @@ def remap_remo(
         arfeh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "RF", kpbl
     )
 
-    ## second pressure correction and vertical interpolation of wind
+    # second pressure correction and vertical interpolation of wind
     pshm = pressure_correction_ge(ps1hm, thm, arfhm, ficeh, fibhm, akbkhm.ak, akbkhm.bk)
     pshm.name = "PS"
     # return ps1hm, pshm, thm, arfhm, ficeh, fibeh

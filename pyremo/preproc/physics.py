@@ -187,10 +187,10 @@ def addem_remo(tds):
     return xr.merge([wsem, dtpbem]).squeeze(drop=True)
 
 
-def bodfld_remo(ads, surflib):
-    #  RELATIVES WS IN ABSOLUTES WS ZURUECKRECHNEN
-    wshm = ads.WS * surflib.WSMX
-    tslhm = ads.T.isel({const.lev_input: -1}) - dtpbeh(ij) * dphm(ij) / dpeh(ij)
+# def bodfld_remo(ads, surflib):
+#    #  RELATIVES WS IN ABSOLUTES WS ZURUECKRECHNEN
+#    wshm = ads.WS * surflib.WSMX
+#    tslhm = ads.T.isel({const.lev_input: -1}) - dtpbeh(ij) * dphm(ij) / dpeh(ij)
 
 
 def from_surflib(surflib):

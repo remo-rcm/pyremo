@@ -5,14 +5,13 @@
 """File Conventions
 
 Classes and methods in :mod:`FileConventions` define a number of
-file naming conventions that can be used by the DataHandler to 
+file naming conventions that can be used by the DataHandler to
 store and retrieve REMO data from the archive or the filesystem.
 
 """
 
 
 import os
-
 
 FILE_FREQS = ["1h", "6h", "day", "mon"]
 ARCH_FREQS = ["mon", "year"]

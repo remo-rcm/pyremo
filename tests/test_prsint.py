@@ -1,6 +1,7 @@
 import numpy as np
-import pyremo as pr
 import pytest
+
+import pyremo as pr
 
 from . import requires_pydruint
 

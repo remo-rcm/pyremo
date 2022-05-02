@@ -7,9 +7,11 @@ dependencies:
   - matplotlib-base
   - numpy
   - pooch
-  - regionmask 
+  - regionmask
   - setuptools
   - xarray
+  - dask
+  - cf_xarray
   - netCDF4
 # for testing
   - pytest

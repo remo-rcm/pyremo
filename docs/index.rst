@@ -1,11 +1,9 @@
-Welcome to pyremo's documentation!
-======================================
+.. include:: ../README.rst
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   readme
    installation
    usage
    domain
@@ -13,6 +11,7 @@ Welcome to pyremo's documentation!
    remo-dataset
    production-analysis
    preprocessing-cf
+   cmorization
    ar
    contributing
    authors

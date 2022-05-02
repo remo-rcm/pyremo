@@ -30,15 +30,15 @@ cordex domain module.
 
 """
 
-import pandas as pd
-
 from itertools import chain, product
+
 import cordex as cx
+import pandas as pd
 
 from ..tables import domains
 
 
-def remo_domain(short_name, dummy=False):
+def remo_domain(short_name, **kwargs):
     """Creates an xarray dataset containg the domain grid definitions.
 
     Parameters
@@ -56,7 +56,7 @@ def remo_domain(short_name, dummy=False):
         Dataset containing the coordinates.
 
     """
-    return cx.cordex_domain(short_name, dummy, tables=domains.table)
+    return cx.cordex_domain(short_name, tables=domains.table, **kwargs)
 
 
 def domain_info(short_name):
@@ -94,7 +94,7 @@ def table(name):
 
 def magic_number(n=1, m=0, o=0):
     """returns a magic number for REMO grid boxes."""
-    return 2 ** n * 3 ** m * 5 ** o + 1
+    return 2**n * 3**m * 5**o + 1
 
 
 def magic_numbers(size=100):

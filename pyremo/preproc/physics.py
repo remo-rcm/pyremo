@@ -1,8 +1,9 @@
 # from pyremo.physics import specific_humidity, liquid_water_content
 
-import pyremo.physics as prp
-import xarray as xr
 import numpy as np
+import xarray as xr
+
+import pyremo.physics as prp
 
 from . import constants as const
 
@@ -48,7 +49,7 @@ EMRdrd = 1.0 - RDRd
 
 
 # def soil_layers(state):
-##    if 'TD' not in state:
+# if 'TD' not in state:
 #    tswem = state['TSW']
 #    tslem = state['TSL']
 #    td3ge = state.get('TD3', None)

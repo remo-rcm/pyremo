@@ -6,14 +6,14 @@ Classes and methods in :mod:`DataHandler` should help retrieving and
 archiving raw REMO data.
 """
 
-import os
 import logging
+import os
 import tarfile
 
-from .ftp import check_ftp_path, check_ftp_path_list, download_file
-from .file_conventions import REMO_2015_DISK_ARCHIVE, REMO_2015_TAPE_ARCHIVE
 from hpc_scheduler import Scheduler
 
+from .file_conventions import REMO_2015_DISK_ARCHIVE, REMO_2015_TAPE_ARCHIVE
+from .ftp import check_ftp_path_list, download_file
 
 # template for executing a PyREMO command in a batch script
 JOB_TEMPLATE = """

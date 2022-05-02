@@ -4,15 +4,16 @@ This module wraps the pyintorg interfaces into xr.apply_ufunc.
 
 """
 
-import xarray as xr
-import numpy as np
 import warnings
+
+import numpy as np
+import xarray as xr
 
 xr.set_options(keep_attrs=True)
 
 try:
     from pyintorg import interface as intf
-except:
+except Exception:
     warnings.warn(
         "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://gitlab.dkrz.de/remo/pyintorg.git"
     )
@@ -112,7 +113,8 @@ def intersect(lamgm, phigm, lamem, phiem):
             rcm_dims,
             rcm_dims,
         ],  # list with one entry per arg
-        output_core_dims=[out_dims, out_dims],  # returned data has 3 dimensions
+        # returned data has 3 dimensions
+        output_core_dims=[out_dims, out_dims],
         dask="parallelized",
         output_dtypes=[lamgm.dtype],
     )
@@ -555,6 +557,7 @@ def get_vc(ds):
 
 def map_sst(tos, ref_ds, resample="6H", regrid=True):
     from datetime import timedelta as td
+
     import xesmf as xe
 
     # tos_res = tos
@@ -580,7 +583,7 @@ def convert_units(ds):
             ds["sftlf"] = ds.sftlf * 0.01
             attrs["units"] = 1
             ds.sftlf.attrs = attrs
-    except:
+    except Exception:
         warnings.warn("sftlf has no units attribute, must be fractional.")
     try:
         if ds.tos.units == "degC":
@@ -589,7 +592,7 @@ def convert_units(ds):
             ds["tos"] = ds.tos + const.absolute_zero
             attrs["units"] = "K"
             ds.tos.attrs = attrs
-    except:
+    except Exception:
         warnings.warn("tos has no units attribute, must be Kelvin!")
     try:
         if ds.orog.units == "m":
@@ -598,7 +601,7 @@ def convert_units(ds):
             ds["orog"] = ds.orog * const.grav_const
             attrs["units"] = "m2 s-2"
             ds.orog.attrs = attrs
-    except:
+    except Exception:
         warnings.warn("orog has no units attribute, must be m2 s-2")
     return ds
 
@@ -608,7 +611,7 @@ def gfile(datasets, ref_ds=None, tos=None, time_range=None):
     if ref_ds is None:
         try:
             ref_ds = open_mfdataset(datasets["ta"])
-        except:
+        except Exception:
             raise Exception("ta is required in the datasets dict if no ref_ds is given")
     lon, lat = horizontal_dims(ref_ds)
     if time_range is None:
@@ -618,12 +621,12 @@ def gfile(datasets, ref_ds=None, tos=None, time_range=None):
         try:
             da = open_mfdataset(f, chunks={"time": 1})[var]
             da = da.sel(time=time_range)
-        except:
+        except Exception:
             da = open_mfdataset(f, chunks={})[var]
         try:
             if da.lev.positive == "down":
                 da = da.reindex(lev=da.lev[::-1])
-        except:
+        except Exception:
             pass
         # print(var)
         # print(da)
@@ -663,7 +666,8 @@ def rotate_uv(uge, vge, uvge, vuge, lamem, phiem, pollam, polphi):
         polphi,
         input_core_dims=input_core_dims,  # list with one entry per arg
         #  output_core_dims=[threeD_dims],  # returned data has 3 dimensions
-        output_core_dims=2 * [twoD_dims + [lev_gm]],  # returned data has 3 dimensions
+        # returned data has 3 dimensions
+        output_core_dims=2 * [twoD_dims + [lev_gm]],
         vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",
@@ -798,8 +802,6 @@ def pressure_correction_ge(ps1em, tem, arfem, ficge, fibem, akem, bkem):
 
 
 def correct_uv(uem, vem, psem, akem, bkem, lamem, phiem, ll_lam, dlam, dphi):
-    ulamem, uphiem = lamem.isel(pos=1), phiem.isel(pos=1)
-    vlamem, vphiem = lamem.isel(pos=2), phiem.isel(pos=2)
     twoD_dims = list(horizontal_dims(uem))
     input_core_dims = (
         2 * [twoD_dims + [lev]]
@@ -820,7 +822,8 @@ def correct_uv(uem, vem, psem, akem, bkem, lamem, phiem, ll_lam, dlam, dphi):
         dphi,
         input_core_dims=input_core_dims,  # list with one entry per arg
         #  output_core_dims=[threeD_dims],  # returned data has 3 dimensions
-        output_core_dims=2 * [twoD_dims + [lev]],  # returned data has 3 dimensions
+        # returned data has 3 dimensions
+        output_core_dims=2 * [twoD_dims + [lev]],
         vectorize=True,  # loop over non-core dims, in this case: time
         # exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
         dask="parallelized",

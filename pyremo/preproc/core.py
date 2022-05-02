@@ -716,7 +716,7 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         ds = check_lev(ds)
     if tos is not None:
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
-    # ds["akgm"], ds["bkgm"] = get_vc(ds)
+    ds["akgm"], ds["bkgm"] = get_vc(ds)
     ds = ds.rename({"lev": lev_gm})
     ds = convert_units(ds)
     if "sftlf" in ds:

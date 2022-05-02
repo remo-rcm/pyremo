@@ -144,7 +144,7 @@ def load_dataset(*args, **kwargs):
         return ds.load()
 
 
-def mpi_esm():
+def mpi_esm(**kwargs):
     files = [
         "ta_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
         "ua_6hrLev_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_197901010600",
@@ -156,11 +156,11 @@ def mpi_esm():
     ]
 
     return xr.merge(
-        [open_dataset(f) for f in files], compat="override", join="override"
+        [open_dataset(f, **kwargs) for f in files], compat="override", join="override"
     )
 
 
-def mpi_esm_tos():
+def mpi_esm_tos(**kwargs):
     return open_dataset(
-        "tos_Oday_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_19781231-19790102"
+        "tos_Oday_MPI-ESM1-2-HR_historical_r1i1p1f1_gn_19781231-19790102", **kwargs
     )

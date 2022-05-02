@@ -6,6 +6,7 @@ This module wraps the pyintorg interfaces into xr.apply_ufunc.
 
 import warnings
 
+import cf_xarray as cfxr
 import numpy as np
 import xarray as xr
 
@@ -616,6 +617,36 @@ def get_vc(ds):
     return xr.DataArray(ak, dims="lev_2"), xr.DataArray(bk, dims="lev_2")
 
 
+def get_ab_bnds(ds):
+    ak_valid = ["ap_bnds", "a_bnds"]
+    bk_valid = ["b_bnds"]
+    ak_bnds = None
+    bk_bnds = None
+    for ak_name in ak_valid:
+        if ak_name in ds:
+            ak_bnds = ds[ak_name]
+            print("using {} for akgm".format(ak_name))
+    for bk_name in bk_valid:
+        if bk_name in ds:
+            bk_bnds = ds[bk_name]
+            print("using {} for bkgm".format(bk_name))
+    return ak_bnds, bk_bnds
+
+
+def get_vc2(ds):
+    """Reads the vertical hybrid coordinate from a dataset."""
+    ak_bnds, bk_bnds = get_ab_bnds(ds)
+    ak = cfxr.bounds_to_vertices(ak_bnds, bounds_dim="bnds")
+    bk = cfxr.bounds_to_vertices(bk_bnds, bounds_dim="bnds")
+    if ak_bnds.cf["vertical"].positive == "down":
+        ak = np.flip(ak)
+    if bk_bnds.cf["vertical"].positive == "down":
+        bk = np.flip(bk)
+    ak.name = "akgm"
+    bk.name = "bkgm"
+    return ak, bk
+
+
 def map_sst(tos, ref_ds, resample="6H", regrid=True):
     from datetime import timedelta as td
 
@@ -671,10 +702,16 @@ def convert_units(ds):
 
 
 def check_lev(ds):
+    # print("inverting vertical coordinate: {},{}".format(ds.data_vars, ds.cf['vertical'].name))
     try:
-        if ds.lev.positive == "down":
-            print("inverting vertical coordinate")
-            ds = ds.reindex(lev=ds.lev[::-1])
+        if ds.cf["vertical"].positive == "down":
+            print(
+                "inverting vertical coordinate: {},{}".format(
+                    ds.name, ds.cf["vertical"].name
+                )
+            )
+            kwargs = {ds.cf["vertical"].name: ds.cf["vertical"][::-1]}
+            ds = ds.reindex(**kwargs)
     except Exception:
         warnings.warn("could not determine positive attribute of vertical axis.")
     return ds
@@ -688,9 +725,10 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
         except Exception:
             raise Exception("ta is required in the datasets dict if no ref_ds is given")
     lon, lat = horizontal_dims(ref_ds)
+    ak_bnds, bk_bnds = get_ab_bnds(ref_ds)
     if time_range is None:
         time_range = ref_ds.time
-    dsets = []
+    dsets = [check_lev(ak_bnds), check_lev(bk_bnds)]
     for var, f in datasets.items():
         try:
             da = open_mfdataset(f, chunks={"time": 1})[var]
@@ -701,6 +739,7 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
         # da[lon] = ref_ds[lon]
         # da[lat] = ref_ds[lat]
         dsets.append(da)
+    dsets += list(get_vc2(ref_ds))
     return xr.merge(dsets, compat="override", join="override")
 
 
@@ -712,11 +751,11 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
     else:
         if time_range is None:
             time_range = ds.time
-        ds = ds.sel(time=time_range)
-        ds = check_lev(ds)
+            ds = ds.sel(time=time_range)
+            ds["akgm"], ds["bkgm"] = get_vc2(ds)
+            ds = check_lev(ds)
     if tos is not None:
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
-    # ds["akgm"], ds["bkgm"] = get_vc(ds)
     ds = ds.rename({"lev": lev_gm})
     ds = convert_units(ds)
     if "sftlf" in ds:

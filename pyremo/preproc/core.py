@@ -18,7 +18,7 @@ except Exception:
         "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://gitlab.dkrz.de/remo/pyintorg.git"
     )
 
-from .constants import lev_i, lev, lev_gm
+from .constants import lev, lev_gm, lev_i
 
 
 class const:
@@ -64,7 +64,7 @@ def open_mfdataset(
         data_vars=data_vars,
         coords="minimal",
         compat="override",
-        **kwargs
+        **kwargs,
     )
     return xr.decode_cf(ds, use_cftime=use_cftime)
 
@@ -121,58 +121,65 @@ def intersect(lamgm, phigm, lamem, phiem):
     return result
 
 
-def compute_relative_pol(polphihm,pollamhm,polphiem,pollamem):
+def compute_relative_pol(polphihm, pollamhm, polphiem, pollamem):
     """python implementation of pol calculation in readni"""
-    import numpy as np
     import intorg
-    if polphihm==polphiem and pollamhm==pollamem:
+    import numpy as np
+
+    if polphihm == polphiem and pollamhm == pollamem:
         pollam = 0.0
         polphi = 90.0
         polgam = 180.0
     else:
-    #SK      POLGAM = - ZRPI18*ASIN(SIN(POLLAM*ZPIR18)  *
-    #SK     1                     COS(POLPHIEM*ZPIR18)/COS(POLPHIHM*ZPIR18))
-    #SK     2         - 180.0
+        # SK      POLGAM = - ZRPI18*ASIN(SIN(POLLAM*ZPIR18)  *
+        # SK     1                     COS(POLPHIEM*ZPIR18)/COS(POLPHIHM*ZPIR18))
+        # SK     2         - 180.0
         zrpi18 = 57.2957795
         zpir18 = 0.0174532925
-        polgam = -zrpi18*np.arcsin(np.cos(zpir18*polphiem)*np.sin(zpir18*(pollamhm-pollamem))                         
-                                / np.cos(zpir18*intorg.phtophs(polphiem,pollamem,polphihm,pollamhm)))
-        polphi = intorg.phtophs(polphihm,pollamhm,polphiem,pollamem)
-        pollam = intorg.lmtolms(polphihm,pollamhm,polphiem,pollamem)
-    return {'pollam': pollam, 'polphi': polphi, 'polgam': polgam}
+        polgam = -zrpi18 * np.arcsin(
+            np.cos(zpir18 * polphiem)
+            * np.sin(zpir18 * (pollamhm - pollamem))
+            / np.cos(zpir18 * intorg.phtophs(polphiem, pollamem, polphihm, pollamhm))
+        )
+        polphi = intorg.phtophs(polphihm, pollamhm, polphiem, pollamem)
+        pollam = intorg.lmtolms(polphihm, pollamhm, polphiem, pollamem)
+    return {"pollam": pollam, "polphi": polphi, "polgam": polgam}
 
 
 def intersect_regional(em, hm):
-    
     def get_arguments(em, hm):
         args = {}
-        args['lamluem'] = em['ll_lon']
-        args['philuem'] = em['ll_lat']
-        args['lamluhm'] = hm['ll_lon']
-        args['philuhm'] = hm['ll_lat']
-        args['dlamem'] = em['dlon']
-        args['dlamhm'] = hm['dlon']
-        args['dphiem'] = em['dlat']
-        args['dphihm'] = hm['dlat']
-        args['pollamem'] = em['pollon']
-        args['polphiem'] = em['pollat']
-        args['pollamhm'] = hm['pollon']
-        args['polphihm'] = hm['pollat']
-        args['ieem'] = em['nlon']
-        args['jeem'] = em['nlat']
-        args['ie2hm'] = hm['nlon'] + 2
-        args['je2hm'] = hm['nlat'] + 2
+        args["lamluem"] = em["ll_lon"]
+        args["philuem"] = em["ll_lat"]
+        args["lamluhm"] = hm["ll_lon"]
+        args["philuhm"] = hm["ll_lat"]
+        args["dlamem"] = em["dlon"]
+        args["dlamhm"] = hm["dlon"]
+        args["dphiem"] = em["dlat"]
+        args["dphihm"] = hm["dlat"]
+        args["pollamem"] = em["pollon"]
+        args["polphiem"] = em["pollat"]
+        args["pollamhm"] = hm["pollon"]
+        args["polphihm"] = hm["pollat"]
+        args["ieem"] = em["nlon"]
+        args["jeem"] = em["nlat"]
+        args["ie2hm"] = hm["nlon"] + 2
+        args["je2hm"] = hm["nlat"] + 2
         return args
+
     args = get_arguments(em, hm)
-    args.update(compute_relative_pol(args['polphihm'],args['pollamhm'],
-                                     args['polphiem'],args['pollamem']))
-    indemi,indemj,dxemhm,dyemhm = intf.intersection_points_regional(**args)
-    dims=('rlon', 'rlat', 'pos')
-    indemi = xr.DataArray(indemi, dims=dims, name='indemi')
-    indemj = xr.DataArray(indemj, dims=dims, name='indemj')
-    dxemhm = xr.DataArray(dxemhm, dims=dims, name='dxemhm')
-    dyemhm = xr.DataArray(dyemhm, dims=dims, name='dyemhm')
-    return indemi,indemj,dxemhm,dyemhm
+    args.update(
+        compute_relative_pol(
+            args["polphihm"], args["pollamhm"], args["polphiem"], args["pollamem"]
+        )
+    )
+    indemi, indemj, dxemhm, dyemhm = intf.intersection_points_regional(**args)
+    dims = ("rlon", "rlat", "pos")
+    indemi = xr.DataArray(indemi, dims=dims, name="indemi")
+    indemj = xr.DataArray(indemj, dims=dims, name="indemj")
+    dxemhm = xr.DataArray(dxemhm, dims=dims, name="dxemhm")
+    dyemhm = xr.DataArray(dyemhm, dims=dims, name="dyemhm")
+    return indemi, indemj, dxemhm, dyemhm
 
 
 def interpolate_horizontal(
@@ -238,7 +245,8 @@ def interpolate_horizontal_remo(
             blagm,
             blaem,
         )
-    
+
+
 # def interp_horiz_2d(field, lamgm, phigm, lamem, phiem, indii, indjj, name):
 #     """interpolates 2d global data horizontally.
 
@@ -302,8 +310,8 @@ def interp_horiz_remo(da, indemi, indemj, dxemhm, dyemhm, name, keep_attrs=False
     """main interface"""
     em_dims = list(horizontal_dims(da))
     hm_dims = list(horizontal_dims(indemj))
-    input_core_dims = [em_dims] + 4*[hm_dims] + [[]]
-    #return
+    input_core_dims = [em_dims] + 4 * [hm_dims] + [[]]
+    # return
     result = xr.apply_ufunc(
         intf.interp_horiz_remo_2d,  # first the function
         da,  # now arguments in the order expected
@@ -377,17 +385,41 @@ def interp_horiz_cm(
     return result
 
 
-def interp_horiz_remo_cm(da, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
-                         phiem, lamem, phihm, lamhm, name, lice=None, siceem=None, sicehm=None, keep_attrs=False):
+def interp_horiz_remo_cm(
+    da,
+    indemi,
+    indemj,
+    dxemhm,
+    dyemhm,
+    blaem,
+    blahm,
+    phiem,
+    lamem,
+    phihm,
+    lamhm,
+    name,
+    lice=None,
+    siceem=None,
+    sicehm=None,
+    keep_attrs=False,
+):
     """main interface"""
     em_dims = list(horizontal_dims(da))
     hm_dims = list(horizontal_dims(indemj))
-    input_core_dims = [em_dims] + 4*[hm_dims] + [em_dims]+ [hm_dims] + 2*[em_dims] + 2*[hm_dims] + [[]]
+    input_core_dims = (
+        [em_dims]
+        + 4 * [hm_dims]
+        + [em_dims]
+        + [hm_dims]
+        + 2 * [em_dims]
+        + 2 * [hm_dims]
+        + [[]]
+    )
     ice_args = ()
     if lice is False:
         input_core_dims += [[]] + [em_dims] + [hm_dims]
         ice_args = (lice, siceem, sicehm)
-    #return
+    # return
     result = xr.apply_ufunc(
         intf.interp_horiz_remo_2d_cm,  # first the function
         da,  # now arguments in the order expected
@@ -397,10 +429,10 @@ def interp_horiz_remo_cm(da, indemi, indemj, dxemhm, dyemhm, blaem, blahm,
         dyemhm.isel(pos=0),
         blaem,
         blahm,
-        phiem* 1.0 / 57.296,
-        lamem* 1.0 / 57.296,
-        phihm.isel(pos=0)* 1.0 / 57.296,
-        lamhm.isel(pos=0)* 1.0 / 57.296,
+        phiem * 1.0 / 57.296,
+        lamem * 1.0 / 57.296,
+        phihm.isel(pos=0) * 1.0 / 57.296,
+        lamhm.isel(pos=0) * 1.0 / 57.296,
         name,
         *ice_args,
         input_core_dims=input_core_dims,  # list with one entry per arg
@@ -740,7 +772,9 @@ def interpolate_vertical(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, 
     return result
 
 
-def interpolate_vertical_remo(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, kpbl):
+def interpolate_vertical_remo(
+    xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, kpbl
+):
     twoD_dims = list(horizontal_dims(psge))
     threeD_dims = list(horizontal_dims(psge)) + [lev_gm]
     input_core_dims = (

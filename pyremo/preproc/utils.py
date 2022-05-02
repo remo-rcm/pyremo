@@ -1,6 +1,6 @@
+import cordex as cx
 
 import pyremo as pr
-import cordex as cx
 
 # variables that should have a mask with fill values
 fillvars = ["TSW", "SEAICE", "TSI"]
@@ -8,7 +8,6 @@ fillvars = ["TSW", "SEAICE", "TSI"]
 
 def get_grid(domain_info):
     return cx.create_dataset(**domain_info)
-
 
 
 def encoding(da, missval):
@@ -33,7 +32,6 @@ def update_attrs(ds):
         except:
             pass
     return ds
-
 
 
 def to_netcdf(

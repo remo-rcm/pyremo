@@ -178,28 +178,28 @@ def fgqd(ge, p):
     return RDRd * ge / (p - EMRdrd * ge)
 
 
-
 def addem_remo(tds):
     # ws auf relative bodenfeucht umrechnen
-    wsem = tds.WS.where(tds.WS < 1.e9, 0.0) / tds.WSMX
-    wsem.name = 'WS'
-    dtpbem = tds.T.isel({const.lev_input:-1}) - tds.TSL
-    dtpbem.name = 'DTPB'
-    return xr.merge([wsem,dtpbem]).squeeze(drop=True)
-    
-    
+    wsem = tds.WS.where(tds.WS < 1.0e9, 0.0) / tds.WSMX
+    wsem.name = "WS"
+    dtpbem = tds.T.isel({const.lev_input: -1}) - tds.TSL
+    dtpbem.name = "DTPB"
+    return xr.merge([wsem, dtpbem]).squeeze(drop=True)
+
 
 def bodfld_remo(ads, surflib):
     #  RELATIVES WS IN ABSOLUTES WS ZURUECKRECHNEN
     wshm = ads.WS * surflib.WSMX
-    tslhm = ads.T.isel({const.lev_input:-1}) - dtpbeh(ij)*dphm(ij)/dpeh(ij)
+    tslhm = ads.T.isel({const.lev_input: -1}) - dtpbeh(ij) * dphm(ij) / dpeh(ij)
 
-    
+
 def from_surflib(surflib):
     pass
 
+
 def derive_soil_temperatures(tds, ads):
     pass
+
 
 #  dpeh(ij) = pseh(ij) - GETP(akem(KEEM),bkem(KEEM),pseh(ij),akem(1))
 #  dphm(ij) = pshm(ij) - GETP(akhm(KEHM),bkhm(KEHM),pshm(ij),akhm(1))
@@ -220,4 +220,3 @@ def derive_soil_temperatures(tds, ads):
 #   tdhm(ij) = tdeh(ij) + zdts(ij)
 #   tdclhm(ij) = tdcleh(ij) + zdts(ij)
 # ENDDO
-

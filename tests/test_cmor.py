@@ -10,10 +10,8 @@ import pyremo as pr
 from pyremo import cmor as prcmor
 
 
-
 def test_cftime():
     assert prcmor.to_cftime(dt.datetime(2000, 1, 1, 1)) == cfdt.datetime(2000, 1, 1, 1)
-
 
 
 def test_cmorizer_fx():

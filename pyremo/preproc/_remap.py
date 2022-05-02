@@ -7,30 +7,25 @@ import xarray as xr
 import pyremo as pr
 
 from . import physics
+from .constants import lev_gm, lev_input
 from .core import (
     const,
     correct_uv,
     geo_coords,
     geopotential,
     get_akbkem,
+    interp_horiz_remo_cm,
     interpolate_horizontal,
     interpolate_horizontal_remo,
-    interp_horiz_remo_cm,
-    relative_humidity,
     interpolate_vertical,
     interpolate_vertical_remo,
-    rotate_uv,
+    intersect_regional,
     pbl_index,
     pressure_correction_em,
     pressure_correction_ge,
-    correct_uv,
-    intersect_regional,
+    relative_humidity,
+    rotate_uv,
 )
-
-from .constants import lev_gm, lev_input
-
-from . import physics
-
 
 xr.set_options(keep_attrs=True)
 
@@ -143,7 +138,6 @@ def remap(gds, domain_info, vc, surflib):
 
     """
 
-
     #   'U'     , UR       , code=131, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_RIGHT)
     #   CALL add(BOUNDARY_TABLE, 'V'     , VR       , code=132, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_TOP)
     #   CALL add(BOUNDARY_TABLE, 'T'     , TR       , code=130, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
@@ -163,10 +157,8 @@ def remap(gds, domain_info, vc, surflib):
 
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
-
     ## broadcast 1d global coordinates
     lamgm, phigm = broadcast_coords(gds)
-
 
     # horizontal interpolation
     tge = interpolate_horizontal(gds.ta, lamem, phiem, lamgm, phigm, "T")
@@ -240,7 +232,6 @@ def remap(gds, domain_info, vc, surflib):
         vge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "V", kpbl
     )
 
-
     ## correct wind with potential divergence
     philuem = domain_info["ll_lon"]
     dlamem = domain_info["dlon"]
@@ -249,7 +240,6 @@ def remap(gds, domain_info, vc, surflib):
     uem_corr, vem_corr = correct_uv(
         uem, vem, psem, akbkem.ak, akbkem.bk, lamem, phiem, philuem, dlamem, dphiem
     )
-
 
     tsw = remap_sst(
         gds.tos,
@@ -305,8 +295,8 @@ def remap(gds, domain_info, vc, surflib):
 
 
 def remap_remo(
-    tds, domain_info_em, domain_info_hm, vc, surflib, initial=False, 
-    lice=None):
+    tds, domain_info_em, domain_info_hm, vc, surflib, initial=False, lice=None
+):
     """remapping workflow for double nesting
 
     This function should be similar to the ones in the
@@ -344,7 +334,7 @@ def remap_remo(
     # rename coords so they dont conflict with hm coords
     tds = tds.copy().rename({"rlon": "rlon_em", "rlat": "rlat_em", "lev": lev_input})
     grid = get_grid(domain_info_hm)
-    
+
     ## curvilinear coordinaetes
     # remove time dimension if there is one
     fibhm = surflib.FIB.squeeze(drop=True) * const.grav_const
@@ -376,7 +366,7 @@ def remap_remo(
     vueh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 3)
     qdeh = interpolate_horizontal_remo(tds.QD, indemi, indemj, dxemhm, dyemhm, "QD")
     fibeh = interpolate_horizontal_remo(tds.FIB, indemi, indemj, dxemhm, dyemhm, "FIB")
-    
+
     if has_seaice:
         siceem = tds.SEAICE
         sicehm = interp_horiz_remo_cm(
@@ -396,8 +386,7 @@ def remap_remo(
     else:
         sicehm = None
         siceem = None
-        
-    
+
     tsweh = interp_horiz_remo_cm(
         tds.TSW,
         indemi,
@@ -413,9 +402,9 @@ def remap_remo(
         "TSW",
         lice,
         siceem,
-        sicehm
+        sicehm,
     )
-    
+
     tsieh = interp_horiz_remo_cm(
         tds.TSI,
         indemi,
@@ -431,15 +420,27 @@ def remap_remo(
         "TSI",
         lice,
         siceem,
-        sicehm
+        sicehm,
     )
-    
+
     if initial is True:
         tds = addem_remo(tds)
-        soil = remap_soil(tds, indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm)
+        soil = remap_soil(
+            tds,
+            indemi,
+            indemj,
+            dxemhm,
+            dyemhm,
+            blaem,
+            blahm,
+            phiem,
+            lamem,
+            phihm,
+            lamhm,
+        )
     else:
         soil = xr.Dataset()
-    
+
     # return pseh
     # return ueh
     ficem = geopotential(
@@ -538,13 +539,13 @@ def remap_remo(
     philuhm = domain_info_hm["ll_lon"]
     dlamhm = domain_info_hm["dlon"]
     dphihm = domain_info_hm["dlat"]
-    
-    print('correct uv')
+
+    print("correct uv")
     uhm_corr, vhm_corr = correct_uv(
         uhm, vhm, pshm, akbkhm.ak, akbkhm.bk, lamhm, phihm, philuhm, dlamhm, dphihm
     )
-    print('correct uv done')
-    
+    print("correct uv done")
+
     water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
     # tsi = physics.tsi(tsw)
 
@@ -569,7 +570,7 @@ def remap_remo(
             akbkhm,
         ]
     )
-    
+
     ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
     ads["rlon"] = grid.rlon
     ads["rlat"] = grid.rlat
@@ -582,7 +583,7 @@ def remap_remo(
     if initial is True:
         ads = add_surflib(ads, surflib)
         ads = update_soil_temperatures(ads)
-    
+
     # set global attributes
     ads.attrs = tds.attrs
 
@@ -596,31 +597,33 @@ def remap_remo(
     # return uhm_corr
     # return xr.merge([thm, pshm, uhm_corr, vhm_corr, qdhm, fibeh, ficeh, arfeh, ps1hm])
 
-    
-def remap_soil(tds, indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm):
+
+def remap_soil(
+    tds, indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm
+):
     args = (indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm)
-    
+
     remap_vars = ["DTPB", "TSL", "TSN", "TD3", "TD4", "TD5", "TD", "TDCL", "WS"]
-    
-    #DTPB: TEMPERATUR - DIFFERENZ TP - TB HORIZONTAL INTERPOLIEREN
+
+    # DTPB: TEMPERATUR - DIFFERENZ TP - TB HORIZONTAL INTERPOLIEREN
     def remap_var(varname):
         return interp_horiz_remo_cm(
             tds[varname],
             *args,
             varname,
         )
-    
+
     return xr.merge([remap_var(var) for var in remap_vars])
-    
+
 
 def update_soil_temperatures(ds):
     """Update land and soil temperatures in the input dataset.
-    
+
     Parameters
     ----------
     ds : xarray.Dataset
         Dataset containing ``T``, ``PS``, ``PSEH``, ``DTPB`` and ``TSL``
-    
+
     """
     # BERECHNUNG DER SCHICHTDICKE DER PRANDTL-SCHICHT
     dpeh = ds.PSEH - pr.physics.pressure(ds.PSEH, ds.hyai[-2], ds.hybi[-2])
@@ -665,13 +668,13 @@ def addem_remo(tds):
     tds["WS"] = tds.WS.where(tds.WS < 1.0e9, 0.0) / tds.WSMX
     tds["DTPB"] = tds.T.isel({lev_input: -1}) - tds.TSL
     return tds
-    #return xr.merge([wsem, dtpbem]).squeeze(drop=True)
+    # return xr.merge([wsem, dtpbem]).squeeze(drop=True)
 
 
 def add_surflib(ads, surflib):
     surflib = surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])
-    surflib['rlon'] = ads.rlon
-    surflib['rlat'] = ads.rlat
+    surflib["rlon"] = ads.rlon
+    surflib["rlat"] = ads.rlat
     return xr.merge((ads, surflib.drop("rotated_pole")))
 
 

@@ -79,7 +79,7 @@ def relative_humidity(t, qd, p, qw=None, set_meta=True):
     output_core_dims = [t_dims]
     result = xr.apply_ufunc(
         core.compute_arfgm,  # first the function
-        #core.relative_humidity,  # first the function
+        # core.relative_humidity,  # first the function
         t,  # now arguments in the order expected
         qd,
         p,

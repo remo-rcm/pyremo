@@ -12,6 +12,7 @@ dependencies:
   - xarray
   - dask
   - cf_xarray
+  - xesmf
   - netCDF4
 # for testing
   - pytest

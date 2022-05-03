@@ -24,7 +24,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 
 - Added tests for `pyremo.preproc` module (:pull:`34`).
-- Updated documentation with improved contribution guide (:pull:`63`).
+- Updated documentation including an improved contribution guide (:pull:`63`, :pull:`65`).
 - Fixed issues with ``dask.delayed`` in ``preproc.era5`` running in batch mode (:pull:`58`).
 - Added ``.pre-commit-config.yaml`` and ``linting.yaml`` to run linter checks (:pull:`55`).
 - Code is reformatted to apply to ``flake8`` and ``black`` conventions (:pull:`55`).

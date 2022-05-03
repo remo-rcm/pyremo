@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 import pyremo as pr
-from pyremo.prsint import pressure_interpolation
 
 from . import requires_pydruint
 
@@ -14,6 +13,8 @@ def tfile():
 
 @requires_pydruint
 def test_prsint(tfile):
+    from pyremo.prsint import pressure_interpolation
+
     # define pressure levels in hPa
     plev = [100, 200, 500, 850, 950]
     t_plev = pressure_interpolation(

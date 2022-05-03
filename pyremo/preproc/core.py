@@ -6,6 +6,7 @@ This module wraps the pyintorg interfaces into xr.apply_ufunc.
 
 import warnings
 
+import cf_xarray as cfxr
 import numpy as np
 import xarray as xr
 
@@ -15,13 +16,10 @@ try:
     from pyintorg import interface as intf
 except Exception:
     warnings.warn(
-        "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://git.gerics.de/python/pyintorg.git"
+        "could not find pyintorg, you need this for preprocessing. Please consider installing it from https://gitlab.dkrz.de/remo/pyintorg.git"
     )
 
-
-lev_i = "lev_i"
-lev = "lev"
-lev_gm = "lev_gm"
+from .constants import lev, lev_gm, lev_i
 
 
 class const:
@@ -40,7 +38,7 @@ def open_mfdataset(
     use_cftime=True,
     parallel=True,
     data_vars="minimal",
-    chunks={"time": 1},
+    chunks={},
     coords="minimal",
     compat="override",
     drop=None,
@@ -67,7 +65,7 @@ def open_mfdataset(
         data_vars=data_vars,
         coords="minimal",
         compat="override",
-        **kwargs
+        **kwargs,
     )
     return xr.decode_cf(ds, use_cftime=use_cftime)
 
@@ -124,6 +122,67 @@ def intersect(lamgm, phigm, lamem, phiem):
     return result
 
 
+def compute_relative_pol(polphihm, pollamhm, polphiem, pollamem):
+    """python implementation of pol calculation in readni"""
+    import intorg
+    import numpy as np
+
+    if polphihm == polphiem and pollamhm == pollamem:
+        pollam = 0.0
+        polphi = 90.0
+        polgam = 180.0
+    else:
+        # SK      POLGAM = - ZRPI18*ASIN(SIN(POLLAM*ZPIR18)  *
+        # SK     1                     COS(POLPHIEM*ZPIR18)/COS(POLPHIHM*ZPIR18))
+        # SK     2         - 180.0
+        zrpi18 = 57.2957795
+        zpir18 = 0.0174532925
+        polgam = -zrpi18 * np.arcsin(
+            np.cos(zpir18 * polphiem)
+            * np.sin(zpir18 * (pollamhm - pollamem))
+            / np.cos(zpir18 * intorg.phtophs(polphiem, pollamem, polphihm, pollamhm))
+        )
+        polphi = intorg.phtophs(polphihm, pollamhm, polphiem, pollamem)
+        pollam = intorg.lmtolms(polphihm, pollamhm, polphiem, pollamem)
+    return {"pollam": pollam, "polphi": polphi, "polgam": polgam}
+
+
+def intersect_regional(em, hm):
+    def get_arguments(em, hm):
+        args = {}
+        args["lamluem"] = em["ll_lon"]
+        args["philuem"] = em["ll_lat"]
+        args["lamluhm"] = hm["ll_lon"]
+        args["philuhm"] = hm["ll_lat"]
+        args["dlamem"] = em["dlon"]
+        args["dlamhm"] = hm["dlon"]
+        args["dphiem"] = em["dlat"]
+        args["dphihm"] = hm["dlat"]
+        args["pollamem"] = em["pollon"]
+        args["polphiem"] = em["pollat"]
+        args["pollamhm"] = hm["pollon"]
+        args["polphihm"] = hm["pollat"]
+        args["ieem"] = em["nlon"]
+        args["jeem"] = em["nlat"]
+        args["ie2hm"] = hm["nlon"] + 2
+        args["je2hm"] = hm["nlat"] + 2
+        return args
+
+    args = get_arguments(em, hm)
+    args.update(
+        compute_relative_pol(
+            args["polphihm"], args["pollamhm"], args["polphiem"], args["pollamem"]
+        )
+    )
+    indemi, indemj, dxemhm, dyemhm = intf.intersection_points_regional(**args)
+    dims = ("rlon", "rlat", "pos")
+    indemi = xr.DataArray(indemi, dims=dims, name="indemi")
+    indemj = xr.DataArray(indemj, dims=dims, name="indemj")
+    dxemhm = xr.DataArray(dxemhm, dims=dims, name="dxemhm")
+    dyemhm = xr.DataArray(dyemhm, dims=dims, name="dyemhm")
+    return indemi, indemj, dxemhm, dyemhm
+
+
 def interpolate_horizontal(
     da, lamem, phiem, lamgm, phigm, name=None, igr=None, blagm=None, blaem=None
 ):
@@ -155,6 +214,35 @@ def interpolate_horizontal(
             name,
             blagm,
             blaem,
+        )
+
+
+def interpolate_horizontal_remo(
+    da, indemi, indemj, dxemhm, dyemhm, name=None, igr=None, blaem=None, blahm=None
+):
+    if name is None:
+        name = da.name
+    if igr is None:
+        igr = 0
+    if blaem is None or blahm is None:
+        return interp_horiz_remo(
+            da,
+            indemi.isel(pos=igr),
+            indemj.isel(pos=igr),
+            dxemhm.isel(pos=igr),
+            dyemhm.isel(pos=igr),
+            name,
+        )
+    else:
+        return interp_horiz_remo_cm(
+            da,
+            indemi.isel(pos=igr),
+            indemj.isel(pos=igr),
+            dxemhm.isel(pos=igr),
+            dyemhm.isel(pos=igr),
+            name,
+            blaem,
+            blahm,
         )
 
 
@@ -217,6 +305,37 @@ def interp_horiz(da, lamgm, phigm, lamem, phiem, indii, indjj, name, keep_attrs=
     return result
 
 
+def interp_horiz_remo(da, indemi, indemj, dxemhm, dyemhm, name, keep_attrs=False):
+    """main interface"""
+    em_dims = list(horizontal_dims(da))
+    hm_dims = list(horizontal_dims(indemj))
+    input_core_dims = [em_dims] + 4 * [hm_dims] + [[]]
+    # return
+    result = xr.apply_ufunc(
+        intf.interp_horiz_remo_2d,  # first the function
+        da,  # now arguments in the order expected
+        indemi,
+        indemj,
+        dxemhm,
+        dyemhm,
+        name,
+        input_core_dims=input_core_dims,  # list with one entry per arg
+        output_core_dims=[hm_dims],  # returned data has 3 dimensions
+        vectorize=True,  # loop over non-core dims, in this case: time, lev
+        #  exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
+        dask="parallelized",
+        dask_gufunc_kwargs={"allow_rechunk": True},
+        output_dtypes=[da.dtype],
+    )
+
+    result.name = name
+    # result = result.to_dataset()
+    if keep_attrs:
+        result.attrs = da.attrs
+    # result = result.transpose(..., *spatial_dims(da)[::-1])
+    return result
+
+
 def interp_horiz_cm(
     da, lamgm, phigm, lamem, phiem, indii, indjj, name, blagm, blaem, keep_attrs=False
 ):
@@ -265,6 +384,73 @@ def interp_horiz_cm(
     return result
 
 
+def interp_horiz_remo_cm(
+    da,
+    indemi,
+    indemj,
+    dxemhm,
+    dyemhm,
+    blaem,
+    blahm,
+    phiem,
+    lamem,
+    phihm,
+    lamhm,
+    name,
+    lice=None,
+    siceem=None,
+    sicehm=None,
+    keep_attrs=False,
+):
+    """main interface"""
+    em_dims = list(horizontal_dims(da))
+    hm_dims = list(horizontal_dims(indemj))
+    input_core_dims = (
+        [em_dims]
+        + 4 * [hm_dims]
+        + [em_dims]
+        + [hm_dims]
+        + 2 * [em_dims]
+        + 2 * [hm_dims]
+        + [[]]
+    )
+    ice_args = ()
+    if lice is False:
+        input_core_dims += [[]] + [em_dims] + [hm_dims]
+        ice_args = (lice, siceem, sicehm)
+    # return
+    result = xr.apply_ufunc(
+        intf.interp_horiz_remo_2d_cm,  # first the function
+        da,  # now arguments in the order expected
+        indemi.isel(pos=0),
+        indemj.isel(pos=0),
+        dxemhm.isel(pos=0),
+        dyemhm.isel(pos=0),
+        blaem,
+        blahm,
+        phiem * 1.0 / 57.296,
+        lamem * 1.0 / 57.296,
+        phihm.isel(pos=0) * 1.0 / 57.296,
+        lamhm.isel(pos=0) * 1.0 / 57.296,
+        name,
+        *ice_args,
+        input_core_dims=input_core_dims,  # list with one entry per arg
+        output_core_dims=[hm_dims],  # returned data has 3 dimensions
+        vectorize=True,  # loop over non-core dims, in this case: time, lev
+        #  exclude_dims=set(("lev",)),  # dimensions allowed to change size. Must be a set!
+        dask="parallelized",
+        dask_gufunc_kwargs={"allow_rechunk": True},
+        output_dtypes=[da.dtype],
+    )
+
+    result.name = name
+    # result = result.to_dataset()
+    if keep_attrs:
+        result.attrs = da.attrs
+    # result = result.transpose(..., *spatial_dims(da)[::-1])
+    return result
+
+
 def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
     """main interface"""
     # gcm_dims = list(spatial_dims(lamgm))
@@ -280,8 +466,8 @@ def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
         threeD_dims,
         threeD_dims,
         twoD_dims,
-        ["lev_2"],
-        ["lev_2"],
+        list(akgm.dims),
+        list(bkgm.dims),
         # [],
         # []
     ]
@@ -311,7 +497,7 @@ def relative_humidity(qdgm, tgm, psgm, akgm, bkgm, qwgm=None):
     if qwgm is None:
         qwgm = xr.zeros_like(qdgm)
     twoD_dims = list(horizontal_dims(qdgm))
-    threeD_dims = list(horizontal_dims(qdgm)) + ["lev_gm"]
+    threeD_dims = list(horizontal_dims(qdgm)) + [lev_gm]
     #  print(twoD_dims)
     # threeD_dims.append("lev")
     input_core_dims = [
@@ -369,6 +555,37 @@ def geo_coords(domain_info, rlon, rlat):
     return lamda, phida
 
 
+# def get_vc(ds):
+#    """Reads the vertical hybrid coordinate from a dataset."""
+#    ak_valid = ["ap_bnds", "a_bnds"]
+#    bk_valid = ["b_bnds"]
+#    ak_bnds = None
+#    bk_bnds = None
+#    for ak_name in ak_valid:
+#        if ak_name in ds:
+#            ak_bnds = ds[ak_name]
+#            print("using {} for akgm".format(ak_name))
+#    for bk_name in bk_valid:
+#        if bk_name in ds:
+#            bk_bnds = ds[bk_name]
+#            print("using {} for bkgm".format(bk_name))
+#    #    if not all([ak_bnds, bk_bnds]):
+#    #        print('could not identify vertical coordinate, tried: {}, {}'.format(ak_valid, bk_valid))
+#    #        raise Exception('incomplete input dataset')
+#    #        ak_bnds, bk_bnds  = (ak_bnds[:1], bk_bnds[:,1])
+#    nlev = ak_bnds.shape[0]
+#    ak = np.zeros([nlev + 1], dtype=np.float64)
+#    bk = np.ones([nlev + 1], dtype=np.float64)
+#    if ds.lev.positive == "down":
+#        ak[:-1] = np.flip(ak_bnds[:, 1])
+#        bk[:-1] = np.flip(bk_bnds[:, 1])
+#    else:
+#        ak[1:] = np.flip(ak_bnds[:, 1])
+#        bk[1:] = np.flip(bk_bnds[:, 1])
+#
+#    return xr.DataArray(ak, dims="lev_2"), xr.DataArray(bk, dims="lev_2")
+
+
 def get_vc(ds):
     """Reads the vertical hybrid coordinate from a dataset."""
     ak_valid = ["ap_bnds", "a_bnds"]
@@ -400,6 +617,36 @@ def get_vc(ds):
     return xr.DataArray(ak, dims="lev_2"), xr.DataArray(bk, dims="lev_2")
 
 
+def get_ab_bnds(ds):
+    ak_valid = ["ap_bnds", "a_bnds"]
+    bk_valid = ["b_bnds"]
+    ak_bnds = None
+    bk_bnds = None
+    for ak_name in ak_valid:
+        if ak_name in ds:
+            ak_bnds = ds[ak_name]
+            print("using {} for akgm".format(ak_name))
+    for bk_name in bk_valid:
+        if bk_name in ds:
+            bk_bnds = ds[bk_name]
+            print("using {} for bkgm".format(bk_name))
+    return ak_bnds, bk_bnds
+
+
+def get_vc2(ds):
+    """Reads the vertical hybrid coordinate from a dataset."""
+    ak_bnds, bk_bnds = get_ab_bnds(ds)
+    ak = cfxr.bounds_to_vertices(ak_bnds, bounds_dim="bnds")
+    bk = cfxr.bounds_to_vertices(bk_bnds, bounds_dim="bnds")
+    if ak_bnds.cf["vertical"].positive == "down":
+        ak = np.flip(ak)
+    if bk_bnds.cf["vertical"].positive == "down":
+        bk = np.flip(bk)
+    ak.name = "akgm"
+    bk.name = "bkgm"
+    return ak, bk
+
+
 def map_sst(tos, ref_ds, resample="6H", regrid=True):
     from datetime import timedelta as td
 
@@ -410,12 +657,15 @@ def map_sst(tos, ref_ds, resample="6H", regrid=True):
     tos_times = (ref_ds.time.min() - td(days=1), ref_ds.time.max() + td(days=1))
     tos = tos.sel(time=slice(tos_times[0], tos_times[1]))
     # return tos_res
-    tos = tos.resample(time=resample).interpolate("linear").chunk({"time": 1})
+    # tos = tos.resample(time=resample).interpolate("linear").chunk({"time": 1})
+    tos = tos.resample(time=resample).interpolate("linear")
     tos = tos.sel(time=ref_ds.time)
+
     if regrid:
         regridder = xe.Regridder(tos, ref_ds, "nearest_s2d")
         tos = regridder(tos)
     tos.attrs.update(attrs)
+
     return tos
 
 
@@ -451,7 +701,21 @@ def convert_units(ds):
     return ds
 
 
-def gfile(datasets, ref_ds=None, tos=None, time_range=None):
+def check_lev(ds):
+    if "vertical" in ds.cf:
+        positive = ds.cf["vertical"].attrs.get("positive", None)
+    else:
+        positive = None
+    if positive is None:
+        warnings.warn("could not determine positive attribute of vertical axis.")
+        return ds
+    elif positive == "down":
+        kwargs = {ds.cf["vertical"].name: ds.cf["vertical"][::-1]}
+        return ds.reindex(**kwargs)
+    return ds
+
+
+def open_datasets(datasets, ref_ds=None, time_range=None):
     """Creates a virtual gfile"""
     if ref_ds is None:
         try:
@@ -459,6 +723,7 @@ def gfile(datasets, ref_ds=None, tos=None, time_range=None):
         except Exception:
             raise Exception("ta is required in the datasets dict if no ref_ds is given")
     lon, lat = horizontal_dims(ref_ds)
+    # ak_bnds, bk_bnds = get_ab_bnds(ref_ds)
     if time_range is None:
         time_range = ref_ds.time
     dsets = []
@@ -468,26 +733,35 @@ def gfile(datasets, ref_ds=None, tos=None, time_range=None):
             da = da.sel(time=time_range)
         except Exception:
             da = open_mfdataset(f, chunks={})[var]
-        try:
-            if da.lev.positive == "down":
-                da = da.reindex(lev=da.lev[::-1])
-        except Exception:
-            pass
-        # print(var)
-        # print(da)
-        da[lon] = ref_ds[lon]
-        da[lat] = ref_ds[lat]
+        if "vertical" in da.cf:
+            da = check_lev(da)
         dsets.append(da)
+    dsets += list(get_vc2(ref_ds))
+    return xr.merge(dsets, compat="override", join="override")
 
-    ds = xr.merge(dsets)
+
+def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
+    """Creates a virtual gfile"""
+
+    if isinstance(ds, dict):
+        ds = open_datasets(ds, ref_ds, time_range)
+        if time_range is None:
+            time_range = ds.time
+    else:
+        ds = ds.copy()
+        if time_range is None:
+            time_range = ds.time
+        ds = ds.sel(time=time_range)
+        ds["akgm"], ds["bkgm"] = get_vc2(ds)
+        ds = check_lev(ds)
     if tos is not None:
-        ds["tos"] = map_sst(tos, ref_ds.sel(time=time_range))
-    ds["akgm"], ds["bkgm"] = get_vc(ref_ds)
+        ds["tos"] = map_sst(tos, ds.sel(time=time_range))
     ds = ds.rename({"lev": lev_gm})
     ds = convert_units(ds)
     if "sftlf" in ds:
         ds["sftlf"] = np.around(ds.sftlf)
-    ds.attrs = ref_ds.attrs
+    if attrs is None:
+        attrs = ds.attrs
     return ds
 
 
@@ -564,6 +838,41 @@ def interpolate_vertical(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, 
     # print(output_core_dims)
     result = xr.apply_ufunc(
         intf.interp_vert,  # first the function
+        xge,  # now arguments in the order expected
+        psge,
+        ps1em,
+        akhgm,
+        bkhgm,
+        akhem,
+        bkhem,
+        varname,
+        kpbl,
+        input_core_dims=input_core_dims,  # list with one entry per arg
+        output_core_dims=output_core_dims,  # returned data has 3 dimensions
+        # exclude_dims=set(("index",)),
+        vectorize=True,  # loop over non-core dims, in this case: time
+        dask="parallelized",
+        dask_gufunc_kwargs={"allow_rechunk": True},
+        output_dtypes=[xge.dtype],
+    )
+    result.name = varname
+    return result
+
+
+def interpolate_vertical_remo(
+    xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, kpbl
+):
+    twoD_dims = list(horizontal_dims(psge))
+    threeD_dims = list(horizontal_dims(psge)) + [lev_gm]
+    input_core_dims = (
+        [threeD_dims]
+        + 2 * [twoD_dims]
+        + [[akhgm.dims[0]], [bkhgm.dims[0]], [akhem.dims[0]], [bkhem.dims[0]], [], []]
+    )
+    output_core_dims = [twoD_dims + [akhem.dims[0]]]
+    # print(output_core_dims)
+    result = xr.apply_ufunc(
+        intf.interp_vert2,  # first the function
         xge,  # now arguments in the order expected
         psge,
         ps1em,

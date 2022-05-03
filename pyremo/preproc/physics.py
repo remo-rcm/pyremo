@@ -5,6 +5,8 @@ import xarray as xr
 
 import pyremo.physics as prp
 
+from . import constants as const
+
 zds3 = (3.25 - 0.0) / (3.5 - 0.0)
 zds4 = (19.2 - 17.5) / (64.0 - 17.5)
 zds5 = (77.55 - 64.0) / (194.5 - 64.0)
@@ -174,3 +176,47 @@ def fgee(tx):
 def fgqd(ge, p):
     """magnus formula"""
     return RDRd * ge / (p - EMRdrd * ge)
+
+
+def addem_remo(tds):
+    # ws auf relative bodenfeucht umrechnen
+    wsem = tds.WS.where(tds.WS < 1.0e9, 0.0) / tds.WSMX
+    wsem.name = "WS"
+    dtpbem = tds.T.isel({const.lev_input: -1}) - tds.TSL
+    dtpbem.name = "DTPB"
+    return xr.merge([wsem, dtpbem]).squeeze(drop=True)
+
+
+# def bodfld_remo(ads, surflib):
+#    #  RELATIVES WS IN ABSOLUTES WS ZURUECKRECHNEN
+#    wshm = ads.WS * surflib.WSMX
+#    tslhm = ads.T.isel({const.lev_input: -1}) - dtpbeh(ij) * dphm(ij) / dpeh(ij)
+
+
+def from_surflib(surflib):
+    pass
+
+
+def derive_soil_temperatures(tds, ads):
+    pass
+
+
+#  dpeh(ij) = pseh(ij) - GETP(akem(KEEM),bkem(KEEM),pseh(ij),akem(1))
+#  dphm(ij) = pshm(ij) - GETP(akhm(KEHM),bkhm(KEHM),pshm(ij),akhm(1))
+
+
+# DO ij = 1 , IJ2HM
+#   tswhm(ij) = tsweh(ij)
+#   tsihm(ij) = tsieh(ij)
+#   tslhm(ij) = thm(ij,KEHM) - dtpbeh(ij)*dphm(ij)/dpeh(ij)
+# ENDDO
+# !
+# DO ij = 1 , IJ2HM
+#   zdts(ij) = tslhm(ij) - tsleh(ij)
+#   tsnhm(ij) = tsneh(ij) + zdts(ij)
+#   td3hm(ij) = td3eh(ij) + zdts(ij)
+#   td4hm(ij) = td4eh(ij) + zdts(ij)
+#   td5hm(ij) = td5eh(ij) + zdts(ij)
+#   tdhm(ij) = tdeh(ij) + zdts(ij)
+#   tdclhm(ij) = tdcleh(ij) + zdts(ij)
+# ENDDO

@@ -22,7 +22,7 @@ def _vertical_dim(da):
     return lev_dim
 
 
-def pressure(ps, ak, bk):
+def pressure(ps, ak, bk, ptop=0.0):
     """computes pressure at model levels.
 
     Uses surface pressure and vertical hybrid coordinates.
@@ -37,6 +37,9 @@ def pressure(ps, ak, bk):
     bk : xarray.DataArrays
         Hybrid sigma B coefficient at full levels or
         level interfaces.
+    ptop : float
+        Pressure at the top of the atmosphere. Defaults to
+        zero.
 
     Returns
     -------
@@ -44,7 +47,7 @@ def pressure(ps, ak, bk):
         Returns atmopspheric pressure.
 
     """
-    return ak + bk * ps
+    return ak + bk * (ps - ptop)
 
 
 def relative_humidity(t, qd, p, qw=None, set_meta=True):
@@ -76,6 +79,7 @@ def relative_humidity(t, qd, p, qw=None, set_meta=True):
     output_core_dims = [t_dims]
     result = xr.apply_ufunc(
         core.compute_arfgm,  # first the function
+        # core.relative_humidity,  # first the function
         t,  # now arguments in the order expected
         qd,
         p,

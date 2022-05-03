@@ -14,6 +14,7 @@ v0.3.0 (Unreleased)
 New Features
 ~~~~~~~~~~~~
 
+- Added double nesting preprocessor API (:pull:`34`).
 - ``prsint``: a command line interface for the pressure interpolator (:pull:`53`).
 - ERA5 cmorizer includes ERA5.1 to work with DKRZ data pool (:pull:`52`).
 - Added ``python3.10`` support (:pull:`46`).

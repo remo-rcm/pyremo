@@ -716,6 +716,31 @@ def check_lev(ds):
 
 
 def open_datasets(datasets, ref_ds=None, time_range=None):
+    """Creates a virtual gfile"""
+    if ref_ds is None:
+        try:
+            ref_ds = open_mfdataset(datasets["ta"])
+        except Exception:
+            raise Exception("ta is required in the datasets dict if no ref_ds is given")
+    lon, lat = horizontal_dims(ref_ds)
+    # ak_bnds, bk_bnds = get_ab_bnds(ref_ds)
+    if time_range is None:
+        time_range = ref_ds.time
+    dsets = []
+    for var, f in datasets.items():
+        try:
+            da = open_mfdataset(f, chunks={"time": 1})[var]
+            da = da.sel(time=time_range)
+        except Exception:
+            da = open_mfdataset(f, chunks={})[var]
+        if "vertical" in da.cf:
+            da = check_lev(da)
+        dsets.append(da)
+    dsets += list(get_vc2(ref_ds))
+    return xr.merge(dsets, compat="override", join="override")
+
+
+def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
     """Creates a global dataset ready for preprocessing.
 
     This function creates a homogenized global dataset. If neccessary,
@@ -748,32 +773,6 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
         Global dataset ready for preprocessing.
 
     """
-    if ref_ds is None:
-        try:
-            ref_ds = open_mfdataset(datasets["ta"])
-        except Exception:
-            raise Exception("ta is required in the datasets dict if no ref_ds is given")
-    lon, lat = horizontal_dims(ref_ds)
-    # ak_bnds, bk_bnds = get_ab_bnds(ref_ds)
-    if time_range is None:
-        time_range = ref_ds.time
-    dsets = []
-    for var, f in datasets.items():
-        try:
-            da = open_mfdataset(f, chunks={"time": 1})[var]
-            da = da.sel(time=time_range)
-        except Exception:
-            da = open_mfdataset(f, chunks={})[var]
-        if "vertical" in da.cf:
-            da = check_lev(da)
-        dsets.append(da)
-    dsets += list(get_vc2(ref_ds))
-    return xr.merge(dsets, compat="override", join="override")
-
-
-def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
-    """Creates a virtual gfile"""
-
     if isinstance(ds, dict):
         ds = open_datasets(ds, ref_ds, time_range)
         if time_range is None:

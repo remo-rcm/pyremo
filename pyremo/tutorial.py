@@ -156,7 +156,7 @@ def mpi_esm(**kwargs):
     ]
 
     return xr.merge(
-        [open_dataset(f, **kwargs) for f in files], compat="override", join="override"
+        [load_dataset(f, **kwargs) for f in files], compat="override", join="override"
     )
 
 

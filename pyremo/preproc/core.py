@@ -702,7 +702,10 @@ def convert_units(ds):
 
 
 def check_lev(ds):
-    positive = ds.cf["vertical"].attrs.get("positive", None)
+    if "vertical" in ds.cf:
+        positive = ds.cf["vertical"].attrs.get("positive", None)
+    else:
+        positive = None
     if positive is None:
         warnings.warn("could not determine positive attribute of vertical axis.")
         return ds
@@ -730,7 +733,8 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
             da = da.sel(time=time_range)
         except Exception:
             da = open_mfdataset(f, chunks={})[var]
-        da = check_lev(da)
+        if "vertical" in da.cf:
+            da = check_lev(da)
         dsets.append(da)
     dsets += list(get_vc2(ref_ds))
     return xr.merge(dsets, compat="override", join="override")
@@ -741,6 +745,8 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
 
     if isinstance(ds, dict):
         ds = open_datasets(ds, ref_ds, time_range)
+        if time_range is None:
+            time_range = ds.time
     else:
         ds = ds.copy()
         if time_range is None:

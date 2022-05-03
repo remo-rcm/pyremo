@@ -15,7 +15,7 @@ New Features
 ~~~~~~~~~~~~
 
 - Added double nesting preprocessor API (:pull:`34`).
-- ``prsint``: a command line interface for the pressure interpolator (:pull:`53`).
+- ``prsint``: a command line interface for the pressure interpolator (:pull:`53`, :pull:`66`).
 - ERA5 cmorizer includes ERA5.1 to work with DKRZ data pool (:pull:`52`).
 - Added ``python3.10`` support (:pull:`46`).
 - Updated cmorization module for use with CMIP6 (:pull:`48`, :pull:`49`, :pull:`51`) and CORDEX vocabulary. The underlying tables are only used for testing and should not yet be uses for actual data publication, see also `here <https://github.com/euro-cordex/py-cordex/pull/55>`_.

@@ -716,7 +716,38 @@ def check_lev(ds):
 
 
 def open_datasets(datasets, ref_ds=None, time_range=None):
-    """Creates a virtual gfile"""
+    """Creates a global dataset ready for preprocessing.
+
+    This function creates a homogenized global dataset. If neccessary,
+    units are converted and the sea surface temperature ``tos`` is
+    interpolated spatially and temporally to the atmospheric grid.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset or dict of filenames
+        Input dataset from a global model according to CF conventions.
+
+    ref_ds : xarray.Dataset
+        Reference datasets that is used for determining the grid and vertical
+        coordinates and the global attributes. If ``ref_ds=None``, ``ta`` from
+        the input dataset is used as a reference.
+
+    tos : xarray.Dataset
+        Sea surface dataset.
+
+    time_rage :
+        The common time range from the input and sst that should be used.
+
+    attrs:
+        Global attributes for the output dataset. If ``attrs=None``, the global
+        attributes from ``ref_ds`` are used.
+
+    Returns
+    -------
+    gfile : xarray.Dataset
+        Global dataset ready for preprocessing.
+
+    """
     if ref_ds is None:
         try:
             ref_ds = open_mfdataset(datasets["ta"])

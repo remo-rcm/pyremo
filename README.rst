@@ -46,7 +46,7 @@ Features
 Installation
 ------------
 
-We recommend installing `pyremo` with conda:
+We recommend installing ``pyremo`` with conda:
 
 .. code-block:: console
 
@@ -56,27 +56,10 @@ We recommend installing `pyremo` with conda:
 Installation from source
 ------------------------
 
-You can install the package directly from github using pip:
-
-
-.. code-block:: console
-
-    pip install git+https://github.com/euro-cordex/pyremo
-
-
-If you want to contribute, please fork the repository to your github account
-and install it in development mode, e.g.
-
-
-.. code-block:: console
-
-    git clone https://github.com/<your-account>/pyremo
-    cd pyremo
-    pip install -e .
-
-
-This will install the package but you can still edit it and you don't need the package in your :code:`PYTHONPATH`.
-Please get in contact as early as possible, e.g., using `draft pull requests <https://github.blog/2019-02-14-introducing-draft-pull-requests>`_.
+We don't recommend to pip install ``pyremo`` because some of the dependencies require pre-compiled packages
+that won't work with pip. For instructions to install py-cordex from source, please have a look
+at the `contributing guide <https://pyremo.readthedocs.io/en/stable/contributing.html>`_.
+If you want to contribute, please get in contact as early as possible, e.g.,  using `draft pull requests <https://github.blog/2019-02-14-introducing-draft-pull-requests>`_.
 
 Fortran extensions
 ------------------

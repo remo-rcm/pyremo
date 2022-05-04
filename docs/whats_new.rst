@@ -12,6 +12,11 @@ What's New
 v0.3.1 (Unreleased)
 -------------------
 
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Added ``nbQA`` to pre-commit hooks and formatted notebooks (:pull:`72`).
+
 Bugfixes
 ~~~~~~~~
 

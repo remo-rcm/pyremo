@@ -37,11 +37,11 @@ Python tools for the regional climate model `REMO <https://www.remo-rcm.de>`_
 Features
 --------
 
-* Easily access to Remo meta information and data
+* Easy access to Remo meta information and data
 * API based on xarray data structures
 * Pressure interpolation
 * Pre and post processing
-* Includes basic physics package
+* Includes basic physics package for REMO
 
 Installation
 ------------

@@ -1,6 +1,6 @@
-======
-pyremo
-======
+=====================================================================================
+pyremo: python tools for the regional climate model `REMO <https://www.remo-rcm.de>`_
+=====================================================================================
 
 .. image:: https://zenodo.org/badge/282037812.svg
    :target: https://zenodo.org/badge/latestdoi/282037812
@@ -32,7 +32,7 @@ pyremo
    :target: https://www.codefactor.io/repository/github/remo-rcm/pyremo
    :alt: CodeFactor
 
-Python tools for the regional climate model `REMO <https://www.remo-rcm.de>`_
+
 
 Features
 --------

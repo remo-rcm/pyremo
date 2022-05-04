@@ -22,24 +22,25 @@ def test_entrypoint():
 
 @requires_pydruint
 @pytest.mark.parametrize(
-    "output, expected",
+    "split, expected",
     [
         (
-            "plev",
+            True,
             [
                 "e056000p_c130_0100_200601.nc",
                 "e056000p_c130_0100_200601.nc",
                 "e056000p_c130_0100_200601.nc",
             ],
         ),
-        ("input", ["e056000p_c130_200601.nc"]),
+        (False, ["e056000p_c130_200601.nc"]),
     ],
 )
-def test_prsint_cli(tfile, output, expected):
+def test_prsint_cli(tfile, split, expected):
     parser = cli.prsint_parser()
-    args = parser.parse_args(
-        (tfile, "-id", "056000", "-v", "T", "--plev", "100", "200", "300", "-o", output)
-    )
+    args = (tfile, "-id", "056000", "-v", "T", "--plev", "100", "200", "300")
+    if split is True:
+        args = args + ("-s",)
+    args = parser.parse_args(args)
     cli.prsint(args)
     for f in expected:
         assert os.path.exists(f)

@@ -9,7 +9,7 @@ What's New
     import pyremo
 
 
-v0.3.1 (Unreleased)
+v0.3.1 (4 May 2022)
 -------------------
 
 Patch release to fix ``.zenodo.json``, update documentation and add pre-commit hooks.

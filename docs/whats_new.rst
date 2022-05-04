@@ -12,6 +12,8 @@ What's New
 v0.3.1 (Unreleased)
 -------------------
 
+Patch release to fix ``.zenodo.json``, update documentation and add pre-commit hooks.
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 

@@ -50,12 +50,12 @@ def prsint_from_file(filename, varname, **args):
     return result
 
 
-def write_output_variable(data_array, format, id):
+def write_output_variable(data_array, split, id):
     data_array = encode(data_array)
-    if format == "input":
-        write_output_variable_like_input(data_array, id)
-    elif format == "plev":
+    if split is True:
         write_output_variable_one_per_plev(data_array, id)
+    else:
+        write_output_variable_like_input(data_array, id)
 
 
 def write_output_variable_like_input(data_array, id):
@@ -89,7 +89,7 @@ def prsint(args):
                 varname=var,
                 plev=args.plev,
             )
-            write_output_variable(output, args.output, args.id)
+            write_output_variable(output, args.split, args.id)
     return 0
 
 
@@ -116,12 +116,11 @@ def prsint_parser():
         default=dflt.plevs,
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        dest="output",
-        help="output format",
-        choices=["plev", "input"],
-        default="plev",
+        "-s",
+        "--split",
+        dest="split",
+        help="write one pressure level per output file",
+        action="store_true",
     )
     parser.add_argument(
         "-id",

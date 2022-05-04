@@ -11,10 +11,10 @@ What's New
 v0.3.0 (4 May 2022)
 -------------------
 
-This release comes with a new `double nesting preprocessing API <https://pyremo.readthedocs.io/en/latest/generated/pyremo.preproc.remap_remo.html#pyremo.preproc.remap_remo>`_, 
+This release comes with a new `double nesting preprocessing API <https://pyremo.readthedocs.io/en/latest/generated/pyremo.preproc.remap_remo.html#pyremo.preproc.remap_remo>`_,
 a command line interface for the `pressure interpolation <https://pyremo.readthedocs.io/en/latest/prsint.html>`_, updated
-`cmorization <https://pyremo.readthedocs.io/en/latest/cmorization.html>`_ features and a new ERA5 cmorizer to handle ERA5.1 data. 
-Documentation has also improved and contains an updated tutorial on how to `explore REMO NetCDF output <https://pyremo.readthedocs.io/en/latest/remo-dataset.html>`_. 
+`cmorization <https://pyremo.readthedocs.io/en/latest/cmorization.html>`_ features and a new ERA5 cmorizer to handle ERA5.1 data.
+Documentation has also improved and contains an updated tutorial on how to `explore REMO NetCDF output <https://pyremo.readthedocs.io/en/latest/remo-dataset.html>`_.
 Fortran extensions for preprocessing and pressure interpolation have been added as python extensions (``options.extras_require``) for easy installation.
 
 New Features

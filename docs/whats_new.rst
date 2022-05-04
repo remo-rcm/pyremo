@@ -15,7 +15,7 @@ This release comes with a new `double nesting preprocessing API <https://pyremo.
 a command line interface for the `pressure interpolation <https://pyremo.readthedocs.io/en/latest/prsint.html>`_, updated
 `cmorization <https://pyremo.readthedocs.io/en/latest/cmorization.html>`_ features and a new ERA5 cmorizer to handle ERA5.1 data. 
 Documentation has also improved and contains an updated tutorial on how to `explore REMO NetCDF output <https://pyremo.readthedocs.io/en/latest/remo-dataset.html>`_. 
-Fortran extensions for preprocessing and pressure interpolation have been added as python extensions for easy installation.
+Fortran extensions for preprocessing and pressure interpolation have been added as python extensions (``options.extras_require``) for easy installation.
 
 New Features
 ~~~~~~~~~~~~

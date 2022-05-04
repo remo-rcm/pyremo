@@ -77,12 +77,12 @@ For the pressure interpolation :code:`prsint`, you will need to install the addi
 
 Note, that you will have to install these packages from source which will require a fortran compiler (e.g. :code:`gfortran`).
 If you require access to those packages, please request access to the REMO group in the DRKZ gitlab.
-If you have access, you can install those extension directly from the gitlab or by using, e.g.
+If you have access, you can install those extension directly from the gitlab, e.g.
 
 .. code-block:: console
 
-    pip install pyremo[preproc] # install pyintorg
-    pip install pyremo[prsint] # install pydruint
+    pip install git+http://gitlab.dkrz.de/remo/pyintorg.git@v0.2.0a1
+    pip install git+http://gitlab.dkrz.de/remo/pydruint.git@v0.1.0
 
 Credits
 -------

@@ -8,6 +8,14 @@ What's New
 
     import pyremo
 
+v0.3.2 (Unreleased)
+-------------------
+
+Bugfixes
+~~~~~~~~
+
+- Updated path resource for ``pyremo.analysis`` for use at DKRZ on levante filesystem (:pull:`76`).
+
 
 v0.3.1 (4 May 2022)
 -------------------

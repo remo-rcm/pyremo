@@ -23,6 +23,7 @@ Bugfixes
 ~~~~~~~~
 
 - Fixed ``.zenodo.json`` format and added pre-commit hook (:pull:`71`).
+- Updated path resource for ``pyremo.analysis`` for use at DKRZ on levante filesystem (:pull:`76`).
 
 
 v0.3.0 (4 May 2022)

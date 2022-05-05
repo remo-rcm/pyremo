@@ -232,14 +232,12 @@ def cru_ts4(chunks="auto", **kwargs):
     """Returns CRU_TS4 dataset from DKRZ filesystem"""
     varmap = {"tas": "tmp", "pr": "pre", "orog": "topo"}
     variables = ["tmp", "pre", "cld", "dtr", "frs", "pet"]
-    path = "/mnt/lustre02/work/ch0636/eddy/pool/obs/cru/CRU/TS4.04/original"
+    path = "/work/ch0636/pool/obs/cru/CRU/TS4.04/original"
     template = "cru_ts4.04.1901.2019.{variable}.dat.nc"
     filenames = {
         key: os.path.join(path, template.format(variable=key)) for key in variables
     }
-    filenames[
-        "topo"
-    ] = "/mnt/lustre02/work/ch0636/eddy/pool/obs/cru/CRU/TS4.04/original/cru404_c129.nc"
+    filenames["topo"] = "/work/ch0636/pool/obs/cru/CRU/TS4.04/original/cru404_c129.nc"
     return create_dataset(
         filenames, mask="tmp", drop="stn", varmap=varmap, chunks=chunks, **kwargs
     )
@@ -257,7 +255,7 @@ def eobs(version="v22.0e", chunks="auto", **kwargs):
         "orog": "elevation",
     }
     variables = ["tg", "tx", "tn", "rr", "qq", "pp"]
-    path = "/mnt/lustre02/work/ch0636/eddy/pool/obs/eobs/{version}/original_025/day/var/{cf_name}/"
+    path = "/work/ch0636/pool/obs/eobs/{version}/original_025/day/var/{cf_name}/"
     template = "{variable}_ens_mean_0.25deg_reg_{version}.nc"
     filenames = {
         key: os.path.join(path, template).format(
@@ -267,7 +265,7 @@ def eobs(version="v22.0e", chunks="auto", **kwargs):
     }
     filenames[
         "elevation"
-    ] = "/mnt/lustre02/work/ch0636/eddy/pool/obs/eobs/{version}/original_025/fx/orog/elev_ens_0.25deg_reg_{version}.nc".format(
+    ] = "/work/ch0636/pool/obs/eobs/{version}/original_025/fx/orog/elev_ens_0.25deg_reg_{version}.nc".format(
         version=version
     )
     return create_dataset(filenames, mask="tg", varmap=varmap, chunks=chunks, **kwargs)
@@ -279,7 +277,7 @@ def eobs(version="v22.0e", chunks="auto", **kwargs):
 def hyras(chunks="auto", **kwargs):
     """Returns hyras dataset from DKRZ filesystem."""
     variables = ["tas", "pr", "tmax", "tmin", "hurs"]
-    path = "/mnt/lustre02/work/ch0636/eddy/pool/obs/HYRAS/{variable}"
+    path = "/work/ch0636/eddy/pool/obs/HYRAS/{variable}"
     template = "{variable}_hyras_5_*_v3.0_ocz.nc"
     filenames = {
         key: os.path.join(path, template).format(variable=key) for key in variables

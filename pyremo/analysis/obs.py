@@ -4,9 +4,12 @@ import os
 import numpy as np
 import xarray as xr
 
+from . import resources as res
+
 # from ..archive import archive
 # from ..core import codes
 # from ..core.remo_ds import preprocess as remo_preprocess
+
 
 soil_temps = ["TS", "TSL", "TEMP2", "TSN", "TD3", "TD4", "TD5"]
 
@@ -228,22 +231,24 @@ def create_dataset(filenames, drop=None, mask=None, varmap=None, **kwargs):
     return ds
 
 
-def cru_ts4(chunks="auto", **kwargs):
+def cru_ts4(chunks=None, **kwargs):
     """Returns CRU_TS4 dataset from DKRZ filesystem"""
+    if chunks is None:
+        chunks = {"lat": 360, "lon": 720}
     varmap = {"tas": "tmp", "pr": "pre", "orog": "topo"}
     variables = ["tmp", "pre", "cld", "dtr", "frs", "pet"]
-    path = "/work/ch0636/pool/obs/cru/CRU/TS4.04/original"
+    path = res.cru_path
     template = "cru_ts4.04.1901.2019.{variable}.dat.nc"
     filenames = {
         key: os.path.join(path, template.format(variable=key)) for key in variables
     }
-    filenames["topo"] = "/work/ch0636/pool/obs/cru/CRU/TS4.04/original/cru404_c129.nc"
+    filenames["topo"] = os.path.join(path, "cru404_c129.nc")
     return create_dataset(
         filenames, mask="tmp", drop="stn", varmap=varmap, chunks=chunks, **kwargs
     )
 
 
-def eobs(version="v22.0e", chunks="auto", **kwargs):
+def eobs(chunks=None, version="v22.0e", **kwargs):
     """Returns eobs dataset from DKRZ filesystem"""
     varmap = {
         "tas": "tg",
@@ -254,8 +259,10 @@ def eobs(version="v22.0e", chunks="auto", **kwargs):
         "psl": "pp",
         "orog": "elevation",
     }
+    if chunks is None:
+        chunks = {"latitude": 201, "longitude": 464}
     variables = ["tg", "tx", "tn", "rr", "qq", "pp"]
-    path = "/work/ch0636/pool/obs/eobs/{version}/original_025/day/var/{cf_name}/"
+    path = os.path.join(res.eobs_path, "{version}/original_025/day/var/{cf_name}/")
     template = "{variable}_ens_mean_0.25deg_reg_{version}.nc"
     filenames = {
         key: os.path.join(path, template).format(
@@ -263,21 +270,22 @@ def eobs(version="v22.0e", chunks="auto", **kwargs):
         )
         for key in variables
     }
-    filenames[
-        "elevation"
-    ] = "/work/ch0636/pool/obs/eobs/{version}/original_025/fx/orog/elev_ens_0.25deg_reg_{version}.nc".format(
-        version=version
-    )
+    filenames["elevation"] = os.path.join(
+        res.eobs_path,
+        "{version}/original_025/fx/orog/elev_ens_0.25deg_reg_{version}.nc",
+    ).format(version=version)
     return create_dataset(filenames, mask="tg", varmap=varmap, chunks=chunks, **kwargs)
 
 
 # CRU_TS4 = Dataset(tas="/mnt/lustre02/work/ch0636/eddy/pool/obs/cru/CRU/TS4.04/original/cru_ts4.04.1901.2019.tmp.dat.nc")
 
 
-def hyras(chunks="auto", **kwargs):
+def hyras(chunks=None, **kwargs):
     """Returns hyras dataset from DKRZ filesystem."""
+    if chunks is None:
+        chunks = {"time": 1}
     variables = ["tas", "pr", "tmax", "tmin", "hurs"]
-    path = "/work/ch0636/eddy/pool/obs/HYRAS/{variable}"
+    path = os.path.join(res.hyras_path, "{variable}")
     template = "{variable}_hyras_5_*_v3.0_ocz.nc"
     filenames = {
         key: os.path.join(path, template).format(variable=key) for key in variables

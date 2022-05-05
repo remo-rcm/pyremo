@@ -231,8 +231,10 @@ def create_dataset(filenames, drop=None, mask=None, varmap=None, **kwargs):
     return ds
 
 
-def cru_ts4(chunks="auto", **kwargs):
+def cru_ts4(chunks=None, **kwargs):
     """Returns CRU_TS4 dataset from DKRZ filesystem"""
+    if chunks is None:
+        chunks = {"lat": 360, "lon": 720}
     varmap = {"tas": "tmp", "pr": "pre", "orog": "topo"}
     variables = ["tmp", "pre", "cld", "dtr", "frs", "pet"]
     path = res.cru_path
@@ -246,7 +248,7 @@ def cru_ts4(chunks="auto", **kwargs):
     )
 
 
-def eobs(version="v22.0e", chunks="auto", **kwargs):
+def eobs(chunks=None, version="v22.0e", **kwargs):
     """Returns eobs dataset from DKRZ filesystem"""
     varmap = {
         "tas": "tg",
@@ -257,6 +259,8 @@ def eobs(version="v22.0e", chunks="auto", **kwargs):
         "psl": "pp",
         "orog": "elevation",
     }
+    if chunks is None:
+        chunks = {"latitude": 201, "longitude": 464}
     variables = ["tg", "tx", "tn", "rr", "qq", "pp"]
     path = os.path.join(res.eobs_path, "{version}/original_025/day/var/{cf_name}/")
     template = "{variable}_ens_mean_0.25deg_reg_{version}.nc"
@@ -276,8 +280,10 @@ def eobs(version="v22.0e", chunks="auto", **kwargs):
 # CRU_TS4 = Dataset(tas="/mnt/lustre02/work/ch0636/eddy/pool/obs/cru/CRU/TS4.04/original/cru_ts4.04.1901.2019.tmp.dat.nc")
 
 
-def hyras(chunks="auto", **kwargs):
+def hyras(chunks=None, **kwargs):
     """Returns hyras dataset from DKRZ filesystem."""
+    if chunks is None:
+        chunks = {"time": 1}
     variables = ["tas", "pr", "tmax", "tmin", "hurs"]
     path = os.path.join(res.hyras_path, "{variable}")
     template = "{variable}_hyras_5_*_v3.0_ocz.nc"

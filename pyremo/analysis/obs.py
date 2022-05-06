@@ -144,7 +144,7 @@ class Dataset:
     def _init_dataset(self, filenames):
         da = []
         for var, filename in self.filenames.items():
-            da.append(xr.open_mfdataset(filename)[var])
+            da.append(xr.open_mfdataset(filename, parallel=True)[var])
         ds = xr.merge(da).rename(self.inv_map)
         ds["mask"] = xr.where(~np.isnan(ds[self._mask_var].isel(time=0)), 1, 0)
         return ds
@@ -234,7 +234,7 @@ def create_dataset(filenames, drop=None, mask=None, varmap=None, **kwargs):
 def cru_ts4(chunks=None, **kwargs):
     """Returns CRU_TS4 dataset from DKRZ filesystem"""
     if chunks is None:
-        chunks = {"lat": 360, "lon": 720}
+        chunks = {"time": "auto", "lat": 360, "lon": 720}
     varmap = {"tas": "tmp", "pr": "pre", "orog": "topo"}
     variables = ["tmp", "pre", "cld", "dtr", "frs", "pet"]
     path = res.cru_path
@@ -260,7 +260,7 @@ def eobs(chunks=None, version="v22.0e", **kwargs):
         "orog": "elevation",
     }
     if chunks is None:
-        chunks = {"latitude": 201, "longitude": 464}
+        chunks = {"time": "auto", "latitude": 201, "longitude": 464}
     variables = ["tg", "tx", "tn", "rr", "qq", "pp"]
     path = os.path.join(res.eobs_path, "{version}/original_025/day/var/{cf_name}/")
     template = "{variable}_ens_mean_0.25deg_reg_{version}.nc"
@@ -283,7 +283,7 @@ def eobs(chunks=None, version="v22.0e", **kwargs):
 def hyras(chunks=None, **kwargs):
     """Returns hyras dataset from DKRZ filesystem."""
     if chunks is None:
-        chunks = {"time": 1}
+        chunks = {"time": "auto"}
     variables = ["tas", "pr", "tmax", "tmin", "hurs"]
     path = os.path.join(res.hyras_path, "{variable}")
     template = "{variable}_hyras_5_*_v3.0_ocz.nc"

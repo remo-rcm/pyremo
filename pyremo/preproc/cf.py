@@ -1,8 +1,10 @@
+import os
 import subprocess
 import tempfile
 from warnings import warn
 
 import pandas as pd
+from cdo import Cdo
 
 cdo_exe = "cdo"
 
@@ -34,7 +36,7 @@ def get_var_by_time(df, datetime=None, **kwargs):
 
 
 class CFModelSelector:
-    def __init__(self, df, **kwargs):
+    def __init__(self, df, scratch=None, **kwargs):
         df = df.copy()
         if kwargs:
             df = search_df(df, **kwargs)
@@ -44,20 +46,30 @@ class CFModelSelector:
             self.df = df
             warn("could not parse times in dataframe")
         self.tempfiles = []
+        if scratch is None:
+            try:
+                scratch = os.path.join(os.environ["SCRATCH"], ".cf-selector")
+            except Exception:
+                pass
+        self.cdo = Cdo(tempdir=scratch)
 
     def __repr__(self):
-        return repr(
-            self.df.groupby("source_id")[
-                [
-                    "variable_id",
-                    "experiment_id",
-                    "member_id",
-                    "institution_id",
-                    "table_id",
-                    "activity_id",
-                ]
-            ].agg(["unique"])
-        )
+        return repr(self._group())
+
+    def _repr_html_(self):
+        return self._group()._repr_html_()
+
+    def _group(self):
+        return self.df.groupby("source_id")[
+            [
+                "variable_id",
+                "experiment_id",
+                "member_id",
+                "institution_id",
+                "table_id",
+                "activity_id",
+            ]
+        ].agg(["unique"])
 
     def _update_time(self, df):
         df["time_min"] = df["time_min"].apply(convert_to_datetime)
@@ -69,6 +81,12 @@ class CFModelSelector:
         if len(sel.index) != 1:
             raise Exception("file selection is not unique")
         return sel.iloc[0].path
+
+    def extract_timestep(self, datetime=None, **kwargs):
+        file = self.get_file(datetime=datetime, **kwargs)
+        if datetime is None:
+            return file
+        return self.cdo.seldate(datetime, input=file)
 
     # own cdo call here due to https://github.com/Try2Code/cdo-bindings/issues/34
     def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):

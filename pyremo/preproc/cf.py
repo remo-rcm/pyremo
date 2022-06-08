@@ -3,10 +3,16 @@ import subprocess
 import tempfile
 from warnings import warn
 
+import numpy as np
 import pandas as pd
+import xarray as xr
 from cdo import Cdo
 
+from .constants import lev_i
+from .core import check_lev, convert_units, get_vc2, horizontal_dims, open_mfdataset
+
 cdo_exe = "cdo"
+default_catalog = "/work/ik1017/Catalogs/dkrz_cmip6_disk.csv.gz"
 
 
 def convert_to_datetime(time):
@@ -30,13 +36,15 @@ def search_df(df, **kwargs):
 
 def get_var_by_time(df, datetime=None, **kwargs):
     df = search_df(df, **kwargs)
-    if datetime is not None:
+    if datetime is not None and len(df) > 1:
         df = df[(datetime >= df.time_min) & (datetime <= df.time_max)]
     return df
 
 
 class CFModelSelector:
-    def __init__(self, df, scratch=None, **kwargs):
+    def __init__(self, df=None, scratch=None, **kwargs):
+        if df is None:
+            df = pd.read_csv(default_catalog)
         df = df.copy()
         if kwargs:
             df = search_df(df, **kwargs)
@@ -46,12 +54,6 @@ class CFModelSelector:
             self.df = df
             warn("could not parse times in dataframe")
         self.tempfiles = []
-        if scratch is None:
-            try:
-                scratch = os.path.join(os.environ["SCRATCH"], ".cf-selector")
-            except Exception:
-                pass
-        self.cdo = Cdo(tempdir=scratch)
 
     def __repr__(self):
         return repr(self._group())
@@ -60,13 +62,13 @@ class CFModelSelector:
         return self._group()._repr_html_()
 
     def _group(self):
-        return self.df.groupby("source_id")[
+        groups = ["source_id", "member_id", "experiment_id", "table_id"]
+        return self.df.groupby(groups)[
             [
                 "variable_id",
-                "experiment_id",
-                "member_id",
+                #  "member_id",
                 "institution_id",
-                "table_id",
+                #  "table_id",
                 "activity_id",
             ]
         ].agg(["unique"])
@@ -78,15 +80,11 @@ class CFModelSelector:
 
     def get_file(self, datetime=None, **kwargs):
         sel = get_var_by_time(self.df, datetime=datetime, **kwargs)
-        if len(sel.index) != 1:
+        if len(sel.index) > 1:
             raise Exception("file selection is not unique")
+        if sel.empty:
+            raise Exception("no file found")
         return sel.iloc[0].path
-
-    def extract_timestep(self, datetime=None, **kwargs):
-        file = self.get_file(datetime=datetime, **kwargs)
-        if datetime is None:
-            return file
-        return self.cdo.seldate(datetime, input=file)
 
     # own cdo call here due to https://github.com/Try2Code/cdo-bindings/issues/34
     def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
@@ -106,3 +104,148 @@ class CFModelSelector:
         if output:
             return output
         return stdout
+
+
+def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
+    """Creates a global dataset ready for preprocessing.
+
+    This function creates a homogenized global dataset. If neccessary,
+    units are converted and the sea surface temperature ``tos`` is
+    interpolated spatially and temporally to the atmospheric grid.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset or dict of filenames
+        Input dataset from a global model according to CF conventions.
+
+    ref_ds : xarray.Dataset
+        Reference datasets that is used for determining the grid and vertical
+        coordinates and the global attributes. If ``ref_ds=None``, ``ta`` from
+        the input dataset is used as a reference.
+
+    tos : xarray.Dataset
+        Sea surface dataset.
+
+    time_rage :
+        The common time range from the input and sst that should be used.
+
+    attrs:
+        Global attributes for the output dataset. If ``attrs=None``, the global
+        attributes from ``ref_ds`` are used.
+
+    Returns
+    -------
+    gfile : xarray.Dataset
+        Global dataset ready for preprocessing.
+
+    """
+    if isinstance(ds, dict):
+        ds = open_datasets(ds, ref_ds, time_range)
+        if time_range is None:
+            time_range = ds.time
+    else:
+        ds = ds.copy()
+        if time_range is None:
+            time_range = ds.time
+        ds = ds.sel(time=time_range)
+        ds["akgm"], ds["bkgm"] = get_vc2(ds)
+        ds = check_lev(ds)
+    if tos is not None:
+        ds["tos"] = map_sst(tos, ds.sel(time=time_range))
+    ds = ds.rename({"lev": lev_i})
+    ds = convert_units(ds)
+    if "sftlf" in ds:
+        ds["sftlf"] = np.around(ds.sftlf)
+    if attrs is None:
+        attrs = ds.attrs
+    return ds
+
+
+class GFile:
+
+    dynamics = ["ta", "ua", "va", "ps", "hus"]
+    fx = ["orog", "sftlf"]
+    sst = ["tos"]
+    all_vars = dynamics + fx  # + sst
+
+    def __init__(self, df=None, scratch=None, **kwargs):
+        self.selector = CFModelSelector(df=df, **kwargs)
+        if scratch is None:
+            try:
+                scratch = os.path.join(os.environ["SCRATCH"], ".cf-selector")
+            except Exception:
+                pass
+        self.cdo = Cdo(tempdir=scratch, logging=True)
+
+    def get_files(self, variables, datetime, **kwargs):
+        files = {
+            var: self.selector.get_file(variable_id=var, datetime=datetime, **kwargs)
+            for var in variables
+        }
+        return files
+
+    def get_gfile(self, datetime, **kwargs):
+        files = self.get_files(datetime, **kwargs)
+        return files
+
+    def extract_timestep(self, datetime=None, **kwargs):
+        pass
+
+    def extract_dynamic_timesteps(self, datetime=None, **kwargs):
+        files = self.get_files(self.dynamics, datetime=datetime, **kwargs)
+        if datetime is None:
+            return files
+        return {v: self.cdo.seldate(datetime, input=f) for v, f in files.items()}
+
+    def extract_files(self, datetime, **kwargs):
+        files = self.extract_dynamic_timesteps(datetime, **kwargs)
+        files.update(self.get_files(self.fx, datetime=None, **kwargs))
+        # files.update(self.get_files(self.sst, datetime=datetime, **kwargs))
+        return files
+
+
+def map_sst(tos, ref_ds, resample="6H", regrid=True):
+    from datetime import timedelta as td
+
+    import xesmf as xe
+
+    # tos_res = tos
+    attrs = tos.attrs
+    tos_times = (ref_ds.time.min() - td(days=1), ref_ds.time.max() + td(days=1))
+    tos = tos.sel(time=slice(tos_times[0], tos_times[1]))
+    # return tos_res
+    # tos = tos.resample(time=resample).interpolate("linear").chunk({"time": 1})
+    tos = tos.resample(time=resample).interpolate("linear")
+    tos = tos.sel(time=ref_ds.time)
+
+    if regrid:
+        regridder = xe.Regridder(tos, ref_ds, "nearest_s2d")
+        tos = regridder(tos)
+    tos.attrs.update(attrs)
+
+    return tos
+
+
+def open_datasets(datasets, ref_ds=None, time_range=None):
+    """Creates a virtual gfile"""
+    if ref_ds is None:
+        try:
+            ref_ds = open_mfdataset(datasets["ta"])
+        except Exception:
+            raise Exception("ta is required in the datasets dict if no ref_ds is given")
+    lon, lat = horizontal_dims(ref_ds)
+    # ak_bnds, bk_bnds = get_ab_bnds(ref_ds)
+    if time_range is None:
+        time_range = ref_ds.time
+    dsets = []
+    for var, f in datasets.items():
+        try:
+            da = open_mfdataset(f, chunks={"time": 1})[var]
+            da = da.sel(time=time_range)
+        except Exception:
+            da = open_mfdataset(f, chunks={})[var]
+        if "vertical" in da.cf:
+            da = check_lev(da)
+        dsets.append(da)
+    dsets += list(get_vc2(ref_ds))
+    return xr.merge(dsets, compat="override", join="override")

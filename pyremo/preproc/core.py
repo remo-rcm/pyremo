@@ -753,7 +753,9 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
             da = check_lev(da)
         dsets.append(da)
     dsets += list(get_vc2(ref_ds))
-    return xr.merge(dsets, compat="override", join="override")
+    output = xr.merge(dsets, compat="override", join="override")
+    output.attrs = ref_ds.attrs
+    return output
 
 
 def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):

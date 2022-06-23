@@ -11,6 +11,12 @@ What's New
 v0.3.2 (Unreleased)
 -------------------
 
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Switched to automatic version numbering using ``setuptools_scm`` (:pull:`80`).
+
+
 Bugfixes
 ~~~~~~~~
 

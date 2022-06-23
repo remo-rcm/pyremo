@@ -15,6 +15,7 @@ Bugfixes
 ~~~~~~~~
 
 - Updated path resource for ``pyremo.analysis`` for use at DKRZ on levante filesystem (:pull:`76`).
+- Fixed SST interpolation in preprocessing of CMIP models, uses now masks with xesmf (:pull:`79`).
 
 
 v0.3.1 (4 May 2022)

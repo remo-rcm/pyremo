@@ -81,7 +81,8 @@ class CFModelSelector:
     def get_file(self, datetime=None, **kwargs):
         sel = get_var_by_time(self.df, datetime=datetime, **kwargs)
         if len(sel.index) > 1:
-            raise Exception("file selection is not unique")
+            return list(sel.path)
+            # raise Exception("file selection is not unique")
         if sel.empty:
             raise Exception("no file found")
         return sel.iloc[0].path
@@ -165,7 +166,7 @@ class GFile:
 
     dynamics = ["ta", "ua", "va", "ps", "hus"]
     fx = ["orog", "sftlf"]
-    sst = ["tos"]
+    sst = "tos"
     all_vars = dynamics + fx  # + sst
 
     def __init__(self, df=None, scratch=None, **kwargs):
@@ -202,6 +203,11 @@ class GFile:
         files.update(self.get_files(self.fx, datetime=None, **kwargs))
         # files.update(self.get_files(self.sst, datetime=datetime, **kwargs))
         return files
+
+    def get_sst(self, datetime):
+        files = self.get_files([self.sst], datetime=None)
+        ds = open_mfdataset(files[self.sst])
+        return ds
 
 
 def map_sst(tos, ref_ds, resample="6H", regrid=True):

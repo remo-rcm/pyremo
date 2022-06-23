@@ -618,8 +618,8 @@ def get_vc(ds):
 
 
 def get_ab_bnds(ds):
-    ak_valid = ["ap_bnds", "a_bnds"]
-    bk_valid = ["b_bnds"]
+    ak_valid = ["ap_bnds", "a_bnds", "hyai"]
+    bk_valid = ["b_bnds", "hybi"]
     ak_bnds = None
     bk_bnds = None
     for ak_name in ak_valid:
@@ -636,12 +636,22 @@ def get_ab_bnds(ds):
 def get_vc2(ds):
     """Reads the vertical hybrid coordinate from a dataset."""
     ak_bnds, bk_bnds = get_ab_bnds(ds)
-    ak = cfxr.bounds_to_vertices(ak_bnds, bounds_dim="bnds")
-    bk = cfxr.bounds_to_vertices(bk_bnds, bounds_dim="bnds")
-    if ak_bnds.cf["vertical"].positive == "down":
-        ak = np.flip(ak)
-    if bk_bnds.cf["vertical"].positive == "down":
-        bk = np.flip(bk)
+    if ak_bnds.ndim > 1:
+        ak = cfxr.bounds_to_vertices(ak_bnds, bounds_dim="bnds")
+        bk = cfxr.bounds_to_vertices(bk_bnds, bounds_dim="bnds")
+    else:
+        ak = ak_bnds
+        bk = bk_bnds
+    try:
+        if ak_bnds.cf["vertical"].positive == "down":
+            ak = np.flip(ak)
+    except Exception:
+        pass
+    try:
+        if bk_bnds.cf["vertical"].positive == "down":
+            bk = np.flip(bk)
+    except Exception:
+        pass
     ak.name = "akgm"
     bk.name = "bkgm"
     return ak, bk
@@ -652,8 +662,12 @@ def map_sst(tos, ref_ds, resample="6H", regrid=True):
 
     import xesmf as xe
 
+    try:
+        tos = tos.to_dataset()
+    except Exception:
+        pass
     # tos_res = tos
-    attrs = tos.attrs
+    attrs = tos.tos.attrs
     tos_times = (ref_ds.time.min() - td(days=1), ref_ds.time.max() + td(days=1))
     tos = tos.sel(time=slice(tos_times[0], tos_times[1]))
     # return tos_res
@@ -662,8 +676,10 @@ def map_sst(tos, ref_ds, resample="6H", regrid=True):
     tos = tos.sel(time=ref_ds.time)
 
     if regrid:
+        ref_ds["mask"] = ~(ref_ds.sftlf > 0)
+        tos["mask"] = ~tos.tos.isel(time=0).isnull()
         regridder = xe.Regridder(tos, ref_ds, "nearest_s2d")
-        tos = regridder(tos)
+        tos = regridder(tos.tos)
     tos.attrs.update(attrs)
 
     return tos
@@ -788,8 +804,8 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
     ds = ds.rename({"lev": lev_gm})
     ds = convert_units(ds)
-    if "sftlf" in ds:
-        ds["sftlf"] = np.around(ds.sftlf)
+    # if "sftlf" in ds:
+    #    ds["sftlf"] = np.around(ds.sftlf)
     if attrs is None:
         attrs = ds.attrs
     return ds

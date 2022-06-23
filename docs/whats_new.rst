@@ -22,7 +22,7 @@ Bugfixes
 
 - Updated path resource for ``pyremo.analysis`` for use at DKRZ on levante filesystem (:pull:`76`).
 - Fixed SST interpolation in preprocessing of CMIP models, uses now masks with xesmf (:pull:`79`).
-- Fixed global attributes in forcing data inherited from driving model (`:pull: 81`).
+- Fixed global attributes in forcing data inherited from driving model (:pull:`81`).
 
 
 v0.3.1 (4 May 2022)

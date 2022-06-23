@@ -1,20 +1,18 @@
-"""Top-level package for pyremo."""
+import pkg_resources
 
-__author__ = """Lars Buntemeyer"""
-__email__ = "lars.buntemeyer@hzg.de"
-
-
-# from . import core, preproc
-# from . import preproc, physics, cmor
 from . import physics, tutorial
 from .core import codes, data, remo_ds
 from .core.cal import parse_absolute_time, parse_dates
 from .core.domain import domain_info, remo_domain
 from .core.remo_ds import open_remo_dataset, preprocess, update_meta_info
 from .tables import domains, vc
-from .version import version
 
-__version__ = version
+try:
+    __version__ = pkg_resources.get_distribution("py-cordex").version
+except Exception:
+    # Local copy or not installed with setuptools.
+    # Disable minimum version checks on downstream libraries.
+    __version__ = "999"
 
 __all__ = [
     "physics",

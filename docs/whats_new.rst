@@ -8,6 +8,11 @@ What's New
 
     import pyremo
 
+v0.3.3 (27 June 2022)
+---------------------
+
+Patch release to fix version bug.
+
 v0.3.2 (24 June 2022)
 ---------------------
 

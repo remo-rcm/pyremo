@@ -11,7 +11,7 @@ What's New
 v0.3.3 (27 June 2022)
 ---------------------
 
-Patch release to fix version bug.
+Patch release to `fix version bug <https://github.com/remo-rcm/pyremo/commit/0ab457d7ba6f828497059797f66d218d26ca954a>`_.
 
 v0.3.2 (24 June 2022)
 ---------------------

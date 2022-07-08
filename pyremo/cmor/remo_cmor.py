@@ -152,7 +152,9 @@ def _load_table(table):
     cmor.load_table(table)
 
 
-def _setup(dataset_table, mip_table, grid_table="CMIP6_grids.json", inpath="."):
+def _setup(dataset_table, mip_table, grids_table=None, inpath="."):
+    if grids_table is None:
+        grids_table = "CORDEX-CMIP6_grids.json"
     cmor.setup(
         inpath,
         set_verbosity=cmor.CMOR_NORMAL,
@@ -161,7 +163,7 @@ def _setup(dataset_table, mip_table, grid_table="CMIP6_grids.json", inpath="."):
         logfile=None,
     )
     cmor.dataset_json(dataset_table)
-    grid_id = cmor.load_table(grid_table)
+    grid_id = cmor.load_table(grids_table)
     table_id = cmor.load_table(mip_table)
     cmor.set_table(grid_id)
     return (grid_id, table_id)
@@ -379,6 +381,7 @@ def cmorize_variable(
     varname,
     cmor_table,
     dataset_table,
+    grids_table=None,
     inpath=".",
     allow_units_convert=False,
     allow_resample=False,
@@ -401,6 +404,8 @@ def cmorize_variable(
         Filepath to cmor table.
     dataset_table: str
         Filepath to dataset cmor table.
+    grids_table: str
+        Filepath to cmor grids table.
     inpath: str
         Path to cmor tables, if ``inpath == "."``, inpath is the path
         to ``cmor_table``. This is required to find additional cmor tables,
@@ -492,7 +497,7 @@ def cmorize_variable(
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
 
-    table_ids = _setup(dataset_table, cmor_table, inpath=inpath)
+    table_ids = _setup(dataset_table, cmor_table, grids_table=grids_table, inpath=inpath)
     time_cell_method = _strip_time_cell_method(cfvarinfo)
     cmorTime, cmorGrid = _define_grid(ds_prep, table_ids, time_cell_method)
 

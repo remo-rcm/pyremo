@@ -7,12 +7,12 @@ What's New
    :suppress:
 
     import pyremo
-    
+
 v0.3.4 (Unreleased)
 -------------------
 
 Patch release to use ``pyremo`` for cmorization tests with `CORDEX-CMIP6 cmor tables <https://github.com/WCRP-CORDEX/cordex-cmip6-cmor-tables>`_.
-    
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 

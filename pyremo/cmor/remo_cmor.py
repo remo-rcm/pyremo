@@ -497,7 +497,9 @@ def cmorize_variable(
     if allow_units_convert is True:
         ds_prep[varname] = _units_convert(ds_prep[varname], cmor_table)
 
-    table_ids = _setup(dataset_table, cmor_table, grids_table=grids_table, inpath=inpath)
+    table_ids = _setup(
+        dataset_table, cmor_table, grids_table=grids_table, inpath=inpath
+    )
     time_cell_method = _strip_time_cell_method(cfvarinfo)
     cmorTime, cmorGrid = _define_grid(ds_prep, table_ids, time_cell_method)
 

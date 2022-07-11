@@ -8,8 +8,8 @@ What's New
 
     import pyremo
 
-v0.3.4 (Unreleased)
--------------------
+v0.3.4 (11 July 2022)
+---------------------
 
 Patch release to use ``pyremo`` for cmorization tests with `CORDEX-CMIP6 cmor tables <https://github.com/WCRP-CORDEX/cordex-cmip6-cmor-tables>`_.
 

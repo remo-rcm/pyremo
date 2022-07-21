@@ -7,9 +7,9 @@ What's New
    :suppress:
 
     import pyremo
-    
+
 v0.4.0 (Unreleased)
--------------------    
+-------------------
 
 New Features
 ~~~~~~~~~~~~

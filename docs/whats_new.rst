@@ -14,7 +14,7 @@ v0.4.0 (Unreleased)
 New Features
 ~~~~~~~~~~~~
 
-- Added ``magic_numbers` to API (:pull:`85`).
+- Added ``magic_numbers`` to API (:pull:`85`).
 
 v0.3.4 (11 July 2022)
 ---------------------

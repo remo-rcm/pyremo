@@ -1,7 +1,6 @@
 import os
 import subprocess
 import tempfile
-from warnings import warn
 
 import numpy as np
 import pandas as pd
@@ -20,6 +19,11 @@ def convert_to_datetime(time):
         return pd.to_datetime(str(int(time)))
     except Exception:
         return time
+
+
+def convert_to_cfdatetime(time):
+    time = str(int(time))
+    return xr.cftime_range(start=time, end=time)[0]
 
 
 def search_df(df, **kwargs):
@@ -48,11 +52,11 @@ class CFModelSelector:
         df = df.copy()
         if kwargs:
             df = search_df(df, **kwargs)
-        try:
-            self.df = self._update_time(df)
-        except Exception:
-            self.df = df
-            warn("could not parse times in dataframe")
+        # try:
+        self.df = self._update_time(df)
+        # except Exception:
+        #    self.df = df
+        #    warn("could not parse times in dataframe")
         self.tempfiles = []
 
     def __repr__(self):
@@ -75,7 +79,7 @@ class CFModelSelector:
 
     def _update_time(self, df):
         df["time_min"] = df["time_min"].apply(convert_to_datetime)
-        df["time_max"] = df.time_max.apply(convert_to_datetime)
+        df["time_max"] = df["time_max"].apply(convert_to_datetime)
         return df
 
     def get_file(self, datetime=None, **kwargs):
@@ -205,7 +209,8 @@ class GFile:
         return files
 
     def get_sst(self, datetime):
-        files = self.get_files([self.sst], datetime=None)
+        files = self.get_files([self.sst], datetime=datetime)
+        return files
         ds = open_mfdataset(files[self.sst])
         return ds
 

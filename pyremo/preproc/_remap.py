@@ -18,6 +18,7 @@ from .core import (
     interpolate_horizontal,
     interpolate_horizontal_remo,
     interpolate_vertical,
+    intersect,
     intersect_regional,
     pbl_index,
     pressure_correction_em,
@@ -159,14 +160,31 @@ def remap(gds, domain_info, vc, surflib):
     # broadcast 1d global coordinates
     lamgm, phigm = broadcast_coords(gds)
 
+    # compute remap matrix
+    indii, indjj = intersect(lamgm, phigm, lamem, phiem)  # .compute()
+
     # horizontal interpolation
-    tge = interpolate_horizontal(gds.ta, lamem, phiem, lamgm, phigm, "T")
-    psge = interpolate_horizontal(gds.ps, lamem, phiem, lamgm, phigm, "PS")
-    uge = interpolate_horizontal(gds.ua, lamem, phiem, lamgm, phigm, "U", 1)
-    uvge = interpolate_horizontal(gds.ua, lamem, phiem, lamgm, phigm, "U", 2)
-    vge = interpolate_horizontal(gds.va, lamem, phiem, lamgm, phigm, "V", 2)
-    vuge = interpolate_horizontal(gds.va, lamem, phiem, lamgm, phigm, "V", 1)
-    fibge = interpolate_horizontal(gds.orog, lamem, phiem, lamgm, phigm, "FIB")
+    tge = interpolate_horizontal(
+        gds.ta, lamem, phiem, lamgm, phigm, "T", indii=indii, indjj=indjj
+    )
+    psge = interpolate_horizontal(
+        gds.ps, lamem, phiem, lamgm, phigm, "PS", indii=indii, indjj=indjj
+    )
+    uge = interpolate_horizontal(
+        gds.ua, lamem, phiem, lamgm, phigm, "U", 1, indii=indii, indjj=indjj
+    )
+    uvge = interpolate_horizontal(
+        gds.ua, lamem, phiem, lamgm, phigm, "U", 2, indii=indii, indjj=indjj
+    )
+    vge = interpolate_horizontal(
+        gds.va, lamem, phiem, lamgm, phigm, "V", 2, indii=indii, indjj=indjj
+    )
+    vuge = interpolate_horizontal(
+        gds.va, lamem, phiem, lamgm, phigm, "V", 1, indii=indii, indjj=indjj
+    )
+    fibge = interpolate_horizontal(
+        gds.orog, lamem, phiem, lamgm, phigm, "FIB", indii=indii, indjj=indjj
+    )
 
     # geopotential
     #     if "time" in gds.hus.dims:
@@ -186,14 +204,18 @@ def remap(gds, domain_info, vc, surflib):
         gds.orog, gds.ta, gds.hus, gds.ps, gds.akgm, gds.bkgm
     )  # .squeeze(drop=True)
 
-    ficge = interpolate_horizontal(ficgm, lamem, phiem, lamgm, phigm, "FIC")
+    ficge = interpolate_horizontal(
+        ficgm, lamem, phiem, lamgm, phigm, "FIC", indii=indii, indjj=indjj
+    )
 
     if "clw" in gds:
         # if False:
         arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm, gds.clw)
     else:
         arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm)
-    arfge = interpolate_horizontal(arfgm, lamem, phiem, lamgm, phigm, "AREL HUM")
+    arfge = interpolate_horizontal(
+        arfgm, lamem, phiem, lamgm, phigm, "AREL HUM", indii=indii, indjj=indjj
+    )
 
     # wind vector rotation
     uge_rot, vge_rot = rotate_uv(

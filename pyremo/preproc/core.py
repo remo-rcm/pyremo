@@ -184,13 +184,24 @@ def intersect_regional(em, hm):
 
 
 def interpolate_horizontal(
-    da, lamem, phiem, lamgm, phigm, name=None, igr=None, blagm=None, blaem=None
+    da,
+    lamem,
+    phiem,
+    lamgm,
+    phigm,
+    name=None,
+    igr=None,
+    blagm=None,
+    blaem=None,
+    indii=None,
+    indjj=None,
 ):
     if name is None:
         name = da.name
     if igr is None:
         igr = 0
-    indii, indjj = intersect(lamgm, phigm, lamem, phiem)
+    if indii is None or indjj is None:
+        indii, indjj = intersect(lamgm, phigm, lamem, phiem)
     if blagm is None or blaem is None:
         return interp_horiz(
             da,

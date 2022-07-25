@@ -59,6 +59,8 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
         Pressure levels to interpolate to [hPa].
     t : xarray.DataArray
         Atmospheric temperature on model levels.
+    orog : xarray.DataArray
+        Orography [m].
     ps : xarray.DataArray
         Surface pressure.
     a : xarray.DataArray

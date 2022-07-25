@@ -15,6 +15,7 @@ New Features
 ~~~~~~~~~~~~
 
 - Added ``magic_numbers`` to API (:pull:`85`).
+- Documentation updates (:pull:`87`).
 
 v0.3.4 (11 July 2022)
 ---------------------

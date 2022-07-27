@@ -8,8 +8,33 @@ What's New
 
     import pyremo
 
-v0.3.2 (Unreleased)
+v0.4.0 (Unreleased)
 -------------------
+
+New Features
+~~~~~~~~~~~~
+
+- Added ``magic_numbers`` to API (:pull:`85`).
+
+v0.3.4 (11 July 2022)
+---------------------
+
+Patch release to use ``pyremo`` for cmorization tests with `CORDEX-CMIP6 cmor tables <https://github.com/WCRP-CORDEX/cordex-cmip6-cmor-tables>`_.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Updated ``pyremo.cmor`` API to choose cmor grids table (:pull:`83`)
+
+v0.3.3 (27 June 2022)
+---------------------
+
+Patch release to `fix version bug <https://github.com/remo-rcm/pyremo/commit/0ab457d7ba6f828497059797f66d218d26ca954a>`_.
+
+v0.3.2 (24 June 2022)
+---------------------
+
+Patch release to fix preprocessor bugs.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

@@ -20,6 +20,8 @@ Top-level functions
    parse_dates
    parse_absolute_time
    preprocess
+   magic_number
+   magic_numbers
 
 
 Physics

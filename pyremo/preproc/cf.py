@@ -1,7 +1,10 @@
 import os
-import subprocess
-import tempfile
 
+# import subprocess
+# import tempfile
+from datetime import timedelta as td
+
+import cftime as cfdt
 import numpy as np
 import pandas as pd
 import xarray as xr
@@ -13,17 +16,22 @@ from .core import check_lev, convert_units, get_vc2, horizontal_dims, open_mfdat
 cdo_exe = "cdo"
 default_catalog = "/work/ik1017/Catalogs/dkrz_cmip6_disk.csv.gz"
 
+cdo_datetime_format = "%Y-%m-%dT%H:%M:%S"
 
-def convert_to_datetime(time):
+
+def to_datetime(time):
     try:
         return pd.to_datetime(str(int(time)))
     except Exception:
         return time
 
 
-def convert_to_cfdatetime(time):
-    time = str(int(time))
-    return xr.cftime_range(start=time, end=time)[0]
+def to_cfdatetime(time, calendar="standard"):
+    # time = str(int(time))
+    try:
+        return xr.cftime_range(start=time, end=time, calendar=calendar)[0]
+    except Exception:
+        return np.nan
 
 
 def search_df(df, **kwargs):
@@ -46,18 +54,15 @@ def get_var_by_time(df, datetime=None, **kwargs):
 
 
 class CFModelSelector:
-    def __init__(self, df=None, scratch=None, **kwargs):
+    def __init__(self, df=None, scratch=None, calendar="standard", **kwargs):
         if df is None:
             df = pd.read_csv(default_catalog)
         df = df.copy()
         if kwargs:
             df = search_df(df, **kwargs)
-        # try:
-        self.df = self._update_time(df)
-        # except Exception:
-        #    self.df = df
-        #    warn("could not parse times in dataframe")
+        self.calendar = calendar
         self.tempfiles = []
+        self.df = self._update_time(df)
 
     def __repr__(self):
         return repr(self._group())
@@ -78,8 +83,8 @@ class CFModelSelector:
         ].agg(["unique"])
 
     def _update_time(self, df):
-        df["time_min"] = df["time_min"].apply(convert_to_datetime)
-        df["time_max"] = df["time_max"].apply(convert_to_datetime)
+        df["time_min"] = df["time_min"].apply(to_cfdatetime, calendar=self.calendar)
+        df["time_max"] = df["time_max"].apply(to_cfdatetime, calendar=self.calendar)
         return df
 
     def get_file(self, datetime=None, **kwargs):
@@ -92,23 +97,26 @@ class CFModelSelector:
         return sel.iloc[0].path
 
     # own cdo call here due to https://github.com/Try2Code/cdo-bindings/issues/34
+    # def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
+    #     if output is None:
+    #         output = ""
+    #     elif output == "temp":
+    #         output = tempfile.TemporaryDirectory(dir=self.scratch).name
+    #         self.tempfiles.append(output)
+    #     if isinstance(input, list):
+    #         input = " ".join(input)
+    #     call = "{} {} {} {} {}".format(cdo_exe, options, op, input, output)
+    #     if print_command is True:
+    #         print(call)
+    #     stdout = subprocess.Popen(
+    #         call, shell=True, stdout=subprocess.PIPE
+    #     ).stdout.read()
+    #     if output:
+    #         return output
+    #     return stdout
     def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
-        if output is None:
-            output = ""
-        elif output == "temp":
-            output = tempfile.TemporaryDirectory(dir=self.scratch).name
-            self.tempfiles.append(output)
-        if isinstance(input, list):
-            input = " ".join(input)
-        call = "{} {} {} {} {}".format(cdo_exe, options, op, input, output)
-        if print_command is True:
-            print(call)
-        stdout = subprocess.Popen(
-            call, shell=True, stdout=subprocess.PIPE
-        ).stdout.read()
-        if output:
-            return output
-        return stdout
+        cdo = Cdo(tempdir=self.scratch)
+        getattr(cdo, op)(options=options, input=input)
 
 
 def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
@@ -155,8 +163,8 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         ds = ds.sel(time=time_range)
         ds["akgm"], ds["bkgm"] = get_vc2(ds)
         ds = check_lev(ds)
-    if tos is not None:
-        ds["tos"] = map_sst(tos, ds.sel(time=time_range))
+    #    if tos is not None:
+    #        ds["tos"] = map_sst(tos, ds.sel(time=time_range))
     ds = ds.rename({"lev": lev_i})
     ds = convert_units(ds)
     if "sftlf" in ds:
@@ -181,16 +189,14 @@ class GFile:
             except Exception:
                 pass
         self.cdo = Cdo(tempdir=scratch, logging=True)
+        self.regridder = None
 
     def get_files(self, variables, datetime, **kwargs):
+        datetime = to_cfdatetime(datetime)
         files = {
             var: self.selector.get_file(variable_id=var, datetime=datetime, **kwargs)
             for var in variables
         }
-        return files
-
-    def get_gfile(self, datetime, **kwargs):
-        files = self.get_files(datetime, **kwargs)
         return files
 
     def extract_timestep(self, datetime=None, **kwargs):
@@ -208,33 +214,53 @@ class GFile:
         # files.update(self.get_files(self.sst, datetime=datetime, **kwargs))
         return files
 
-    def get_sst(self, datetime):
-        files = self.get_files([self.sst], datetime=datetime)
-        return files
-        ds = open_mfdataset(files[self.sst])
+    def get_sst(self, datetime, atmo_grid):
+        datetime = to_cfdatetime(datetime)
+        times = get_sst_times(datetime)
+        files = {
+            t: self.selector.get_file(variable_id=self.sst, datetime=t) for t in times
+        }
+        sst_extract = [
+            self.cdo.seldate(t.strftime(cdo_datetime_format), input=f)
+            for t, f in files.items()
+        ]
+        sst_ds = xr.open_mfdataset(sst_extract, use_cftime=True)
+        sst_ds = sst_ds[self.sst].interp(time=datetime.strftime(cdo_datetime_format))
+        return self.regrid_to_atmosphere(sst_ds, atmo_grid)
+
+    def regrid_to_atmosphere(self, ds, atmo_grid):
+        import xesmf as xe
+
+        atmo_grid = atmo_grid.copy()
+        if self.regridder is None:
+            print("creating regridder")
+            self.regridder = xe.Regridder(ds, atmo_grid, method="nearest_s2d")
+        ds = self.regridder(ds)
         return ds
 
+    def get_gfile(self, datetime, sst=True, **kwargs):
+        files = self.extract_files(datetime=datetime, **kwargs)
+        gds = xr.open_mfdataset(files.values(), compat="override", join="override")
+        if sst is True:
+            sst_ds = self.get_sst(datetime, gds)
+            sst_ds.name = self.sst
+            gds = gds.merge(sst_ds)
+        return gds
 
-def map_sst(tos, ref_ds, resample="6H", regrid=True):
-    from datetime import timedelta as td
 
-    import xesmf as xe
-
-    # tos_res = tos
-    attrs = tos.attrs
-    tos_times = (ref_ds.time.min() - td(days=1), ref_ds.time.max() + td(days=1))
-    tos = tos.sel(time=slice(tos_times[0], tos_times[1]))
-    # return tos_res
-    # tos = tos.resample(time=resample).interpolate("linear").chunk({"time": 1})
-    tos = tos.resample(time=resample).interpolate("linear")
-    tos = tos.sel(time=ref_ds.time)
-
-    if regrid:
-        regridder = xe.Regridder(tos, ref_ds, "nearest_s2d")
-        tos = regridder(tos)
-    tos.attrs.update(attrs)
-
-    return tos
+def get_sst_times(dt):
+    cal = dt.calendar
+    if dt.hour == 12:
+        return (dt,)
+    if dt.hour > 12:
+        dt1 = dt + td(days=1)
+    else:
+        dt1 = dt
+        dt = dt + td(days=-1)
+    return (
+        cfdt.datetime(dt.year, dt.month, dt.day, 12, calendar=cal),
+        cfdt.datetime(dt1.year, dt1.month, dt1.day, 12, calendar=cal),
+    )
 
 
 def open_datasets(datasets, ref_ds=None, time_range=None):

@@ -15,6 +15,7 @@ New Features
 ~~~~~~~~~~~~
 
 - Added ``magic_numbers`` to API (:pull:`85`).
+- New module for gfile creation from CMIP6 datasets (:pull:`78`).
 
 v0.3.4 (11 July 2022)
 ---------------------

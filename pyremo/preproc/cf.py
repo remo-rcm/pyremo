@@ -4,6 +4,7 @@ import os
 # import subprocess
 # import tempfile
 from datetime import timedelta as td
+from os import path as op
 
 import cftime as cfdt
 import dask
@@ -46,7 +47,10 @@ def get_times_from_files(files):
 
 
 def get_files(directory):
-    files = glob.glob(os.path.join(directory, "*.nc"))
+    if op.isdir(directory):
+        files = glob.glob(os.path.join(directory, "*.nc"))
+    else:
+        files = glob.glob(directory)
     files.sort
     return files
 
@@ -255,7 +259,7 @@ class GFile:
         # files.update(self.get_files(self.sst, datetime=datetime, **kwargs))
         return files
 
-    def get_sst(self, datetime, atmo_grid):
+    def get_sst(self, datetime, atmo_grid=None):
         datetime = to_cfdatetime(datetime, self.calendar)
         times = get_sst_times(datetime)
         files = {
@@ -267,19 +271,23 @@ class GFile:
         ]
         sst_ds = xr.open_mfdataset(sst_extract, use_cftime=True)
         sst_da = sst_ds[self.sst].interp(time=datetime.strftime(cdo_datetime_format))
+        if atmo_grid is None:
+            return sst_da
         return self.regrid_to_atmosphere(sst_da, atmo_grid)
 
-    def regrid_to_atmosphere(self, ds, atmo_grid):
+    def regrid_to_atmosphere(self, da, atmo_grid):
         import xesmf as xe
 
-        attrs = ds.attrs
+        attrs = da.attrs
         atmo_grid = atmo_grid.copy()
         if self.regridder is None:
             print("creating regridder")
-            self.regridder = xe.Regridder(ds, atmo_grid, method="nearest_s2d")
-        ds = self.regridder(ds)
-        ds.attrs = attrs
-        return ds
+            self.regridder = xe.Regridder(
+                da.to_dataset(), atmo_grid, method="nearest_s2d"
+            )
+        da = self.regridder(da)
+        da.attrs = attrs
+        return da
 
     def gfile(self, datetime, sst=True, **kwargs):
         files = self.extract_files(datetime=datetime, **kwargs)
@@ -288,6 +296,8 @@ class GFile:
             sst_ds = self.get_sst(datetime, gds)
             sst_ds.name = self.sst
             gds = gds.merge(sst_ds)
+        if "variable_id" in gds.attrs:
+            del gds.attrs["variable_id"]
         return gfile(gds)
         # gds = convert_units(gds)
         # if "sftlf" in gds:

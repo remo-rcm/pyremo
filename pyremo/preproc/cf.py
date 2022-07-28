@@ -1,3 +1,4 @@
+import glob
 import os
 
 # import subprocess
@@ -5,18 +6,71 @@ import os
 from datetime import timedelta as td
 
 import cftime as cfdt
+import dask
+import netCDF4
 import numpy as np
 import pandas as pd
 import xarray as xr
 from cdo import Cdo
 
-from .constants import lev_i
+# from .constants import lev_i
 from .core import check_lev, convert_units, get_vc2, horizontal_dims, open_mfdataset
 
 cdo_exe = "cdo"
 default_catalog = "/work/ik1017/Catalogs/dkrz_cmip6_disk.csv.gz"
 
 cdo_datetime_format = "%Y-%m-%dT%H:%M:%S"
+
+
+@dask.delayed
+def get_min_max_time(filename):
+    with netCDF4.Dataset(filename) as ds:
+        try:
+            time_min = netCDF4.num2date(
+                ds["time"][0], ds["time"].units, calendar=ds["time"].calendar
+            )
+            time_max = netCDF4.num2date(
+                ds["time"][-1], ds["time"].units, calendar=ds["time"].calendar
+            )
+            return time_min, time_max
+        except Exception:
+            return np.nan, np.nan
+
+
+# @dask.delayed
+def get_times_from_files(files):
+    result = {}
+    for f in files:
+        result[f] = get_min_max_time(f)
+    return result
+
+
+def get_files(directory):
+    files = glob.glob(os.path.join(directory, "*.nc"))
+    files.sort
+    return files
+
+
+def create_var_df(var, data):
+    df = pd.DataFrame.from_dict(data, orient="index", columns=["time_min", "time_max"])
+    df.index.name = "path"
+    df = df.reset_index()
+    df["variable_id"] = var
+    df.sort_values(by="time_min", inplace=True)
+    return df
+
+
+def create_df(data):
+    return pd.concat([create_var_df(v, d) for v, d in data.items()], ignore_index=True)
+
+
+def create_catalog(**args):
+    files = {}
+    for v, d in args.items():
+        files[v] = get_files(d)
+    for v, fs in files.items():
+        files[v] = get_times_from_files(fs)
+    return files
 
 
 def to_datetime(time):
@@ -93,27 +147,9 @@ class CFModelSelector:
             return list(sel.path)
             # raise Exception("file selection is not unique")
         if sel.empty:
-            raise Exception("no file found")
+            raise Exception("no file found: {}".format(kwargs))
         return sel.iloc[0].path
 
-    # own cdo call here due to https://github.com/Try2Code/cdo-bindings/issues/34
-    # def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
-    #     if output is None:
-    #         output = ""
-    #     elif output == "temp":
-    #         output = tempfile.TemporaryDirectory(dir=self.scratch).name
-    #         self.tempfiles.append(output)
-    #     if isinstance(input, list):
-    #         input = " ".join(input)
-    #     call = "{} {} {} {} {}".format(cdo_exe, options, op, input, output)
-    #     if print_command is True:
-    #         print(call)
-    #     stdout = subprocess.Popen(
-    #         call, shell=True, stdout=subprocess.PIPE
-    #     ).stdout.read()
-    #     if output:
-    #         return output
-    #     return stdout
     def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
         cdo = Cdo(tempdir=self.scratch)
         getattr(cdo, op)(options=options, input=input)
@@ -163,9 +199,9 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         ds = ds.sel(time=time_range)
         ds["akgm"], ds["bkgm"] = get_vc2(ds)
         ds = check_lev(ds)
-    #    if tos is not None:
-    #        ds["tos"] = map_sst(tos, ds.sel(time=time_range))
-    ds = ds.rename({"lev": lev_i})
+    # if tos is not None:
+    #    ds["tos"] = map_sst(tos, ds.sel(time=time_range))
+    # ds = ds.rename({"lev": lev_i})
     ds = convert_units(ds)
     if "sftlf" in ds:
         ds["sftlf"] = np.around(ds.sftlf)
@@ -181,8 +217,13 @@ class GFile:
     sst = "tos"
     all_vars = dynamics + fx  # + sst
 
-    def __init__(self, df=None, scratch=None, **kwargs):
-        self.selector = CFModelSelector(df=df, **kwargs)
+    def __init__(self, df=None, calendar=None, scratch=None, **kwargs):
+        if calendar is None:
+            try:
+                self.calendar = df.time_min.iloc[0].calendar
+            except Exception:
+                self.calendar = "standard"
+        self.selector = CFModelSelector(df=df, calendar=self.calendar, **kwargs)
         if scratch is None:
             try:
                 scratch = os.path.join(os.environ["SCRATCH"], ".cf-selector")
@@ -192,7 +233,7 @@ class GFile:
         self.regridder = None
 
     def get_files(self, variables, datetime, **kwargs):
-        datetime = to_cfdatetime(datetime)
+        datetime = to_cfdatetime(datetime, self.calendar)
         files = {
             var: self.selector.get_file(variable_id=var, datetime=datetime, **kwargs)
             for var in variables
@@ -215,7 +256,7 @@ class GFile:
         return files
 
     def get_sst(self, datetime, atmo_grid):
-        datetime = to_cfdatetime(datetime)
+        datetime = to_cfdatetime(datetime, self.calendar)
         times = get_sst_times(datetime)
         files = {
             t: self.selector.get_file(variable_id=self.sst, datetime=t) for t in times
@@ -225,27 +266,33 @@ class GFile:
             for t, f in files.items()
         ]
         sst_ds = xr.open_mfdataset(sst_extract, use_cftime=True)
-        sst_ds = sst_ds[self.sst].interp(time=datetime.strftime(cdo_datetime_format))
-        return self.regrid_to_atmosphere(sst_ds, atmo_grid)
+        sst_da = sst_ds[self.sst].interp(time=datetime.strftime(cdo_datetime_format))
+        return self.regrid_to_atmosphere(sst_da, atmo_grid)
 
     def regrid_to_atmosphere(self, ds, atmo_grid):
         import xesmf as xe
 
+        attrs = ds.attrs
         atmo_grid = atmo_grid.copy()
         if self.regridder is None:
             print("creating regridder")
             self.regridder = xe.Regridder(ds, atmo_grid, method="nearest_s2d")
         ds = self.regridder(ds)
+        ds.attrs = attrs
         return ds
 
-    def get_gfile(self, datetime, sst=True, **kwargs):
+    def gfile(self, datetime, sst=True, **kwargs):
         files = self.extract_files(datetime=datetime, **kwargs)
         gds = xr.open_mfdataset(files.values(), compat="override", join="override")
         if sst is True:
             sst_ds = self.get_sst(datetime, gds)
             sst_ds.name = self.sst
             gds = gds.merge(sst_ds)
-        return gds
+        return gfile(gds)
+        # gds = convert_units(gds)
+        # if "sftlf" in gds:
+        #    gds["sftlf"] = np.around(gds.sftlf)
+        # return gds
 
 
 def get_sst_times(dt):
@@ -286,3 +333,10 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
         dsets.append(da)
     dsets += list(get_vc2(ref_ds))
     return xr.merge(dsets, compat="override", join="override")
+
+
+def get_gfile(**kwargs):
+    files = create_catalog(**kwargs)
+    data = dask.compute(files)
+    df = create_df(data[0])
+    return GFile(df=df)

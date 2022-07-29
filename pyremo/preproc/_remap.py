@@ -1,5 +1,6 @@
 import os
 
+import cf_xarray as cfxr  # noqa
 import cordex as cx
 import numpy as np
 import xarray as xr
@@ -33,7 +34,17 @@ xr.set_options(keep_attrs=True)
 # variables that should have a mask with fill values
 fillvars = ["TSW", "SEAICE", "TSI"]
 
-vcs = ["hyai", "hybi", "hyam", "hybm", "akgm", "bkgm", "ak", "bk"]
+vcs = [
+    "hyai",
+    "hybi",
+    "hyam",
+    "hybm",
+    "akgm",
+    "bkgm",
+    "ak",
+    "bk",
+    "rotated_latitude_longitude",
+]
 
 
 def get_filename(date, expid="000000", template=None):
@@ -137,20 +148,9 @@ def remap(gds, domain_info, vc, surflib):
         `TSW`, `TSI` and `SEAICE`.
 
     """
-
-    #   'U'     , UR       , code=131, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_RIGHT)
-    #   CALL add(BOUNDARY_TABLE, 'V'     , VR       , code=132, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2, arakawa=ARAKAWA_TOP)
-    #   CALL add(BOUNDARY_TABLE, 'T'     , TR       , code=130, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
-    #   CALL add(BOUNDARY_TABLE, 'QD'    , QDR      , code=133, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
-    #   CALL add(BOUNDARY_TABLE, 'QW'    , QWR      , code=153, adims=(/IE,JE,KE, 2/), leveltype=110, kake=(/1  ,KE /), ntime=2)
-    #   CALL add(BOUNDARY_TABLE, 'PS'    , PSR      , code=134, adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
-    #   CALL add(BOUNDARY_TABLE, 'QDBL'  , QDBLR    , code=84 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
-    #   CALL add(BOUNDARY_TABLE, 'TSW'   , TSWECHR  , code=55 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
-
-    #   CALL add(BOUNDARY_TABLE, 'TSI'   , TSIECHR  , code=56 , adims=(/IE,JE, 2/)   , leveltype=1  , ntime=2)
-    #   CALL add(BOUNDARY_TABLE, 'SEAICE'
-
-    # curvilinear coordinaetes
+    # rename vertical coordinate of input to avoid conflict with output lev
+    gds = gds.copy()
+    gds = gds.rename({gds.cf["vertical"].name: lev_input})
 
     # remove time dimension if there is one
     fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
@@ -308,6 +308,7 @@ def remap(gds, domain_info, vc, surflib):
     ads.attrs = gds.attrs
 
     ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
+    ads.attrs["CORDEX_domain"] = domain_info.get("short_name", "no name")
 
     ads = update_attrs(ads)
 

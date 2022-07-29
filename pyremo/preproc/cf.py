@@ -111,6 +111,10 @@ def get_var_by_time(df, datetime=None, **kwargs):
     return df
 
 
+def cdo_call(self, options="", op="", input="", output="temp", print_command=True):
+    pass
+
+
 class CFModelSelector:
     def __init__(self, df=None, scratch=None, calendar="standard", **kwargs):
         if df is None:
@@ -228,12 +232,13 @@ class GFile:
             except Exception:
                 self.calendar = "standard"
         self.selector = CFModelSelector(df=df, calendar=self.calendar, **kwargs)
-        if scratch is None:
+        self.scratch = scratch
+        if self.scratch is None:
             try:
-                scratch = os.path.join(os.environ["SCRATCH"], ".cf-selector")
+                self.scratch = os.path.join(os.environ["SCRATCH"], ".cf-selector")
             except Exception:
                 pass
-        self.cdo = Cdo(tempdir=scratch, logging=True)
+        # self.cdo = Cdo(tempdir=self.scratch)
         self.regridder = None
 
     def get_files(self, variables, datetime, **kwargs):
@@ -248,16 +253,29 @@ class GFile:
         pass
 
     def extract_dynamic_timesteps(self, datetime=None, **kwargs):
+        datetime = to_cfdatetime(datetime, self.calendar)
         files = self.get_files(self.dynamics, datetime=datetime, **kwargs)
         if datetime is None:
             return files
-        return {v: self.cdo.seldate(datetime, input=f) for v, f in files.items()}
+        cdo = Cdo(tempdir=self.scratch)
+        return {
+            v: cdo.seldate(
+                datetime.strftime(cdo_datetime_format), input=f, returnXDataset=True
+            ).load()
+            for v, f in files.items()
+        }
 
-    def extract_files(self, datetime, **kwargs):
+    def extract_data(self, datetime, **kwargs):
         files = self.extract_dynamic_timesteps(datetime, **kwargs)
-        files.update(self.get_files(self.fx, datetime=None, **kwargs))
+        files.update(
+            {
+                var: xr.open_dataset(f).load()
+                for var, f in self.get_files(self.fx, datetime=None, **kwargs).items()
+            }
+        )
         # files.update(self.get_files(self.sst, datetime=datetime, **kwargs))
-        return files
+        return xr.merge(files.values(), compat="override", join="override")
+        # return files
 
     def get_sst(self, datetime, atmo_grid=None):
         datetime = to_cfdatetime(datetime, self.calendar)
@@ -265,37 +283,41 @@ class GFile:
         files = {
             t: self.selector.get_file(variable_id=self.sst, datetime=t) for t in times
         }
+        cdo = Cdo(tempdir=self.scratch)
         sst_extract = [
-            self.cdo.seldate(t.strftime(cdo_datetime_format), input=f)
+            cdo.seldate(
+                t.strftime(cdo_datetime_format), input=f, returnXDataset=True
+            ).load()
             for t, f in files.items()
         ]
-        sst_ds = xr.open_mfdataset(sst_extract, use_cftime=True)
-        sst_da = sst_ds[self.sst].interp(time=datetime.strftime(cdo_datetime_format))
+        sst_da = xr.merge(sst_extract)[
+            self.sst
+        ]  # xr.open_mfdataset(sst_extract, use_cftime=True)
+        if len(sst_da.time) > 1:
+            sst_da = sst_da.interp(time=datetime.strftime(cdo_datetime_format))
         if atmo_grid is None:
             return sst_da
-        return self.regrid_to_atmosphere(sst_da, atmo_grid)
+        return self.regrid_to_atmosphere(sst_da.squeeze(drop=True), atmo_grid)
 
     def regrid_to_atmosphere(self, da, atmo_grid):
         import xesmf as xe
 
         attrs = da.attrs
         atmo_grid = atmo_grid.copy()
-        if self.regridder is None:
-            print("creating regridder")
-            self.regridder = xe.Regridder(
-                da.to_dataset(), atmo_grid, method="nearest_s2d"
-            )
-        da = self.regridder(da)
+        atmo_grid["mask"] = ~(atmo_grid.sftlf > 0).squeeze(drop=True)
+        # if self.regridder is None:
+        ds = da.to_dataset()
+        ds["mask"] = ~ds.tos.isnull().squeeze(drop=True)
+        print("creating regridder")
+        self.regridder = xe.Regridder(ds, atmo_grid, method="nearest_s2d")
+        da = self.regridder(ds.tos)
         da.attrs = attrs
         return da
 
     def gfile(self, datetime, sst=True, **kwargs):
-        files = self.extract_files(datetime=datetime, **kwargs)
-        gds = xr.open_mfdataset(files.values(), compat="override", join="override")
+        gds = self.extract_data(datetime=datetime, **kwargs)
         if sst is True:
-            sst_ds = self.get_sst(datetime, gds)
-            sst_ds.name = self.sst
-            gds = gds.merge(sst_ds)
+            gds[self.sst] = self.get_sst(datetime, gds)
         if "variable_id" in gds.attrs:
             del gds.attrs["variable_id"]
         return gfile(gds)
@@ -346,7 +368,10 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
 
 
 def get_gfile(**kwargs):
-    files = create_catalog(**kwargs)
-    data = dask.compute(files)
-    df = create_df(data[0])
+    if "df" in kwargs:
+        df = kwargs["df"]
+    else:
+        files = create_catalog(**kwargs)
+        data = dask.compute(files)
+        df = create_df(data[0])
     return GFile(df=df)

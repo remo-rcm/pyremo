@@ -257,7 +257,10 @@ class GFile:
         files = self.get_files(self.dynamics, datetime=datetime, **kwargs)
         if datetime is None:
             return files
-        cdo = Cdo(tempdir=self.scratch)
+        if self.scratch is not None:
+            cdo = Cdo(tempdir=self.scratch)
+        else:
+            cdo = Cdo()
         return {
             v: cdo.seldate(
                 datetime.strftime(cdo_datetime_format), input=f, returnXDataset=True
@@ -283,7 +286,10 @@ class GFile:
         files = {
             t: self.selector.get_file(variable_id=self.sst, datetime=t) for t in times
         }
-        cdo = Cdo(tempdir=self.scratch)
+        if self.scratch is not None:
+            cdo = Cdo(tempdir=self.scratch)
+        else:
+            cdo = Cdo()
         sst_extract = [
             cdo.seldate(
                 t.strftime(cdo_datetime_format), input=f, returnXDataset=True

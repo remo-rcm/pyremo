@@ -80,7 +80,7 @@ def write_forcing_file(
         os.makedirs(path)
     if template is None:
         template = "a{}a{}.nc"
-    fname = op.join(path, get_filename(ds.time[0].dt, expid, template))
+    fname = op.join(path, get_filename(ds.time.min().dt, expid, template))
     for v in ds.data_vars:
         var = ds[v]
         var.encoding = encoding(var, missval)

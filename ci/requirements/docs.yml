@@ -6,7 +6,9 @@ channels:
 
 dependencies:
   - python
+  - dask
   - xarray
+  - netCDF4
   - cf_xarray
   - docutils==0.16
   - nbconvert
@@ -18,6 +20,7 @@ dependencies:
   - ipython
   - py-cordex
   - cftime
+  - python-cdo
   - sphinx #==4.2.0
   - sphinx_rtd_theme==1.0.0
 #  - sphinx-book-theme

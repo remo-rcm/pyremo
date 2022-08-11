@@ -10,6 +10,7 @@
    processing
    remo-dataset
    production-analysis
+   ghg-forcing
    preprocessing-cf
    cmorization
    ar

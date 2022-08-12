@@ -5,6 +5,7 @@ import sys
 
 from dask.distributed import Client
 
+from .core import cli as core_cli
 from .prsint import cli as prsint_cli
 
 
@@ -32,6 +33,17 @@ def prsint():
     print("Arguments: " + str(args))
     # druint.test()
     prsint_cli.prsint(args)
+    return 0
+
+
+def add_variables():
+    """Console script for variable replacement."""
+    parser = core_cli.replace_parser()
+    args = parser.parse_args()
+
+    print("Arguments: " + str(args))
+    # druint.test()
+    core_cli.replace_variables(args)
     return 0
 
 

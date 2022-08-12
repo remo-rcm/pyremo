@@ -48,6 +48,7 @@ def replace_vars(target, source, vars, overwrite=False):
         fname = get_output_filename(target)
     print(f"writing to {fname}")
     encode(tds).to_netcdf(fname)
+    return fname
 
 
 def replace_parser():
@@ -73,4 +74,4 @@ def replace_parser():
 
 
 def replace_variables(args):
-    replace_vars(args.target, args.source, args.variables, args.overwrite)
+    return replace_vars(args.target, args.source, args.variables, args.overwrite)

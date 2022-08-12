@@ -30,8 +30,6 @@ def prsint():
     parser = prsint_cli.prsint_parser()
     args = parser.parse_args()
 
-    print("Arguments: " + str(args))
-    # druint.test()
     prsint_cli.prsint(args)
     return 0
 
@@ -41,8 +39,6 @@ def add_variables():
     parser = core_cli.replace_parser()
     args = parser.parse_args()
 
-    print("Arguments: " + str(args))
-    # druint.test()
     core_cli.replace_variables(args)
     return 0
 

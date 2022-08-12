@@ -17,6 +17,7 @@ New Features
 - Added ``magic_numbers`` to API (:pull:`85`).
 - New module for gfile creation from CMIP6 datasets (:pull:`78`, :pull:`89`).
 - New notebook on greenhouse gas concentration (GHG). This documents how we create GHG forcing tables for CMIP6 downscaling (:pull:`92`).
+- Command line interface for variable replacement: This tool can be used to replace soil variables in a forcing file with data from a REMO output file (*warm soil*) (:pull:`93`).
 
 v0.3.4 (11 July 2022)
 ---------------------

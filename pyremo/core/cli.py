@@ -18,6 +18,11 @@ soil_default = [
     "SN",
 ]
 
+fx_default = [
+    "FIB",
+    "BLA"
+]
+
 
 def encode(ds):
     # we have to set the encoding here explicitly, otherwise xarray.to_netcdf will
@@ -52,7 +57,7 @@ def replace_vars(target, source, vars, overwrite=False):
 
 
 def replace_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Replace variables in target files with data from source file. This can be used to, e.g., add soil variables from a REMO output file to a forcing file.")
     parser.add_argument("target", metavar="target", help="target file")
     parser.add_argument("source", metavar="source", help="source file")
     parser.add_argument(
@@ -60,10 +65,19 @@ def replace_parser():
         "--variables",
         dest="variables",
         nargs="+",
-        help="list of variables to replace (default = {})".format(soil_default),
+        help="list of variables to add or replace (default = {})".format(soil_default),
         default=soil_default,
     )
     parser.add_argument(
+        "-fx",
+        "--static",
+        dest="static",
+        nargs="+",
+        help="list of variables to add or replace from soil library (default = {})".format(fx_default),
+        default=soil_default,
+    )
+    parser.add_argument(
+        "-f",
         "--overwrite",
         dest="overwrite",
         action="store_true",

@@ -18,6 +18,8 @@ out_templates = {
 
 date_fmt = {"monthly": "%Y%m"}
 
+INFO = """REMO pressure interpolaiton. Historically, REMO has its own interpolator although theoretically the algorithm is similar to what can be found, e.g., in metpy or GeoCAT. However, REMO’s algorithm includes a vertical spline fitting and requires temperature, pressure and orography as input."""
+
 
 def generate_filename(id, time, code, plev=None):
     try:
@@ -94,7 +96,7 @@ def prsint(args):
 
 
 def prsint_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=INFO)
     parser.add_argument("input", metavar="input file", nargs="+")
     parser.add_argument(
         "-v",

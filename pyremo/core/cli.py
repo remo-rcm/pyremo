@@ -18,10 +18,7 @@ soil_default = [
     "SN",
 ]
 
-fx_default = [
-    "FIB",
-    "BLA"
-]
+fx_default = ["FIB", "BLA"]
 
 
 def encode(ds):
@@ -57,7 +54,9 @@ def replace_vars(target, source, vars, overwrite=False):
 
 
 def replace_parser():
-    parser = argparse.ArgumentParser(description="Replace variables in target files with data from source file. This can be used to, e.g., add soil variables from a REMO output file to a forcing file.")
+    parser = argparse.ArgumentParser(
+        description="Replace variables in target files with data from source file. This can be used to, e.g., add soil variables from a REMO output file to a forcing file."
+    )
     parser.add_argument("target", metavar="target", help="target file")
     parser.add_argument("source", metavar="source", help="source file")
     parser.add_argument(
@@ -73,7 +72,9 @@ def replace_parser():
         "--static",
         dest="static",
         nargs="+",
-        help="list of variables to add or replace from soil library (default = {})".format(fx_default),
+        help="list of variables to add or replace from soil library (default = {})".format(
+            fx_default
+        ),
         default=soil_default,
     )
     parser.add_argument(

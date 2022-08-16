@@ -21,6 +21,7 @@ dependencies:
   - pytest-env
   - fsspec
   - requests
+  - setuptools<60.0 # see https://numpy.org/doc/stable/reference/distutils_status_migration.html
   - aiohttp
   - cmor
   - cdo

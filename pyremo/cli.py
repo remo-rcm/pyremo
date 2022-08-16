@@ -6,7 +6,7 @@ import sys
 from dask.distributed import Client
 
 from .core import cli as core_cli
-from .prsint import cli as prsint_cli
+
 
 
 def create_parser():
@@ -27,6 +27,7 @@ def main():
 
 def prsint():
     """Console script for prsint."""
+    from .prsint import cli as prsint_cli
     parser = prsint_cli.prsint_parser()
     args = parser.parse_args()
 

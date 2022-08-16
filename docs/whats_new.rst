@@ -24,8 +24,8 @@ Internal Changes
 
 - Pinned ``setuptools < 60.0`` due to Fortran build system (:pull:`94`).
 
-Documentation updates
-~~~~~~~~~~~~~~~~~~~~~
+Documentation
+~~~~~~~~~~~~~
 
 - Documentation updates (:pull:`87`).
 

@@ -2,8 +2,9 @@ import argparse
 from os import path as op
 from pathlib import Path
 
-import pyremo as pr
 import xarray as xr
+
+import pyremo as pr
 
 soil_default = [
     "TSL",
@@ -20,19 +21,19 @@ soil_default = [
 ]
 
 fx_default = [
-    'FIB',
-    'BLA',
-    'AZ0',
-    'ALB',
-    'VGRAT',
-    'VAROR',
-    'VLT',
-    'FOREST',
-    'FAO',
-    'WSMX',
-    'BETA',
-    'WMINLOK',
-    'WMAXLOK'
+    "FIB",
+    "BLA",
+    "AZ0",
+    "ALB",
+    "VGRAT",
+    "VAROR",
+    "VLT",
+    "FOREST",
+    "FAO",
+    "WSMX",
+    "BETA",
+    "WMINLOK",
+    "WMAXLOK",
 ]
 
 
@@ -114,4 +115,11 @@ def replace_parser():
 
 
 def replace_variables(args):
-    return replace_vars(args.target, args.source, args.variables, surflib=args.surflib, static=args.static, overwrite=args.overwrite)
+    return replace_vars(
+        args.target,
+        args.source,
+        args.variables,
+        surflib=args.surflib,
+        static=args.static,
+        overwrite=args.overwrite,
+    )

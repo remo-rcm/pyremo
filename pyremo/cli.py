@@ -8,7 +8,6 @@ from dask.distributed import Client
 from .core import cli as core_cli
 
 
-
 def create_parser():
     """Creates parser for command line tool."""
     return argparse.ArgumentParser()
@@ -28,6 +27,7 @@ def main():
 def prsint():
     """Console script for prsint."""
     from .prsint import cli as prsint_cli
+
     parser = prsint_cli.prsint_parser()
     args = parser.parse_args()
 

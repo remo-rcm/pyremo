@@ -1,4 +1,5 @@
 import os
+from os import path as op
 
 import cordex as cx
 import numpy as np
@@ -8,13 +9,33 @@ import pyremo as pr
 
 # variables that should have a mask with fill values
 fillvars = ["TSW", "SEAICE", "TSI"]
+vcs = [
+    "hyai",
+    "hybi",
+    "hyam",
+    "hybm",
+    "akgm",
+    "bkgm",
+    "ak",
+    "bk",
+    "rotated_latitude_longitude",
+]
+static = vcs + ["rotated_latitude_longitude"]
 
 
 def get_grid(domain_info):
     return cx.create_dataset(**domain_info)
 
 
-def encoding(da, missval):
+def encoding(da, missval=None):
+    result = {}
+    result.update(encode_missval(da, missval))
+    return result
+
+
+def encode_missval(da, missval=None):
+    if missval is None:
+        missval = 1.0e20
     if np.isnan(da.values).any():
         return {"_FillValue": missval}
     else:
@@ -41,7 +62,33 @@ def update_attrs(ds):
 def get_filename(date, expid="000000", template=None):
     if template is None:
         template = "x{}x{}.nc"
-    return template.format(expid, date.strftime(format="%Y%m%d%H"))
+    return template.format(expid, date.strftime("%Y%m%d%H"))
+
+
+def write_forcing_file(
+    ds,
+    path=None,
+    expid="000000",
+    template=None,
+    tempfiles=None,
+    missval=1.0e20,
+    **kwargs
+):
+    if path is None:
+        path = "./"
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    if template is None:
+        template = "a{}a{}.nc"
+    fname = op.join(path, get_filename(ds.time.min().dt, expid, template))
+    for v in ds.data_vars:
+        var = ds[v]
+        var.encoding = encoding(var, missval)
+        # expand time dim is neccessary
+        if v not in static and "time" not in var.dims:
+            ds[v] = var.expand_dims("time")
+    ds.to_netcdf(fname, **kwargs)
+    return fname
 
 
 def to_netcdf(

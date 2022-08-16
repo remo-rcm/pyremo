@@ -14,10 +14,15 @@ v0.4.0 (Unreleased)
 New Features
 ~~~~~~~~~~~~
 
-- Added ``magic_numbers`` to API (:pull:`85`).
-- Documentation updates (:pull:`87`).
+- Added :py:meth:`magic_numbers` to API (:pull:`85`).
 - New module for gfile creation from CMIP6 datasets (:pull:`78`, :pull:`89`).
 - New notebook on greenhouse gas concentration (GHG). This documents how we create GHG forcing tables for CMIP6 downscaling (:pull:`92`).
+
+Documentation updates
+~~~~~~~~~~~~~~~~~~~~~
+
+- Documentation updates (:pull:`87`).
+
 
 v0.3.4 (11 July 2022)
 ---------------------

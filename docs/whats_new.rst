@@ -18,6 +18,11 @@ New Features
 - New module for gfile creation from CMIP6 datasets (:pull:`78`, :pull:`89`).
 - New notebook on greenhouse gas concentration (GHG). This documents how we create GHG forcing tables for CMIP6 downscaling (:pull:`92`).
 
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Pinned ``setuptools < 60.0`` due to Fortran build system (:pull:`94`).
+
 Documentation updates
 ~~~~~~~~~~~~~~~~~~~~~
 

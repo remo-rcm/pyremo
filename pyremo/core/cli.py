@@ -2,6 +2,7 @@ import argparse
 from os import path as op
 from pathlib import Path
 
+import pyremo as pr
 import xarray as xr
 
 soil_default = [
@@ -18,7 +19,21 @@ soil_default = [
     "SN",
 ]
 
-fx_default = ["FIB", "BLA"]
+fx_default = [
+    'FIB',
+    'BLA',
+    'AZ0',
+    'ALB',
+    'VGRAT',
+    'VAROR',
+    'VLT',
+    'FOREST',
+    'FAO',
+    'WSMX',
+    'BETA',
+    'WMINLOK',
+    'WMAXLOK'
+]
 
 
 def encode(ds):
@@ -40,10 +55,13 @@ def get_output_filename(target):
     return op.join(path.parent, path.stem + "_replaced" + path.suffix)
 
 
-def replace_vars(target, source, vars, overwrite=False):
+def replace_vars(target, source, vars, surflib=None, static=None, overwrite=False):
     tds = xr.open_dataset(target)
     sds = xr.open_dataset(source)
     tds = tds.merge(sds[vars], compat="override", join="override")
+    if surflib is not None:
+        surflib = pr.data.surflib(surflib)
+        tds = tds.merge(surflib[static], compat="override", join="override")
     if overwrite is True:
         fname = target
     else:
@@ -68,6 +86,13 @@ def replace_parser():
         default=soil_default,
     )
     parser.add_argument(
+        "-s",
+        "--surflib",
+        dest="surflib",
+        default=None,
+        help="domain used for surface library",
+    )
+    parser.add_argument(
         "-fx",
         "--static",
         dest="static",
@@ -75,7 +100,7 @@ def replace_parser():
         help="list of variables to add or replace from soil library (default = {})".format(
             fx_default
         ),
-        default=soil_default,
+        default=fx_default,
     )
     parser.add_argument(
         "-f",
@@ -89,4 +114,4 @@ def replace_parser():
 
 
 def replace_variables(args):
-    return replace_vars(args.target, args.source, args.variables, args.overwrite)
+    return replace_vars(args.target, args.source, args.variables, surflib=args.surflib, static=args.static, overwrite=args.overwrite)

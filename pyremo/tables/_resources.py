@@ -1,7 +1,7 @@
 import pandas as pd
 import pooch
 
-base_url = "https://raw.githubusercontent.com/remo-rcm/tables/master/"
+base_url = "https://raw.githubusercontent.com/remo-rcm/tables/main/"
 
 cache_url = "~/.pyremo"
 

@@ -7,9 +7,10 @@ from pyintorg.remo import driver
 
 import pyremo as pr
 
+from .core import get_akbkem
 from .utils import get_grid, update_attrs
 
-dynamics = ["T", "U", "V", "PS", "QD", "QW", "QDBL", "TSW", "TSI", "SICE"]
+dynamics = ["T", "U", "V", "PS", "QD", "QW", "QDBL", "TSW", "TSI"]
 static = ["FIB", "BLA"]
 soil = ["TSL", "TSN", "TD3", "TD4", "TD5", "TD", "TDCL", "SN", "WL", "WS", "QDBL"]
 
@@ -65,9 +66,12 @@ def load_grid(ds, hm, vc):
     driver.load_grid(nlon_em, nlat_em, nlev_em, nlon_hm, nlat_hm, nlev_hm)
 
 
-def load_data(ds, order="F"):
-    ds = ds.copy().rename({"SEAICE": "SICE"})
-    for var in dynamics:
+def load_data(ds, lice=False, order="F"):
+    vars = dynamics.copy()
+    if lice is False:
+        vars.append("SICE")
+        ds = ds.copy().rename({"SEAICE": "SICE"})
+    for var in vars:
         load_variable(ds[var], mod=intorg.mo_nem, suffix="em", order=order)
 
 
@@ -126,7 +130,9 @@ def retrieve_variable(mod, name, shape, order="C"):
     if array.ndim == 2:
         shape = shape + (array.shape[-1],)
         dims = dims + ("lev",)
-    return xr.DataArray(array.copy().reshape(shape, order=order), dims=dims, name=name)
+    return xr.DataArray(
+        array.copy().reshape(shape, order=order), dims=dims, name=name
+    ).transpose(..., "rlat", "rlon")
 
 
 def retrieve_variables(variables, dims, time=None, transpose=None, crop=True):
@@ -163,11 +169,11 @@ def init(ds, em, hm, vc, surflib, order="F"):
     load_options()
 
 
-def remap_timestep(ds, hm, initial=False):
+def remap_timestep(ds, hm, initial=False, lice=False):
     variables = output_variables["dynamics"]
     if initial is True:
         variables += output_variables["initial"]
-    load_data(ds)
+    load_data(ds, lice)
     load_soil(ds)
     intorg.driver.remap_remo()
     dsa = retrieve_variables(
@@ -191,7 +197,16 @@ def write_timestep(ds, expid=None, path=None):
 
 
 def process_file(
-    file, em, hm, vc, surflib, initial=False, lice=False, path=None, write=True
+    file,
+    em,
+    hm,
+    vc,
+    surflib,
+    initial=False,
+    lice=False,
+    expid=None,
+    path=None,
+    write=True,
 ):
     if isinstance(file, str):
         ds = pr.preprocess(xr.open_dataset(file))
@@ -201,14 +216,26 @@ def process_file(
         surflib = pr.preprocess(xr.open_dataset(surflib))
 
     init(ds, em, hm, vc, surflib)
-    dsa = remap_timestep(ds, hm, initial)
+    dsa = remap_timestep(ds, hm, initial, lice)
     deallocate()
     dsa = update_dataset(dsa, ds, hm)
+    dsa = dsa.merge(get_akbkem(vc)).rename(
+        {"ak": "hyai", "bk": "hybi", "akh": "hyam", "bkh": "hybm"}
+    )
     if initial is True:
         # dsa = xr.merge([dsa, surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])])
-        dsa = dsa.merge(surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1]))
+        dsa = dsa.merge(
+            surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1]),
+            compat="override",
+            join="override",
+        )
+    for var, da in dsa.items():
+        if var in ["TSW", "SEAICE", "TSI"]:
+            dsa[var].encoding["_FillValue"] = 1.0e20
+        else:
+            dsa[var].encoding["_FillValue"] = None
     if write is True:
-        return write_timestep(dsa, path)
+        return write_timestep(dsa, expid, path)
     return dsa
 
 
@@ -220,6 +247,7 @@ def process_files(
     surflib,
     initial=False,
     lice=False,
+    expid=None,
     path=None,
     write=True,
     parallel=False,
@@ -232,7 +260,7 @@ def process_files(
         for f in files:
             results.append(
                 dask.delayed(process_file)(
-                    f, em, hm, vc, surflib, initial, lice, path, write
+                    f, em, hm, vc, surflib, initial, lice, expid, path, write
                 )
             )
         if compute is True:
@@ -265,6 +293,7 @@ def remap(
     surflib,
     initial=False,
     lice=None,
+    expid=None,
     path=None,
     write=True,
     parallel=False,
@@ -307,5 +336,5 @@ def remap(
     if not isinstance(files, (list, tuple)):
         files = [files]
     return process_files(
-        files, em, hm, vc, surflib, initial, lice, path, write, parallel, compute
+        files, em, hm, vc, surflib, initial, lice, expid, path, write, parallel, compute
     )

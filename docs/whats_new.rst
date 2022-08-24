@@ -23,6 +23,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 
 - Pinned ``setuptools < 60.0`` due to Fortran build system (:pull:`94`).
+- Table fetching now ignores file hashes. The tables will now be pulled from the ``main`` branch instead of ``master`` in the `tables repository <https://github.com/remo-rcm/tables>`_ (:pull:`97`). Older versions will rely on the ``master`` branch, so that one is now frozend and protected.
 
 Documentation
 ~~~~~~~~~~~~~

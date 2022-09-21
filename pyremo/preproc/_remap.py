@@ -389,7 +389,7 @@ def remap_remo(
     # qdeh = interpolate_horizontal_remo(tds.QD, indemi, indemj, dxemhm, dyemhm, "QD")
     fibeh = interpolate_horizontal_remo(tds.FIB, indemi, indemj, dxemhm, dyemhm, "FIB")
 
-    if has_seaice:
+    if has_seaice is True and lice is False:
         siceem = tds.SEAICE
         sicehm = interp_horiz_remo_cm(
             tds.SEAICE,
@@ -406,8 +406,9 @@ def remap_remo(
             "SICE",
         )
     else:
-        sicehm = None
+        # sicehm = None
         siceem = None
+        sicehm = None
 
     tsweh = interp_horiz_remo_cm(
         tds.TSW,
@@ -444,6 +445,9 @@ def remap_remo(
         siceem,
         sicehm,
     )
+
+    if lice is True:
+        sicehm = physics.seaice(tsweh)
 
     if initial is True:
         tds = addem_remo(tds)
@@ -695,9 +699,13 @@ def addem_remo(tds):
 
 def add_surflib(ads, surflib):
     surflib = surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])
-    surflib["rlon"] = ads.rlon
-    surflib["rlat"] = ads.rlat
-    return xr.merge((ads, surflib.drop("rotated_pole")))
+    try:
+        surflib = surflib.drop("rotated_pole")
+    except Exception:
+        pass
+    return xr.merge(
+        (ads, surflib.squeeze(drop=True)), join="override", compat="override"
+    )
 
 
 def remap_sst(tos, lamem, phiem, lamgm, phigm, blagm, blaem):

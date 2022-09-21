@@ -1,3 +1,4 @@
+import copy
 import os
 
 import numpy as np
@@ -131,7 +132,10 @@ def retrieve_variable(mod, name, shape, order="C"):
         shape = shape + (array.shape[-1],)
         dims = dims + ("lev",)
     return xr.DataArray(
-        array.copy().reshape(shape, order=order), dims=dims, name=name
+        # array.copy().reshape(shape, order=order), dims=dims, name=name
+        copy.deepcopy(array).reshape(shape, order=order),
+        dims=dims,
+        name=name,
     ).transpose(..., "rlat", "rlon")
 
 
@@ -217,7 +221,6 @@ def process_file(
 
     init(ds, em, hm, vc, surflib)
     dsa = remap_timestep(ds, hm, initial, lice)
-    deallocate()
     dsa = update_dataset(dsa, ds, hm)
     dsa = dsa.merge(get_akbkem(vc)).rename(
         {"ak": "hyai", "bk": "hybi", "akh": "hyam", "bkh": "hybm"}
@@ -229,13 +232,18 @@ def process_file(
             compat="override",
             join="override",
         )
-    for var, da in dsa.items():
+    for var in dsa.data_vars:
         if var in ["TSW", "SEAICE", "TSI"]:
             dsa[var].encoding["_FillValue"] = 1.0e20
         else:
             dsa[var].encoding["_FillValue"] = None
+        if dsa[var].dtype == np.float64:
+            dsa[var] = dsa[var].astype(np.float32)
+    deallocate()
     if write is True:
         return write_timestep(dsa, expid, path)
+        # deallocate()
+
     return dsa
 
 
@@ -338,3 +346,41 @@ def remap(
     return process_files(
         files, em, hm, vc, surflib, initial, lice, expid, path, write, parallel, compute
     )
+
+
+class Remapper:
+
+    from pyintorg.remo import driver
+
+    def __init__(self, file, em, hm, vc, surflib, order="F"):
+        if isinstance(file, str):
+            ds = pr.preprocess(xr.open_dataset(file))
+        else:
+            ds = file
+        if isinstance(surflib, str):
+            surflib = pr.preprocess(xr.open_dataset(surflib))
+        ds = update(ds)
+        surflib = update(surflib)
+        self.load_grid(ds, hm, vc)
+        self.allocate()
+        # intorg.mo_nem.fibem[:] = ds.FIB.to_numpy().reshape(get_fshape(ds.FIB), order='F')
+        load_vc(ds, vc)
+        load_coordinates(ds, em, hm, order=order)
+        load_static(ds, order=order)
+        load_surflib(surflib, order=order)
+        load_options()
+
+    def deallocate():
+        driver.deallocate_data()
+
+    def allocate(self):
+        driver.allocate_data()
+
+    def load_grid(self, ds, hm, vc):
+        nlon_em = ds.dims["rlon"]
+        nlat_em = ds.dims["rlat"]
+        nlev_em = ds.dims["lev"]
+        nlon_hm = hm["nlon"]
+        nlat_hm = hm["nlat"]
+        nlev_hm = len(vc) - 1
+        driver.load_grid(nlon_em, nlat_em, nlev_em, nlon_hm, nlat_hm, nlev_hm)

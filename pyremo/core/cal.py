@@ -111,4 +111,4 @@ def parse_absolute_time(time, use_cftime=False, calendar="standard"):
         CF calendar if use_cftime is True.
     """
     parser = AbsoluteCalendar()
-    return [parser.num2date(date, use_cftime, calendar) for date in time]
+    return [parser.num2date(date, use_cftime, calendar=calendar) for date in time]

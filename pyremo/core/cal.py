@@ -51,7 +51,7 @@ class AbsoluteCalendar:
         frac = delta.total_seconds() / dt.timedelta(days=1).total_seconds()
         return float(datetime.strftime(self.fmt)) + frac
 
-    def num2date(self, num, use_cftime=False, roundTo=60):
+    def num2date(self, num, use_cftime=False, roundTo=60, calendar="standard"):
         """convert a numeric absolute date value to a datetime object."""
         frac, whole = math.modf(num)
         date_str = str(int(whole))
@@ -72,11 +72,12 @@ class AbsoluteCalendar:
                 datetime.day,
                 datetime.hour,
                 datetime.minute,
+                calendar=calendar,
             )
         return datetime
 
 
-def parse_dates(ds, use_cftime=False):
+def parse_dates(ds, use_cftime=False, calendar="standard"):
     """Update the time axis of a REMO dataset.
 
     Updates the time axis of a REMO dataset containing an absolute time axis.
@@ -87,13 +88,15 @@ def parse_dates(ds, use_cftime=False):
         Dataset with absolute time axis.
     use_cftime: bool
         Use cftime objects instead of datetime objects.
+    calendar: str
+        CF calendar if use_cftime is True.
     """
     ds = ds.copy()
-    ds["time"] = parse_absolute_time(ds.time, use_cftime=use_cftime)
+    ds["time"] = parse_absolute_time(ds.time, use_cftime=use_cftime, calendar=calendar)
     return ds
 
 
-def parse_absolute_time(time, use_cftime=False):
+def parse_absolute_time(time, use_cftime=False, calendar="standard"):
     """Update a time axis containg fractional absolute dates.
 
     Updates fractional absolute dates to relative dates.
@@ -104,6 +107,8 @@ def parse_absolute_time(time, use_cftime=False):
         Time axis containing absolute dates as float or int.
     use_cftime: bool
         Use cftime objects instead of datetime objects.
+    calendar: str
+        CF calendar if use_cftime is True.
     """
     parser = AbsoluteCalendar()
-    return [parser.num2date(date, use_cftime) for date in time]
+    return [parser.num2date(date, use_cftime, calendar) for date in time]

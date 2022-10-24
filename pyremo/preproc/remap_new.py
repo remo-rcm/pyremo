@@ -57,6 +57,7 @@ def remap(
     regridder=None,
     regridder_u=None,
     regridder_v=None,
+    regridder_sst=None,
 ):
     """remapping workflow
 
@@ -140,43 +141,6 @@ def remap(
     uvge = uvge.assign_coords(rlon=tge.rlon, rlat=tge.rlat)
     vuge = vuge.assign_coords(rlon=tge.rlon, rlat=tge.rlat)
 
-    # horizontal interpolation
-    # tge = interpolate_horizontal(
-    #     gds.ta, lamem, phiem, lamgm, phigm, "T", indii=indii, indjj=indjj
-    # )
-    # psge = interpolate_horizontal(
-    #     gds.ps, lamem, phiem, lamgm, phigm, "PS", indii=indii, indjj=indjj
-    # )
-    # uge = interpolate_horizontal(
-    #     gds.ua, lamem, phiem, lamgm, phigm, "U", 1, indii=indii, indjj=indjj
-    # )
-    # uvge = interpolate_horizontal(
-    #     gds.ua, lamem, phiem, lamgm, phigm, "U", 2, indii=indii, indjj=indjj
-    # )
-    # vge = interpolate_horizontal(
-    #     gds.va, lamem, phiem, lamgm, phigm, "V", 2, indii=indii, indjj=indjj
-    # )
-    # vuge = interpolate_horizontal(
-    #     gds.va, lamem, phiem, lamgm, phigm, "V", 1, indii=indii, indjj=indjj
-    # )
-    # fibge = interpolate_horizontal(
-    #     gds.orog, lamem, phiem, lamgm, phigm, "FIB", indii=indii, indjj=indjj
-    # )
-
-    # geopotential
-    #     if "time" in gds.hus.dims:
-    #         hus = gds.hus.isel(time=0)
-    #     else:
-    #         hus = gds.hus
-    #     if "time" in gds.ta.dims:
-    #         ta = gds.ta.isel(time=0)
-    #     else:
-    #         ta = gds.ta
-    #     if "time" in gds.ps.dims:
-    #         ps = gds.ps.isel(time=0)
-    #     else:
-    #         ps = gds.ps
-
     ficgm = geopotential(
         gds.orog, gds.ta, gds.hus, gds.ps, gds.akgm, gds.bkgm
     )  # .squeeze(drop=True)
@@ -242,9 +206,21 @@ def remap(
         uem, vem, psem, akbkem.ak, akbkem.bk, lamem, phiem, philuem, dlamem, dphiem
     )
 
+    tsw = regridder_sst(gds.tos)
+    tsw.name = "TSW"
+
+    # check if gcm contains seaice, else derive from sst
+    if "sic" in gds:
+        seaice = regridder_sst(gds.sic)
+    else:
+        seaice = physics.seaice(tsw)
+    seaice.name = "SEAICE"
+
     water_content = physics.water_content(tem, arfem, psem, akbkem.akh, akbkem.bkh)
 
-    ads = xr.merge([tem, uem_corr, vem_corr, psem, arfem, water_content, akbkem])
+    ads = xr.merge(
+        [tem, uem_corr, vem_corr, psem, arfem, tsw, seaice, water_content, akbkem]
+    )
 
     grid = get_grid(domain_info)
 
@@ -270,14 +246,19 @@ def remap(
 
 
 class Remapper:
-    def __init__(self, gds, domain_info, vc, surflib, method="bilinear", periodic=True):
+    def __init__(
+        self, gds, domain_info, vc, surflib, method="bilinear", periodic=True, sst=None
+    ):
         self.domain_info = domain_info
         self.vc = vc
         self.surflib = surflib.load()
         self.method = method
         self.periodic = periodic
         self._create_rcm_grids(domain_info)
-        self._init_regridder(gds)
+        # if "time" in gds.coords:
+        self._init_regridder(gds, sst=sst)
+        # else:
+        # self._init_regridder(gds.isel(time=0))
 
     def _create_rcm_grids(self, domain_info):
         # regional grid
@@ -289,7 +270,8 @@ class Remapper:
         self.grid_u = get_grid(domain_info_u)
         self.grid_v = get_grid(domain_info_v)
 
-    def _init_regridder(self, gds):
+    def _init_regridder(self, gds, sst=None):
+
         self.regridder = Regridder(
             gds, self.grid, method=self.method, periodic=self.periodic
         )
@@ -298,6 +280,19 @@ class Remapper:
         )
         self.regridder_v = Regridder(
             gds, self.grid_v, method=self.method, periodic=self.periodic
+        )
+        if sst is None:
+            sst = gds.tos
+        sst_mask = ~sst.isnull().squeeze(drop=True)
+        sst_mask.name = "mask"
+        bla = self.surflib.BLA.isel(rlon=slice(1, -1), rlat=slice(1, -1))
+        bla.name = "mask"
+        self.regridder_sst = Regridder(
+            xr.merge([sst, sst_mask]),
+            self.grid.merge(1 - bla, join="override"),
+            method=self.method,
+            extrap_method="nearest_s2d",
+            periodic=self.periodic,
         )
 
     def remap(self, gds):
@@ -309,4 +304,5 @@ class Remapper:
             regridder=self.regridder,
             regridder_u=self.regridder_u,
             regridder_v=self.regridder_v,
+            regridder_sst=self.regridder_sst,
         )

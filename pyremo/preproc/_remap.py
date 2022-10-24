@@ -354,6 +354,8 @@ def remap_remo(
     """
     # check if we have to derive seaice from tsw
     has_seaice = "SEAICE" in tds
+    if has_seaice is True:
+        tds["SEAICE"] = tds.SEAICE.fillna(0.0)
     if lice is None:
         lice = "SEAICE" not in tds
     # rename coords so they dont conflict with hm coords
@@ -394,6 +396,8 @@ def remap_remo(
     fibeh = interpolate_horizontal_remo(tds.FIB, indemi, indemj, dxemhm, dyemhm, "FIB")
 
     if has_seaice is True and lice is False:
+
+        tds["SEAICE"] = tds.SEAICE.fillna(0.0)
         siceem = tds.SEAICE
         sicehm = interp_horiz_remo_cm(
             tds.SEAICE,
@@ -409,6 +413,7 @@ def remap_remo(
             lamhm,
             "SICE",
         )
+        sicehm.name = "SEAICE"
     else:
         # sicehm = None
         siceem = None

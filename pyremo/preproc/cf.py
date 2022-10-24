@@ -315,7 +315,9 @@ class GFile:
         ds = da.to_dataset()
         ds["mask"] = ~ds.tos.isnull().squeeze(drop=True)
         print("creating regridder")
-        self.regridder = xe.Regridder(ds, atmo_grid, method="nearest_s2d")
+        self.regridder = xe.Regridder(
+            ds, atmo_grid, method="nearest_s2d", extrap_method="nearest_s2d"
+        )
         da = self.regridder(ds.tos)
         da.attrs = attrs
         return da

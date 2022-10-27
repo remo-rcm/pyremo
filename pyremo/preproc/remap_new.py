@@ -247,12 +247,21 @@ def remap(
 
 class Remapper:
     def __init__(
-        self, gds, domain_info, vc, surflib, method="bilinear", periodic=True, sst=None
+        self,
+        gds,
+        domain_info,
+        vc,
+        surflib,
+        method_atmo="bilinear",
+        method_sst="nearest_s2d",
+        periodic=True,
+        sst=None,
     ):
         self.domain_info = domain_info
         self.vc = vc
         self.surflib = surflib.load()
-        self.method = method
+        self.method = method_atmo
+        self.method_sst = method_sst
         self.periodic = periodic
         self._create_rcm_grids(domain_info)
         # if "time" in gds.coords:
@@ -288,10 +297,12 @@ class Remapper:
         bla = self.surflib.BLA.isel(rlon=slice(1, -1), rlat=slice(1, -1))
         bla.name = "mask"
         self.regridder_sst = Regridder(
-            xr.merge([sst, sst_mask]),
-            self.grid.merge(1 - bla, join="override"),
-            method=self.method,
+            sst_mask.to_dataset(),
+            xr.merge([self.grid, 1.0 - bla], join="override"),
+            # self.grid.merge(1 - bla, join="override"),
+            method=self.method_sst,
             extrap_method="nearest_s2d",
+            ignore_degenerate=True,
             periodic=self.periodic,
         )
 

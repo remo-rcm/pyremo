@@ -155,6 +155,23 @@ def remap(gds, domain_info, vc, surflib):
     gds = gds.copy()
     gds = gds.rename({gds.cf["vertical"].name: lev_input})
 
+    if "clw" in gds:
+        gds["clw"] = gds.clw.clip(min=0.0)
+    invalid = (gds.hus <= 0.0) | (gds.hus > 1.0) | (gds.clw > 1)
+    gds["hus"] = xr.where(invalid, 0.0, gds.hus)
+    gds["clw"] = xr.where(invalid, 0.0, gds.clw)
+    # DO ij = 1, IJGM
+    # QWGm(ij, k) = MAX(0.0_DP, QWGm(ij, k))
+    # IF ( QDGm(ij, k)<=0.0_DP ) THEN
+    #   QDGm(ij, k) = 0.0_DP
+    #   QWGm(ij, k) = 0.0_DP
+    # END IF
+    # IF ( QDGm(ij, k)>1.0_DP .OR. QWGm(ij, k)>1.0_DP ) THEN
+    #   QDGm(ij, k) = 0.0_DP
+    #   QWGm(ij, k) = 0.0_DP
+    # END IF
+    # END DO
+
     # remove time dimension if there is one
     fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
 
@@ -188,7 +205,7 @@ def remap(gds, domain_info, vc, surflib):
     fibge = interpolate_horizontal(
         gds.orog, lamem, phiem, lamgm, phigm, "FIB", indii=indii, indjj=indjj
     )
-
+    # return uge, vge
     # geopotential
     #     if "time" in gds.hus.dims:
     #         hus = gds.hus.isel(time=0)
@@ -219,14 +236,15 @@ def remap(gds, domain_info, vc, surflib):
     arfge = interpolate_horizontal(
         arfgm, lamem, phiem, lamgm, phigm, "AREL HUM", indii=indii, indjj=indjj
     )
-
+    # return arfge
     # wind vector rotation
     uge_rot, vge_rot = rotate_uv(
         uge, vge, uvge, vuge, lamem, phiem, domain_info["pollon"], domain_info["pollat"]
     )
-
+    # return uge_rot, vge_rot
     # first pressure correction
     kpbl = pbl_index(gds.akgm, gds.bkgm)
+
     ps1em = pressure_correction_em(
         psge, tge, arfge, fibge, fibem, gds.akgm, gds.bkgm, kpbl
     )
@@ -236,24 +254,25 @@ def remap(gds, domain_info, vc, surflib):
     bkhgm = 0.5 * (gds.bkgm[:-1] + gds.bkgm[1:])
 
     akbkem = get_akbkem(vc)
+    ptop = akbkem.ak[0]
 
     tem = interpolate_vertical(
-        tge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "T", kpbl
+        tge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "T", kpbl, ptop=ptop
     )
 
     arfem = interpolate_vertical(
-        arfge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "RF", kpbl
+        arfge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "RF", kpbl, ptop=ptop
     )
-
+    # return arfem
     # second pressure correction and vertical interpolation of wind
     psem = pressure_correction_ge(ps1em, tem, arfem, ficge, fibem, akbkem.ak, akbkem.bk)
     psem.name = "PS"
 
     uem = interpolate_vertical(
-        uge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "U", kpbl
+        uge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "U", kpbl, ptop=ptop
     )
     vem = interpolate_vertical(
-        vge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "V", kpbl
+        vge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "V", kpbl, ptop=ptop
     )
 
     # correct wind with potential divergence

@@ -522,16 +522,17 @@ def remap_remo(
     # dakem = tds.hyai[1:] - tds.hyai[:-1]
     # dbkem = tds.hybi[1:] - tds.hybi[:-1]
     akbkhm = get_akbkem(vc)
+    ptop = akbkhm.ak[0]
 
     thm = interpolate_vertical(
-        teh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "T", kpbl
+        teh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "T", kpbl, ptop=ptop
     )
     # return thm
     # return teh,thm, pseh, ps1hm
     # return akhem, bkhem, akbkhm.akh, akbkhm.bkh
 
     arfhm = interpolate_vertical(
-        arfeh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "RF", kpbl
+        arfeh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "RF", kpbl, ptop=ptop
     )
 
     # second pressure correction and vertical interpolation of wind
@@ -563,6 +564,7 @@ def remap_remo(
         akbkhm.bkh,
         "U",
         kpbl,
+        ptop=ptop,
     )
     # pseh_v = pseh.interp(rlat=pseh.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
     # pshm_v = pshm.interp(rlat=pshm.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
@@ -588,17 +590,16 @@ def remap_remo(
         akbkhm.bkh,
         "V",
         kpbl,
+        ptop=ptop,
     )
 
     philuhm = domain_info_hm["ll_lon"]
     dlamhm = domain_info_hm["dlon"]
     dphihm = domain_info_hm["dlat"]
 
-    print("correct uv")
     uhm_corr, vhm_corr = correct_uv(
         uhm, vhm, pshm, akbkhm.ak, akbkhm.bk, lamhm, phihm, philuhm, dlamhm, dphihm
     )
-    print("correct uv done")
 
     water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
     # tsi = physics.tsi(tsw)

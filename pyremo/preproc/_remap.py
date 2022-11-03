@@ -155,11 +155,11 @@ def remap(gds, domain_info, vc, surflib):
     gds = gds.copy()
     gds = gds.rename({gds.cf["vertical"].name: lev_input})
 
-    if "clw" in gds:
-        gds["clw"] = gds.clw.clip(min=0.0)
-    invalid = (gds.hus <= 0.0) | (gds.hus > 1.0) | (gds.clw > 1)
-    gds["hus"] = xr.where(invalid, 0.0, gds.hus)
-    gds["clw"] = xr.where(invalid, 0.0, gds.clw)
+    # if "clw" in gds:
+    #    gds["clw"] = gds.clw.clip(min=0.0)
+    # invalid = (gds.hus <= 0.0) | (gds.hus > 1.0) | (gds.clw > 1)
+    # gds["hus"] = xr.where(invalid, 0.0, gds.hus)
+    # gds["clw"] = xr.where(invalid, 0.0, gds.clw)
     # DO ij = 1, IJGM
     # QWGm(ij, k) = MAX(0.0_DP, QWGm(ij, k))
     # IF ( QDGm(ij, k)<=0.0_DP ) THEN

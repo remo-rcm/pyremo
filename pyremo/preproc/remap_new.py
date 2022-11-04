@@ -54,10 +54,10 @@ def remap(
     surflib,
     method="bilinear",
     periodic=True,
-    regridder=None,
-    regridder_u=None,
-    regridder_v=None,
-    regridder_sst=None,
+    weights=None,
+    weights_u=None,
+    weights_v=None,
+    weights_with_mask=None,
 ):
     """remapping workflow
 
@@ -123,12 +123,44 @@ def remap(
     # compute remap matrix
     # indii, indjj = intersect(lamgm, phigm, lamem, phiem)  # .compute()
 
-    if regridder is None:
-        regridder = Regridder(gds, grid, method=method, periodic=periodic)
-    if regridder_u is None:
-        regridder_u = Regridder(gds, grid_u, method=method, periodic=periodic)
-    if regridder_v is None:
-        regridder_v = Regridder(gds, grid_v, method=method, periodic=periodic)
+    regridder = Regridder(
+        gds,
+        grid,
+        method=method,
+        periodic=periodic,
+        reuse_weights=(weights is not None),
+        weights=weights,
+    )
+    regridder_u = Regridder(
+        gds,
+        grid_u,
+        method=method,
+        periodic=periodic,
+        reuse_weights=(weights_u is not None),
+        weights=weights_u,
+    )
+    regridder_v = Regridder(
+        gds,
+        grid_v,
+        method=method,
+        periodic=periodic,
+        reuse_weights=(weights_v is not None),
+        weights=weights_v,
+    )
+    print(surflib.BLA)
+    regridder_sst = Regridder(
+        ~gds.tos.isnull().squeeze(drop=True).to_dataset().rename({"tos": "mask"}),
+        xr.merge([grid, 1.0 - surflib.BLA.squeeze(drop=True)], join="override").rename(
+            {"BLA": "mask"}
+        ),
+        method=method,
+        periodic=periodic,
+        reuse_weights=(weights_with_mask is not None),
+        weights=weights_with_mask,
+        extrap_method="inverse_dist",
+        ignore_degenerate=True,
+    )
+    print(regridder_sst)
 
     tge = regridder(gds.ta)
     psge = regridder(gds.ps)
@@ -217,9 +249,10 @@ def remap(
     seaice.name = "SEAICE"
 
     water_content = physics.water_content(tem, arfem, psem, akbkem.akh, akbkem.bkh)
+    tsi = physics.tsi(tsw)
 
     ads = xr.merge(
-        [tem, uem_corr, vem_corr, psem, arfem, tsw, seaice, water_content, akbkem]
+        [tem, uem_corr, vem_corr, psem, arfem, tsw, seaice, water_content, tsi, akbkem]
     )
 
     grid = get_grid(domain_info)
@@ -253,7 +286,8 @@ class Remapper:
         vc,
         surflib,
         method_atmo="bilinear",
-        method_sst="nearest_s2d",
+        # method_sst="nearest_s2d",
+        method_sst="bilinear",
         periodic=True,
         sst=None,
     ):
@@ -265,7 +299,7 @@ class Remapper:
         self.periodic = periodic
         self._create_rcm_grids(domain_info)
         # if "time" in gds.coords:
-        self._init_regridder(gds, sst=sst)
+        self._init_weights(gds, sst=sst)
         # else:
         # self._init_regridder(gds.isel(time=0))
 
@@ -279,32 +313,32 @@ class Remapper:
         self.grid_u = get_grid(domain_info_u)
         self.grid_v = get_grid(domain_info_v)
 
-    def _init_regridder(self, gds, sst=None):
+    def _init_weights(self, gds, sst=None):
 
-        self.regridder = Regridder(
+        self.weights = Regridder(
             gds, self.grid, method=self.method, periodic=self.periodic
-        )
-        self.regridder_u = Regridder(
+        ).to_netcdf("weights.nc")
+        self.weights_u = Regridder(
             gds, self.grid_u, method=self.method, periodic=self.periodic
-        )
-        self.regridder_v = Regridder(
+        ).to_netcdf("weights_u.nc")
+        self.weights_v = Regridder(
             gds, self.grid_v, method=self.method, periodic=self.periodic
-        )
+        ).to_netcdf("weights_v.nc")
         if sst is None:
             sst = gds.tos
         sst_mask = ~sst.isnull().squeeze(drop=True)
         sst_mask.name = "mask"
         bla = self.surflib.BLA.isel(rlon=slice(1, -1), rlat=slice(1, -1))
         bla.name = "mask"
-        self.regridder_sst = Regridder(
+        self.weights_sst = Regridder(
             sst_mask.to_dataset(),
             xr.merge([self.grid, 1.0 - bla], join="override"),
             # self.grid.merge(1 - bla, join="override"),
             method=self.method_sst,
-            extrap_method="nearest_s2d",
+            extrap_method="inverse_dist",
             ignore_degenerate=True,
             periodic=self.periodic,
-        )
+        ).to_netcdf("weights_sst.nc")
 
     def remap(self, gds):
         return remap(
@@ -312,8 +346,8 @@ class Remapper:
             self.domain_info,
             self.vc,
             self.surflib,
-            regridder=self.regridder,
-            regridder_u=self.regridder_u,
-            regridder_v=self.regridder_v,
-            regridder_sst=self.regridder_sst,
+            weights=self.weights,
+            weights_u=self.weights_u,
+            weights_v=self.weights_v,
+            weights_with_mask=self.weights_sst,
         )

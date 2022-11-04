@@ -19,7 +19,7 @@ New Features
 - CF preprocessor is updated to work with `xesmf` for horizontal interpolation (:pull:`100`). This gives much more stable results especially for interpolating with masks, e.g., the sst.
 - New notebook on greenhouse gas concentration (GHG). This documents how we create GHG forcing tables for CMIP6 downscaling (:pull:`92`).
 - Command line interface ``pradd-vars`` for variable replacement: This tool can be used to replace soil variables in a forcing file with data from a REMO output file (*warm soil*) (:pull:`93`).
-- Updates for double-nesting preprocessor (:pull:`98`).
+- Updates for (double-nesting) preprocessor (:pull:`98`), includes an implementation for using a top level pressure (`ptop`) during vertical interpolation (:pull:`104`).
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

@@ -885,13 +885,23 @@ def pressure_correction_em(psge, tge, arfge, fibge, fibem, akgm, bkgm, kpbl):
     return result
 
 
-def interpolate_vertical(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, kpbl):
+def interpolate_vertical(
+    xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, kpbl, ptop=0.0
+):
     twoD_dims = list(horizontal_dims(psge))
     threeD_dims = list(horizontal_dims(psge)) + [lev_gm]
     input_core_dims = (
         [threeD_dims]
         + 2 * [twoD_dims]
-        + [[akhgm.dims[0]], [bkhgm.dims[0]], [akhem.dims[0]], [bkhem.dims[0]], [], []]
+        + [
+            [akhgm.dims[0]],
+            [bkhgm.dims[0]],
+            [akhem.dims[0]],
+            [bkhem.dims[0]],
+            [],
+            [],
+            [],
+        ]
     )
     output_core_dims = [twoD_dims + [akhem.dims[0]]]
     # print(output_core_dims)
@@ -906,6 +916,7 @@ def interpolate_vertical(xge, psge, ps1em, akhgm, bkhgm, akhem, bkhem, varname, 
         bkhem,
         varname,
         kpbl,
+        ptop,
         input_core_dims=input_core_dims,  # list with one entry per arg
         output_core_dims=output_core_dims,  # returned data has 3 dimensions
         # exclude_dims=set(("index",)),

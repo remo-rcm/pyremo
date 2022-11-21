@@ -47,11 +47,13 @@ def get_times_from_files(files):
 
 
 def get_files(directory):
+    directory = op.abspath(directory)
+    # print('looking into', directory, op.isdir(directory), op.isfile(directory), Path(directory).is_dir())
     if op.isdir(directory):
         files = glob.glob(os.path.join(directory, "*.nc"))
     else:
         files = glob.glob(directory)
-    files.sort
+    files.sort()
     return files
 
 
@@ -70,6 +72,7 @@ def create_df(data):
 
 def create_catalog(**args):
     files = {}
+    print(args)
     for v, d in args.items():
         files[v] = get_files(d)
     for v, fs in files.items():
@@ -155,7 +158,7 @@ class CFModelSelector:
             return list(sel.path)
             # raise Exception("file selection is not unique")
         if sel.empty:
-            raise Exception("no file found: {}".format(kwargs))
+            raise Exception("no file found: {}, date: {}".format(kwargs, datetime))
         return sel.iloc[0].path
 
     def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):

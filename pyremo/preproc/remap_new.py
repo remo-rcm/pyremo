@@ -93,6 +93,10 @@ def remap(
     gds = gds.copy()
     gds = gds.rename({gds.cf["vertical"].name: lev_input})
 
+    #    domain_info["ll_lon"] = domain_info["ll_lon"] - 1.0 * domain_info["dlon"]
+    #    domain_info["ll_lat"] = domain_info["ll_lat"] - 1.0 * domain_info["dlat"]
+    #    domain_info["nlon"] = domain_info["nlon"] + 2
+    #    domain_info["nlat"] = domain_info["nlat"] + 2
     # regional grid
     grid = get_grid(domain_info)
 
@@ -113,6 +117,7 @@ def remap(
     # lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
     lamem = xr.concat([grid.lon, grid_u.lon, grid_v.lon], dim="pos", join="override")
     phiem = xr.concat([grid.lat, grid_u.lat, grid_v.lat], dim="pos", join="override")
+    # lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)#.isel(rlon=slice(1,-1), rlat=slice(1,-1))
     # grid_u = grid_u.rename({"rlon":"rlon_u"})
     # grid_v = grid_v.rename({"rlat":"rlat_v"})
 
@@ -209,13 +214,13 @@ def remap(
     bkhgm = 0.5 * (gds.bkgm[:-1] + gds.bkgm[1:])
 
     akbkem = get_akbkem(vc)
-
+    ptop = akbkem.ak[0]
     tem = interpolate_vertical(
-        tge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "T", kpbl
+        tge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "T", kpbl, ptop=ptop
     )
 
     arfem = interpolate_vertical(
-        arfge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "RF", kpbl
+        arfge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "RF", kpbl, ptop=ptop
     )
 
     # second pressure correction and vertical interpolation of wind
@@ -223,17 +228,17 @@ def remap(
     psem.name = "PS"
 
     uem = interpolate_vertical(
-        uge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "U", kpbl
+        uge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "U", kpbl, ptop=ptop
     )
     vem = interpolate_vertical(
-        vge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "V", kpbl
+        vge_rot, psge, psem, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "V", kpbl, ptop=ptop
     )
 
     # correct wind with potential divergence
-    philuem = domain_info["ll_lon"]
+    philuem = domain_info["ll_lat"]
     dlamem = domain_info["dlon"]
     dphiem = domain_info["dlat"]
-
+    philuem = domain_info["ll_lat"]  # + 1.0 * dphiem
     uem_corr, vem_corr = correct_uv(
         uem, vem, psem, akbkem.ak, akbkem.bk, lamem, phiem, philuem, dlamem, dphiem
     )
@@ -257,9 +262,10 @@ def remap(
 
     grid = get_grid(domain_info)
 
-    ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
-    ads["rlon"] = grid.rlon
-    ads["rlat"] = grid.rlat
+    # ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
+    # ads = ads.isel(rlon=slice(1,-1), rlat=slice(1,-1))
+    ads["rlon"] = grid.rlon  # .isel(rlon=slice(1,-1))
+    ads["rlat"] = grid.rlat  # .isel(rlat=slice(1,-1))
 
     ads = xr.merge([ads, grid])
 

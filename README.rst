@@ -23,7 +23,7 @@ Python tools for the regional climate model `REMO <https://www.remo-rcm.de>`_.
         :target: https://pyremo.readthedocs.io/en/latest/?badge=latest
         :alt: Documentation Status
 
-.. image:: https://anaconda.org/conda-forge/pyremo/badges/installer/conda.svg
+.. image:: https://anaconda.org/conda-forge/pyremo/badges/version.svg
     :target: https://anaconda.org/conda-forge/pyremo
 
 .. image:: https://results.pre-commit.ci/badge/github/remo-rcm/pyremo/master.svg

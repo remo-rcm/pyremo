@@ -8,15 +8,18 @@ What's New
 
     import pyremo
 
-v0.4.0 (Unreleased)
--------------------
+v0.4.0 (15 November 2022)
+-------------------------
+
+This release comes with an updated preprocessing module for preprocessing of CMIP6 model data and the double nesting preprocessor (includes `ptop`). There are also some additional tools for working with forcing files and an updated documentation.
+
 
 New Features
 ~~~~~~~~~~~~
 
 - Added :py:meth:`magic_numbers` to API (:pull:`85`).
 - New module for gfile creation from CMIP6 datasets (:pull:`78`, :pull:`89`).
-- CF preprocessor is updated to work with `xesmf` for horizontal interpolation (:pull:`100`). This gives much more stable results especially for interpolating with masks, e.g., the sst.
+- Additional CF preprocessor option which ueses `xesmf` for horizontal interpolation (:pull:`100`). This is not part of the user API yet.
 - New notebook on greenhouse gas concentration (GHG). This documents how we create GHG forcing tables for CMIP6 downscaling (:pull:`92`).
 - Command line interface ``pradd-vars`` for variable replacement: This tool can be used to replace soil variables in a forcing file with data from a REMO output file (*warm soil*) (:pull:`93`).
 - Updates for (double-nesting) preprocessor (:pull:`98`), includes an implementation for using a top level pressure (`ptop`) during vertical interpolation (:pull:`104`).
@@ -26,6 +29,7 @@ Internal Changes
 
 - Pinned ``setuptools < 60.0`` due to Fortran build system (:pull:`94`).
 - Table fetching now ignores file hashes. The tables will now be pulled from the ``main`` branch instead of ``master`` in the `tables repository <https://github.com/remo-rcm/tables>`_ (:pull:`97`). Older versions will rely on the ``master`` branch, so that one is now frozend and protected.
+- Updates and fixes for the preprocessing module (:pull:`100`, :pull:`104`).
 
 Documentation
 ~~~~~~~~~~~~~

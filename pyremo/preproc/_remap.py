@@ -89,11 +89,11 @@ def to_netcdf(
                 ds[var].encoding["_FillValue"] = None
         dsets.append(ds)
     # dsets = [dset.expand_dims('time') for dset in datasets]
-    xr.save_mfdataset(dsets, paths, **kwargs)
-    if tempfiles is not None:
-        for f in tempfiles:
-            os.remove(f)
-    return paths
+    return xr.save_mfdataset(dsets, paths, **kwargs)
+    # if tempfiles is not None:
+    #    for f in tempfiles:
+    #        os.remove(f)
+    # return paths
 
 
 def to_tar(files, tar_file, mode="w"):
@@ -276,7 +276,7 @@ def remap(gds, domain_info, vc, surflib):
     )
 
     # correct wind with potential divergence
-    philuem = domain_info["ll_lon"]
+    philuem = domain_info["ll_lat"]
     dlamem = domain_info["dlon"]
     dphiem = domain_info["dlat"]
 
@@ -290,7 +290,8 @@ def remap(gds, domain_info, vc, surflib):
         phiem,
         lamgm,
         phigm,
-        blagm=np.around(gds.sftlf),
+        # blagm=np.around(gds.sftlf),
+        blagm=xr.where(gds.tos.isnull(), 1.0, 0.0),
         blaem=surflib.BLA.squeeze(drop=True),
     )
 

@@ -688,7 +688,7 @@ def map_sst(tos, ref_ds, resample="6H", regrid=True):
 
     if regrid:
         ref_ds["mask"] = ~(ref_ds.sftlf > 0)
-        tos["mask"] = ~tos.tos.isel(time=0).isnull()
+        tos["mask"] = ~tos.tos.isel(time=0).isnull().squeeze(drop=True)
         regridder = xe.Regridder(tos, ref_ds, "nearest_s2d")
         tos = regridder(tos.tos)
     tos.attrs.update(attrs)

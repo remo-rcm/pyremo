@@ -119,7 +119,7 @@ def cdo_call(self, options="", op="", input="", output="temp", print_command=Tru
 
 
 class CFModelSelector:
-    def __init__(self, df=None, scratch=None, calendar="standard", **kwargs):
+    def __init__(self, df=None, calendar="standard", **kwargs):
         if df is None:
             df = pd.read_csv(default_catalog)
         df = df.copy()
@@ -161,9 +161,9 @@ class CFModelSelector:
             raise Exception("no file found: {}, date: {}".format(kwargs, datetime))
         return sel.iloc[0].path
 
-    def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
-        cdo = Cdo(tempdir=self.scratch)
-        getattr(cdo, op)(options=options, input=input)
+    # def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
+    #    cdo = Cdo(tempdir=self.scratch)
+    #    getattr(cdo, op)(options=options, input=input)
 
 
 def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
@@ -378,11 +378,11 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
     return xr.merge(dsets, compat="override", join="override")
 
 
-def get_gfile(**kwargs):
+def get_gfile(scratch=None, **kwargs):
     if "df" in kwargs:
         df = kwargs["df"]
     else:
         files = create_catalog(**kwargs)
         data = dask.compute(files)
         df = create_df(data[0])
-    return GFile(df=df)
+    return GFile(df=df, scratch=scratch)

@@ -8,6 +8,15 @@ What's New
 
     import pyremo
 
+v0.4.1 (Unreleased)
+-------------------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Allow multiple input directories for CF preprocessor (:pull:`106`).
+
+
 v0.4.0 (15 November 2022)
 -------------------------
 

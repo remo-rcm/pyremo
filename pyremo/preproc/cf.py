@@ -46,13 +46,18 @@ def get_times_from_files(files):
     return result
 
 
-def get_files(directory):
-    directory = op.abspath(directory)
-    # print('looking into', directory, op.isdir(directory), op.isfile(directory), Path(directory).is_dir())
-    if op.isdir(directory):
-        files = glob.glob(os.path.join(directory, "*.nc"))
-    else:
-        files = glob.glob(directory)
+def get_files(dirs):
+    """get files from a list of directories"""
+    if not isinstance(dirs, list):
+        dirs = [dirs]
+    files = []
+    for d in dirs:
+        d = op.abspath(d)
+        # print('looking into', directory, op.isdir(directory), op.isfile(directory), Path(directory).is_dir())
+        if op.isdir(d):
+            files += glob.glob(os.path.join(d, "*.nc"))
+        else:
+            files += glob.glob(d)
     files.sort()
     return files
 

@@ -17,6 +17,7 @@ Internal Changes
 
 - Allow multiple input directories for CF preprocessor (:pull:`106`).
 - Added ``scratch`` keyword to gfile API (:pull:`106`).
+- Drop ``python3.7`` support in favour of latest xarray releases (:pull:`106`).
 
 
 v0.4.0 (15 November 2022)

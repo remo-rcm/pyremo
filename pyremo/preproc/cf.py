@@ -171,7 +171,7 @@ class CFModelSelector:
     #    getattr(cdo, op)(options=options, input=input)
 
 
-def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
+def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None, use_cftime=True):
     """Creates a global dataset ready for preprocessing.
 
     This function creates a homogenized global dataset. If neccessary,
@@ -223,6 +223,12 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         ds["sftlf"] = np.around(ds.sftlf)
     if attrs is None:
         attrs = ds.attrs
+    if use_cftime is True:
+        # what for https://github.com/pydata/xarray/pull/7399
+        # return ds.convert_calendar(ds.time.dt.calendar, use_cftime=True)
+        return ds.assign_coords(
+            time=ds.time.convert_calendar(ds.time.dt.calendar, use_cftime=True).time
+        )
     return ds
 
 

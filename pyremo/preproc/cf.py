@@ -46,13 +46,18 @@ def get_times_from_files(files):
     return result
 
 
-def get_files(directory):
-    directory = op.abspath(directory)
-    # print('looking into', directory, op.isdir(directory), op.isfile(directory), Path(directory).is_dir())
-    if op.isdir(directory):
-        files = glob.glob(os.path.join(directory, "*.nc"))
-    else:
-        files = glob.glob(directory)
+def get_files(dirs):
+    """get files from a list of directories"""
+    if not isinstance(dirs, list):
+        dirs = [dirs]
+    files = []
+    for d in dirs:
+        d = op.abspath(d)
+        # print('looking into', directory, op.isdir(directory), op.isfile(directory), Path(directory).is_dir())
+        if op.isdir(d):
+            files += glob.glob(os.path.join(d, "*.nc"))
+        else:
+            files += glob.glob(d)
     files.sort()
     return files
 
@@ -119,7 +124,7 @@ def cdo_call(self, options="", op="", input="", output="temp", print_command=Tru
 
 
 class CFModelSelector:
-    def __init__(self, df=None, scratch=None, calendar="standard", **kwargs):
+    def __init__(self, df=None, calendar="standard", **kwargs):
         if df is None:
             df = pd.read_csv(default_catalog)
         df = df.copy()
@@ -161,12 +166,12 @@ class CFModelSelector:
             raise Exception("no file found: {}, date: {}".format(kwargs, datetime))
         return sel.iloc[0].path
 
-    def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
-        cdo = Cdo(tempdir=self.scratch)
-        getattr(cdo, op)(options=options, input=input)
+    # def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
+    #    cdo = Cdo(tempdir=self.scratch)
+    #    getattr(cdo, op)(options=options, input=input)
 
 
-def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
+def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None, use_cftime=True):
     """Creates a global dataset ready for preprocessing.
 
     This function creates a homogenized global dataset. If neccessary,
@@ -218,6 +223,12 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         ds["sftlf"] = np.around(ds.sftlf)
     if attrs is None:
         attrs = ds.attrs
+    if use_cftime is True:
+        # what for https://github.com/pydata/xarray/pull/7399
+        # return ds.convert_calendar(ds.time.dt.calendar, use_cftime=True)
+        return ds.assign_coords(
+            time=ds.time.convert_calendar(ds.time.dt.calendar, use_cftime=True).time
+        )
     return ds
 
 
@@ -378,11 +389,11 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
     return xr.merge(dsets, compat="override", join="override")
 
 
-def get_gfile(**kwargs):
+def get_gfile(scratch=None, **kwargs):
     if "df" in kwargs:
         df = kwargs["df"]
     else:
         files = create_catalog(**kwargs)
         data = dask.compute(files)
         df = create_df(data[0])
-    return GFile(df=df)
+    return GFile(df=df, scratch=scratch)

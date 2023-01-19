@@ -9,8 +9,10 @@ What's New
     import pyremo
 
 
-v0.4.1 (Unreleased)
--------------------
+v0.4.1 (19 January 2023)
+------------------------
+
+Patch release for preprocessor updates.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

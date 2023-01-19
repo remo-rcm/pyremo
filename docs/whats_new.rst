@@ -9,6 +9,15 @@ What's New
     import pyremo
 
 
+v0.4.2 [Unreleased]
+-------------------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Updates for CI pipeline (:pull:`108`).
+
+
 v0.4.1 (19 January 2023)
 ------------------------
 

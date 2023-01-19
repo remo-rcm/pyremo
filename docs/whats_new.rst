@@ -15,7 +15,7 @@ v0.4.2 [Unreleased]
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
-- Updates for CI pipelind (:pull:`108`).
+- Updates for CI pipeline (:pull:`108`).
 
 
 v0.4.1 (19 January 2023)

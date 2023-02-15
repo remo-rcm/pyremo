@@ -1,0 +1,28 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: pyremo
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Lars
+    family-names: Buntemeyer
+    email: lars.buntemeyer@hereon.de
+    orcid: 'https://orcid.org/0000-0002-0849-2404'
+    affiliation: Helmholtz-Zentrum hereon
+  - given-names: Ludwig
+    family-names: Lierhammer
+    email: ludwig.lierhammer@hereon.de
+    affiliation: Helmholtz-Zentrum hereon
+    orcid: 'https://orcid.org/0000-0002-7207-0003'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.7550490
+repository-code: 'https://github.com/remo-rcm/pyremo'
+license: MIT
+commit: e442df5615406d0eeac2f86f11fb7d714e8733c8
+version: 0.4.1
+date-released: '2023-01-19'

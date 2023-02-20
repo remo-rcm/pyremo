@@ -176,7 +176,6 @@ class Dataset:
 
 
 class CRU_TS4(Dataset):
-
     varmap = {"tas": "tmp", "pr": "pre", "orog": "topo"}
 
     def __init__(self):

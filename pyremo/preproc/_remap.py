@@ -416,7 +416,6 @@ def remap_remo(
     fibeh = interpolate_horizontal_remo(tds.FIB, indemi, indemj, dxemhm, dyemhm, "FIB")
 
     if has_seaice is True and lice is False:
-
         tds["SEAICE"] = tds.SEAICE.fillna(0.0)
         siceem = tds.SEAICE
         sicehm = interp_horiz_remo_cm(

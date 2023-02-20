@@ -62,7 +62,6 @@ class REMO_2015:
         pcodes=[0],
         ecodes=[0],
     ):
-
         # suffix of REMO data archive files
         self.arch_suffix = arch_suffix
         self.file_suffix = file_suffix
@@ -262,7 +261,6 @@ class REMO_2015_DISK_ARCHIVE(REMO_2015):
         pcodes=[0],
         ecodes=[0],
     ):
-
         REMO_2015.__init__(self, file_suffix, arch_suffix, year_path, pcodes, ecodes)
         self.file_suffix = ""
         self.loc = "disk"
@@ -329,7 +327,6 @@ class REMO_2015_TAPE_ARCHIVE(REMO_2015):
         pcodes=[0],
         ecodes=[0],
     ):
-
         REMO_2015.__init__(self, file_suffix, arch_suffix, year_path, pcodes, ecodes)
 
         self.loc = "tape"

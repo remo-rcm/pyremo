@@ -135,8 +135,8 @@ def compute_relative_pol(polphihm, pollamhm, polphiem, pollamem):
         # SK      POLGAM = - ZRPI18*ASIN(SIN(POLLAM*ZPIR18)  *
         # SK     1                     COS(POLPHIEM*ZPIR18)/COS(POLPHIHM*ZPIR18))
         # SK     2         - 180.0
-        zrpi18 = 57.2957795
-        zpir18 = 0.0174532925
+        zrpi18 = 57.2957795  # rad2deg
+        zpir18 = 0.0174532925  # deg2rad
         polgam = -zrpi18 * np.arcsin(
             np.cos(zpir18 * polphiem)
             * np.sin(zpir18 * (pollamhm - pollamem))

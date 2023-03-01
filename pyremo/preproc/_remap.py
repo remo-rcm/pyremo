@@ -340,7 +340,14 @@ def remap(gds, domain_info, vc, surflib):
 
 
 def remap_remo(
-    tds, domain_info_em, domain_info_hm, vc, surflib, initial=False, lice=None
+    tds,
+    domain_info_em,
+    domain_info_hm,
+    vc,
+    surflib,
+    initial=False,
+    lice=None,
+    uvcor=True,
 ):
     """remapping workflow for double nesting
 
@@ -363,6 +370,8 @@ def remap_remo(
         orography ``FIB``.
     initial:
         If ``True``, add static and dynamic fields for initial conditions.
+    uvcor: bool
+        Do the u,v correction.
 
     Returns
     -------
@@ -598,9 +607,13 @@ def remap_remo(
     dlamhm = domain_info_hm["dlon"]
     dphihm = domain_info_hm["dlat"]
 
-    uhm_corr, vhm_corr = correct_uv(
-        uhm, vhm, pshm, akbkhm.ak, akbkhm.bk, lamhm, phihm, philuhm, dlamhm, dphihm
-    )
+    if uvcor is True:
+        uhm_corr, vhm_corr = correct_uv(
+            uhm, vhm, pshm, akbkhm.ak, akbkhm.bk, lamhm, phihm, philuhm, dlamhm, dphihm
+        )
+    else:
+        uhm_corr = uhm
+        vhm_corr = vhm
 
     water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
     # tsi = physics.tsi(tsw)

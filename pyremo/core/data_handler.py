@@ -104,7 +104,6 @@ class DataHandler:
         job_dir="",
         sc_logfile="",
     ):
-
         code_filters = []
 
         if not loc:
@@ -225,7 +224,6 @@ class DataHandler:
         job_dir="",
         sc_logfile="",
     ):
-
         if not loc:
             loc = conv.loc
         if not destdir:

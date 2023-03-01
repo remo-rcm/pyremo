@@ -320,7 +320,6 @@ class Remapper:
         self.grid_v = get_grid(domain_info_v)
 
     def _init_weights(self, gds, sst=None):
-
         self.weights = Regridder(
             gds, self.grid, method=self.method, periodic=self.periodic
         ).to_netcdf("weights.nc")

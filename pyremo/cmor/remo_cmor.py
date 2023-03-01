@@ -240,7 +240,6 @@ def _define_time(ds, table_id, time_cell_method=None):
 
 
 def _define_grid(ds, table_ids, time_cell_method="point"):
-
     cmorGrid = _define_axes(ds, table_ids[0])
     if "time" in ds:
         cmorTime = _define_time(ds, table_ids[1], time_cell_method)

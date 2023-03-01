@@ -58,19 +58,16 @@ def fetch_remote_table(name, resource):
 
 
 def read_remote_table(name, resource, **kwargs):
-
     fname = fetch_remote_table(name, resource)
 
     return pd.read_csv(fname, **kwargs)
 
 
 def read_domain_table(name):
-
     return read_remote_table(name, resource=DOMAIN_RESOURCE, index_col="short_name")
 
 
 def read_remo_domain_tables():
-
     resource = DOMAIN_RESOURCE
     return {
         table.split(".")[0]: read_remote_table(table, resource, index_col="short_name")
@@ -79,7 +76,6 @@ def read_remo_domain_tables():
 
 
 def read_remo_code_tables():
-
     resource = CODE_RESOURCE
     return {
         table.split(".")[0]: read_remote_table(table, resource, index_col="code")
@@ -88,7 +84,6 @@ def read_remo_code_tables():
 
 
 def read_remo_vc_tables():
-
     resource = VC_RESOURCE
     return {
         table.split(".")[0]: read_remote_table(

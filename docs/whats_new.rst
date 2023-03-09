@@ -16,6 +16,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 
 - Updates for CI pipeline (:pull:`108`).
+- Updates for ERA5 cmorizer to work with the new DKRZ ERA5 catalog (:pull:`112`).
 - UV correction is now optional in :py:meth:`cmor.remap_remo` (:pull:`111`).
 
 

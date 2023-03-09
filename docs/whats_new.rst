@@ -16,6 +16,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 
 - Updates for CI pipeline (:pull:`108`).
+- Updates for ERA5 cmorizer to work with the new DKRZ ERA5 catalog (:pull:`112`).
 
 
 v0.4.1 (19 January 2023)

@@ -45,7 +45,7 @@ def init_tempdir(dir=None):
     # global tempdir
     if dir is None:
         try:
-            tempdir = os.path.join(os.environ["SCRATCH"], ".stoppistopp")
+            tempdir = os.path.join(os.environ["SCRATCH"], ".era5")
         except Exception:
             tempdir = tempfile.mkdtemp()
     else:
@@ -87,6 +87,9 @@ levelmap = {
     131: "model_level",
     132: "model_level",
     133: "model_level",
+    246: "model_level",
+    138: "model_level",
+    155: "model_level",
 }
 
 
@@ -112,6 +115,7 @@ def _get_row_by_date(code, date, df, frequency="hourly", era_id="E5", use_E1=Tru
     identified by ``era_id=='E1'``.
 
     """
+    print(code)
     date = pd.to_datetime(date)
     era_id_sel = era_id
     if use_E1 is True:
@@ -143,6 +147,7 @@ def _get_row_by_date(code, date, df, frequency="hourly", era_id="E5", use_E1=Tru
         sel = sel[~sel.index.duplicated(keep="first")]
     sel = sel.sort_index()
     # select date index
+
     ix = sel.index.get_indexer([date], method="pad")
     return sel.iloc[ix]
 
@@ -239,7 +244,7 @@ class ERA5:
 
     def __init__(
         self,
-        catalog_url="/pool/data/Catalogs/mistral-era5.json",
+        catalog_url="/pool/data/Catalogs/dkrz_era5_disk.json",
         df=None,
         scratch=None,
         show_cdo=True,
@@ -261,6 +266,7 @@ class ERA5:
         if self.df is None:
             self.df = _open_catalog(catalog_url).df
         self.df["time"] = pd.to_datetime(self.df.validation_date)
+        self.df = self.df[(self.df.table_id == 128.0) & (self.df.dataType == "an")]
 
     def _to_dataarray(
         self,
@@ -280,7 +286,7 @@ class ERA5:
             timesteps_ = dask.compute(timesteps)[0]
         else:
             timesteps_ = timesteps
-        print(timesteps_)
+
         dsets = {
             code: xr.open_mfdataset(
                 files, use_cftime=use_cftime, chunks=chunks, **kwargs

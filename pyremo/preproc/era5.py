@@ -44,14 +44,12 @@ tempfiles = []
 def init_tempdir(dir=None):
     # global tempdir
     if dir is None:
-        try:
-            tempdir = os.path.join(os.environ["SCRATCH"], ".era5")
-        except Exception:
-            tempdir = tempfile.mkdtemp()
+        # tempdir = tempfile.TemporaryDirectory(dir=os.environ["SCRATCH"]).name
+        tempdir = tempfile.mkdtemp(dir=os.environ["SCRATCH"])
     else:
         tempdir = dir
-    if not os.path.isdir(tempdir):
-        os.makedirs(tempdir)
+    # if not os.path.isdir(tempdir):
+    #    os.makedirs(tempdir)
     return tempdir
 
 

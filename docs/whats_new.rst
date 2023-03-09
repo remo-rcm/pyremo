@@ -16,6 +16,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 
 - Updates for CI pipeline (:pull:`108`).
+- UV correction is now optional in :py:meth:`cmor.remap_remo` (:pull:`111`).
 
 
 v0.4.1 (19 January 2023)

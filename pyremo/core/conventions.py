@@ -1,12 +1,34 @@
-output_file_patterns = {
-    "e": "e{expid:06d}{type}{middle}{date}{end}.{suffix}",
-    "t": "e{expid:06d}{type}{date}{end}.{suffix}",
-}
-
-
-def get_file_pattern(
+def output_pattern(
     type, expid=None, date=None, code=None, middle=None, end=None, suffix="nc"
 ):
+    """Create a REMO output file pattern
+
+    Creates a REMO output file pattern from different arguments. If arguments are
+    missing, they will be replaced with wildcards.
+
+    Parameters
+    ----------
+    type :
+        Type of output file, should be in ``["e", "t", "f", "g", "n"]``.
+    expid : str or int
+        Experiment ID.
+    date : str
+        Date in the filename.
+    code : str or int
+        Code in e or n files. Will be ignored for other filetypes.
+    middle : str
+        Some string in the middle of filename. For e and n files this would be the code
+        automatically.
+    end : str
+        Some string in the end of the filename. Could be used for a wildcard.
+    suffix : str
+        File suffix.
+
+    Returns
+    -------
+    Filename patter : str
+
+    """
     wild = "*"
     if middle is None:
         middle = ""

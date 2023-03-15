@@ -1,5 +1,5 @@
 def output_pattern(
-    type, expid=None, date=None, code=None, middle=None, end=None, suffix="nc"
+    type, expid=None, date=None, code=None, middle=None, end=None, suffix=".nc"
 ):
     """Create a REMO output file pattern
 
@@ -37,15 +37,19 @@ def output_pattern(
     else:
         expid = f"{int(expid):06d}"
     if type in ["e", "n"] and code is None:
-        middle = "_*_"
+        middle = "_c*_"
     elif type in ["e", "n"]:
         middle = f"_c{int(code):03d}_"
     else:
         middle = ""
-    if end is None:
-        end = wild
     if date is None:
         date = wild
-    return "e{expid}{type}{middle}{date}{end}.{suffix}".format(
+    if type == "t" and len(date) < 10 and end is None:
+        end = wild
+    if type in ["e", "n", "f", "g"] and len(date) < 6 and end is None:
+        end = wild
+    if end is None:
+        end = ""
+    return "e{expid}{type}{middle}{date}{end}{suffix}".format(
         expid=expid, type=type, middle=middle, date=date, end=end, suffix=suffix
     )

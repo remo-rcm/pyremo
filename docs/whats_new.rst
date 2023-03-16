@@ -9,8 +9,13 @@ What's New
     import pyremo
 
 
-v0.4.2 [Unreleased]
+v0.5.0 [Unreleased]
 -------------------
+
+New Features
+~~~~~~~~~~~~
+
+- Added :py:meth:`output_pattern` for creating output file naming patterns (:pull:`113`).
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

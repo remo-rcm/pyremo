@@ -26,7 +26,7 @@ Internal Changes
 
 Documentation
 
-- Updates GHG notebook (:pull:`116`).
+- Updates GHG notebook (:pull:`114`) with ssp scenario table.
 
 
 v0.4.1 (19 January 2023)

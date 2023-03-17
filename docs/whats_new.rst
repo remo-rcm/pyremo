@@ -24,6 +24,10 @@ Internal Changes
 - Updates for ERA5 cmorizer to work with the new DKRZ ERA5 catalog (:pull:`112`).
 - UV correction is now optional in :py:meth:`cmor.remap_remo` (:pull:`111`).
 
+Documentation
+
+- Updates GHG notebook (:pull:`116`).
+
 
 v0.4.1 (19 January 2023)
 ------------------------

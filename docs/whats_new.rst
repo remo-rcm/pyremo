@@ -9,8 +9,10 @@ What's New
     import pyremo
 
 
-v0.5.0 [Unreleased]
--------------------
+v0.5.0 (3 March 2023)
+---------------------
+
+This release comes with updates for CMIP6 and ERA5 downscaling.
 
 New Features
 ~~~~~~~~~~~~

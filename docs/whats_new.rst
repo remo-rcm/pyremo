@@ -25,6 +25,7 @@ Internal Changes
 - UV correction is now optional in :py:meth:`cmor.remap_remo` (:pull:`111`).
 
 Documentation
+~~~~~~~~~~~~~
 
 - Updates GHG notebook with ssp scenario table (:pull:`114`).
 

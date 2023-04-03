@@ -12,7 +12,7 @@ dependencies:
   - xarray
   - dask
   - cf_xarray
-  - xesmf
+  - xesmf>=0.7.0
   - numba
   - netCDF4
 # for testing

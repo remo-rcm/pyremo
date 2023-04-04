@@ -44,7 +44,7 @@ def output_pattern(
         middle = ""
     if date is None:
         date = wild
-    if type == "t" and len(date) < 10 and end is None:
+    if type in ["t", "f"] and len(date) < 10 and end is None:
         end = wild
     if type in ["e", "n", "f", "g"] and len(date) < 6 and end is None:
         end = wild

@@ -11,7 +11,7 @@ def test_output_pattern():
     assert "e065000f196801*.nc" == output_pattern(
         "f", expid=65000, code=1, date="196801"
     )
-    assert "e065000g196801.nc" == output_pattern("g", expid="065000", date="196801")
+    assert "e065000g196801*.nc" == output_pattern("g", expid="065000", date="196801")
     assert "e000000t196801*.nc" == output_pattern("t", expid=0, date="196801")
     assert "e000000t1968010100.nc" == output_pattern("t", expid=0, date="1968010100")
     assert "e000000t196801.nc" == output_pattern("t", expid=0, date="196801", end="")

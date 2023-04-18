@@ -8,6 +8,14 @@ What's New
 
     import pyremo
 
+v0.5.1 (Unreleased)
+---------------------
+
+Bugfixes
+~~~~~~~~
+
+- Fixed pattern for f-files (:pull:`117`).
+
 
 v0.5.0 (3 March 2023)
 ---------------------

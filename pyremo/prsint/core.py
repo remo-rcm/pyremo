@@ -76,6 +76,7 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
         Returns data array interpolated to pressure levels.
 
     """
+    plev.sort()
     lev_dims = list(spatial_dims(da))
     lev_dims.append(vertical_dim(da))
     plev_dims = list(spatial_dims(da))

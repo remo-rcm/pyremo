@@ -15,7 +15,7 @@ Bugfixes
 ~~~~~~~~
 
 - Fixed pattern for f-files (:pull:`117`).
-
+- Fixed pressure level sorting (:pull:`120`).
 
 v0.5.0 (3 March 2023)
 ---------------------

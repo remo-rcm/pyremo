@@ -3,13 +3,7 @@
 """
 
 import numpy as np
-
-try:
-    import xarray as xr
-
-    hasXarray = True
-except:
-    hasXarray = False
+import xarray as xr
 
 from . import constants as C
 
@@ -169,10 +163,6 @@ def pressure_at_model_levels(ps, ak, bk):
     for k in range(0, p.shape[2]):
         p[:, :, k] = pressure_at_model_level(ps, ak[k], bk[k])
     return p
-
-
-def pressure(ps, ak, bk):
-    pass
 
 
 # from RemapToRemo addem

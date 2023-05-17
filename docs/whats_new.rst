@@ -16,6 +16,7 @@ Bugfixes
 
 - Fixed pattern for f-files (:pull:`117`).
 - Fixed pressure level sorting (:pull:`120`).
+- Added `z_coord` keyword to :py:meth:`physics.pressure` (:pull:`121`).
 
 v0.5.0 (3 March 2023)
 ---------------------

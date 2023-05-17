@@ -22,7 +22,7 @@ def _vertical_dim(da):
     return lev_dim
 
 
-def pressure(ps, ak, bk, ptop=0.0):
+def pressure(ps, ak, bk, ptop=0.0, z_coord=None):
     """computes pressure at model levels.
 
     Uses surface pressure and vertical hybrid coordinates.
@@ -40,6 +40,9 @@ def pressure(ps, ak, bk, ptop=0.0):
     ptop : float
         Pressure at the top of the atmosphere. Defaults to
         zero.
+    z_coord : xr.DataArray
+        If provided, the Z coordinate will be replace by z_coord.
+        Useful, if ak and bk have no coordinates but only dims.
 
     Returns
     -------
@@ -47,7 +50,11 @@ def pressure(ps, ak, bk, ptop=0.0):
         Returns atmopspheric pressure.
 
     """
-    return ak + bk * (ps - ptop)
+    p = ak + bk * (ps - ptop)
+    if z_coord is not None:
+        z_dim = (set(p.dims) - set(p.coords)).pop()
+        p = p.rename({z_dim: z_coord.name}).assign_coords({z_coord.name: z_coord})
+    return p
 
 
 def relative_humidity(t, qd, p, qw=None, set_meta=True):

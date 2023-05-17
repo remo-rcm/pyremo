@@ -54,7 +54,7 @@ def pressure_interpolation(da, plev, t, ps, orog, a, b, keep_attrs=False):
     Parameters
     ----------
     da : xarray.DataArray
-        Varialbe data on model levels.
+        Variable data on model levels.
     plev : array like or list
         Pressure levels to interpolate to [hPa].
     t : xarray.DataArray

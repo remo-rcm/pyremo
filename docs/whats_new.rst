@@ -8,8 +8,10 @@ What's New
 
     import pyremo
 
-v0.5.1 (Unreleased)
----------------------
+v0.5.1 (24 May 2023)
+--------------------
+
+Updates for REMO run workflows.
 
 Bugfixes
 ~~~~~~~~

@@ -9,7 +9,7 @@ def output_pattern(
     Parameters
     ----------
     type :
-        Type of output file, should be in ``["e", "t", "f", "g", "n"]``.
+        Type of output file, should be in ``["e", "t", "f", "g", "n", "p"]``.
     expid : str or int
         Experiment ID.
     date : str
@@ -36,17 +36,18 @@ def output_pattern(
         expid = wild
     else:
         expid = f"{int(expid):06d}"
-    if type in ["e", "n"] and code is None:
-        middle = "_c*_"
-    elif type in ["e", "n"]:
-        middle = f"_c{int(code):03d}_"
+    if type in ["e", "n", "p"]:
+        if code is None:
+            middle = "_c*_"
+        else:
+            middle = f"_c{int(code):03d}_"
     else:
         middle = ""
     if date is None:
         date = wild
     if type in ["t", "f", "g"] and len(date) < 10 and end is None:
         end = wild
-    if type in ["e", "n"] and len(date) < 6 and end is None:
+    if type in ["e", "n", "p"] and len(date) < 6 and end is None:
         end = wild
     if end is None:
         end = ""

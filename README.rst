@@ -81,8 +81,8 @@ If you have access, you can install those extension directly from the gitlab, e.
 
 .. code-block:: console
 
-    pip install git+http://gitlab.dkrz.de/remo/pyintorg.git@v0.2.0a1
-    pip install git+http://gitlab.dkrz.de/remo/pydruint.git@v0.1.0
+    pip install git+http://gitlab.dkrz.de/remo/pyintorg.git
+    pip install git+http://gitlab.dkrz.de/remo/pydruint.git
 
 Credits
 -------

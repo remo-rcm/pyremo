@@ -45,7 +45,7 @@ Example:
 import numpy as np
 import pandas as pd
 
-from ..tables import codes
+from .tables import codes
 
 # table = pd.concat([table for name, table in code_table.items()])
 

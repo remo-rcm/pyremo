@@ -4,7 +4,7 @@ from warnings import warn
 import cordex as cx
 import xarray as xr
 
-from ..core import codes
+from .. import codes
 
 
 def _get_varinfo(name):

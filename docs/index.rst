@@ -6,7 +6,7 @@
 
    installation
    usage
-   notebooks/domain
+   notebooks/domains
    processing
    remo-dataset
    production-analysis

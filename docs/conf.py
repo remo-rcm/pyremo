@@ -47,6 +47,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
+nbsphinx_allow_errors = True
 
 extlinks = {
     "issue": ("https://github.com/remo-rcm/pyremo/issues/%s", "GH"),

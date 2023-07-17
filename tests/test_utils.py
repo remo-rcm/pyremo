@@ -1,7 +1,7 @@
 import datetime as dt
 
 import pyremo as pr
-from pyremo.core import cal
+from pyremo import cal
 
 
 def test_absolute_calendar():

@@ -3,9 +3,9 @@ import argparse
 import numpy as np
 import xarray as xr
 
-from ..core import codes
-from ..core import remo_ds as rds
-from ..core.utilities import encode
+from .. import codes
+from .. import remo_ds as rds
+from ..utils import encode
 from . import _defaults as dflt
 from .core import pressure_interpolation
 

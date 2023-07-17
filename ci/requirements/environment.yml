@@ -26,6 +26,5 @@ dependencies:
   - cmor
   - cdo
   - python-cdo
-  - py-cordex>=0.4
-#  - pip:
-#    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now
+  - pip:
+    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now

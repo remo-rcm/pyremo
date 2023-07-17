@@ -11,9 +11,7 @@ DOMAIN_RESOURCE = pooch.create(
     # The remote data is on Github
     base_url=base_url + "domains/",
     registry={
-        "cordex-domains.csv": None,
-        "aux-domains.csv": None,
-        "cordex-fps.csv": None,
+        "domains.csv": None,
     },
 )
 
@@ -63,14 +61,10 @@ def read_remote_table(name, resource, **kwargs):
     return pd.read_csv(fname, **kwargs)
 
 
-def read_domain_table(name):
-    return read_remote_table(name, resource=DOMAIN_RESOURCE, index_col="short_name")
-
-
 def read_remo_domain_tables():
     resource = DOMAIN_RESOURCE
     return {
-        table.split(".")[0]: read_remote_table(table, resource, index_col="short_name")
+        table.split(".")[0]: read_remote_table(table, resource, index_col="domain_id")
         for table in resource.registry.keys()
     }
 

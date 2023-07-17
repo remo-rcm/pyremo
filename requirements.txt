@@ -1,3 +1,0 @@
-xarray
-pooch
-py-cordex>=0.2.0

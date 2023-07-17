@@ -8,12 +8,13 @@ What's New
 
     import pyremo
 
-v0.5.1 (Unreleased)
+v0.6.0 (Unreleased)
 -------------------
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Refactoring of core modules, now using `domain_id` keyword instead of `short_name` (:pull:`125`).
 - Renamed ``master`` to ``main``.
 
 v0.5.1 (24 May 2023)

@@ -38,12 +38,12 @@ import pandas as pd
 from .tables import domains
 
 
-def remo_domain(short_name, **kwargs):
+def remo_domain(domain_id, **kwargs):
     """Creates an xarray dataset containg the domain grid definitions.
 
     Parameters
     ----------
-    short_name:
+    domain_id:
         Name of the Cordex Domain.
     dummy : str or logical
         Name of dummy field, if dummy=topo, the cdo topo operator will be
@@ -56,10 +56,10 @@ def remo_domain(short_name, **kwargs):
         Dataset containing the coordinates.
 
     """
-    return cx.cordex_domain(short_name, tables=domains.table, **kwargs)
+    return cx.cordex_domain(domain_id, tables=domains.table, **kwargs)
 
 
-def domain_info(short_name):
+def domain_info(domain_id):
     """Returns a dictionary containg the domain grid definitions.
 
     Returns a dictionary with grid information according to the
@@ -67,7 +67,7 @@ def domain_info(short_name):
 
     Parameters
     ----------
-    short_name:
+    domain_id:
         Name of the Cordex Domain.
 
     Returns
@@ -76,20 +76,7 @@ def domain_info(short_name):
         Dictionary containing the grid information.
 
     """
-    return cx.domain_info(short_name, tables=domains.table)
-
-
-def table(name):
-    """Top level function that returns a CORDEX table.
-
-    Args:
-      name (str): name of the CORDEX table.
-
-    Returns:
-      table (DataFrame): Cordex table.
-
-    """
-    return tables[name]
+    return cx.domain_info(domain_id, tables=domains.table)
 
 
 def magic_number(n=1, m=0, o=0):

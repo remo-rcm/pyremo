@@ -9,7 +9,9 @@ dependencies:
   - dask
   - xarray
   - netCDF4
-  - cf_xarray
+  - matplotlib-base
+  - cartopy
+  - cf_xarray>=0.8.0
   - docutils==0.16
   - nbconvert
   - numpydoc
@@ -20,15 +22,12 @@ dependencies:
   - ipython
   - py-cordex
   - cftime
+  - cdo
   - python-cdo
-  - sphinx #==4.2.0
+  - sphinx
   - sphinx_rtd_theme==1.0.0
-#  - sphinx-book-theme
   - jinja2==3.0.0
-#
-#
+  - sphinx-autosummary-accessors
   - pip:
-#    - intake_geopandas>=0.2.4
-#    - msgpack
-#    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now
+    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now
     - sphinxcontrib-mockautodoc

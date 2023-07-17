@@ -14,7 +14,7 @@ v0.6.0 (Unreleased)
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
-- Refactoring of core modules (:pull:`125`)
+- Refactoring of core modules, now using `domain_id` keyword instead of `short_name` (:pull:`125`).
 - Renamed ``master`` to ``main``.
 
 v0.5.1 (24 May 2023)

@@ -8,6 +8,14 @@ What's New
 
     import pyremo
 
+v0.5.1 (Unreleased)
+-------------------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Renamed ``master`` to ``main``.
+
 v0.5.1 (24 May 2023)
 --------------------
 

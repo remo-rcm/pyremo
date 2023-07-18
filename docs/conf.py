@@ -52,8 +52,8 @@ extensions = [
 
 
 extlinks = {
-    "issue": ("https://github.com/remo-rcm/pyremo/issues/%s", "GH"),
-    "pull": ("https://github.com/remo-rcm/pyremo/pull/%s", "PR"),
+    "issue": ("https://github.com/remo-rcm/pyremo/issues/%s", "GH%s"),
+    "pull": ("https://github.com/remo-rcm/pyremo/pull/%s", "GH%s"),
 }
 
 
@@ -121,7 +121,8 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "sphinx_rtd_theme"
+# html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 # html_theme = "sphinx_book_theme"
 html_title = ""
 

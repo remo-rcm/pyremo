@@ -12,24 +12,19 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import os
-import sys
+# import os
+# import sys
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory is
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
-sys.path.insert(0, os.path.abspath(".."))
+import sphinx_autosummary_accessors
+
 from pyremo import __version__
 
-# import sphinx_rtd_theme
-
-
-sys.path.insert(0, os.path.abspath(".."))
-
-
-autodoc_mock_imports = ["cordex", "pint", "pydruint", "pyintorg", "cmor"]
+autodoc_mock_imports = ["pint", "pydruint", "pyintorg", "cmor"]
 
 # -- General configuration ---------------------------------------------
 
@@ -48,15 +43,17 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.mockautodoc",
     "numpydoc",
+    "sphinx_autosummary_accessors",
     "nbsphinx",
     "nbsphinx_link",
+    "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
 ]
 
 
 extlinks = {
-    "issue": ("https://github.com/remo-rcm/pyremo/issues/%s", "GH"),
-    "pull": ("https://github.com/remo-rcm/pyremo/pull/%s", "PR"),
+    "issue": ("https://github.com/remo-rcm/pyremo/issues/%s", "GH%s"),
+    "pull": ("https://github.com/remo-rcm/pyremo/pull/%s", "GH%s"),
 }
 
 
@@ -74,7 +71,8 @@ napoleon_preprocess_types = True
 numpydoc_class_members_toctree = True
 numpydoc_show_class_members = False
 # Add any paths that contain templates here, relative to this directory.
-templates_path = ["_templates"]
+# templates_path = ["_templates"]
+templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:
@@ -124,6 +122,7 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
+# html_theme = "furo"
 # html_theme = "sphinx_book_theme"
 html_title = ""
 

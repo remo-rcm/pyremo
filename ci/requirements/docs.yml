@@ -1,34 +1,33 @@
 name: pyremo-docs
-
 channels:
   - conda-forge
-  - nodefaults
-
 dependencies:
+  - python=3.10
   - python
   - dask
   - xarray
   - netCDF4
-  - cf_xarray
-  - docutils==0.16
+  - matplotlib-base
+  - cartopy
+  - cf_xarray>=0.8.0
   - nbconvert
   - numpydoc
+    #  - docutils=0.16
   - pillow
   - pip
+  - nbconvert
   - nbsphinx
   - nbsphinx-link
   - ipython
+  - ipykernel
   - py-cordex
   - cftime
+  - cdo
   - python-cdo
-  - sphinx #==4.2.0
-  - sphinx_rtd_theme==1.0.0
-#  - sphinx-book-theme
-  - jinja2==3.0.0
-#
-#
+  - sphinx
+  - sphinx_rtd_theme
+  - sphinx-autosummary-accessors
+  - furo
   - pip:
-#    - intake_geopandas>=0.2.4
-#    - msgpack
-#    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now
+    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now
     - sphinxcontrib-mockautodoc

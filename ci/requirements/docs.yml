@@ -10,7 +10,6 @@ dependencies:
   - matplotlib-base
   - cartopy
   - cf_xarray>=0.8.0
-  - docutils==0.16
   - nbconvert
   - numpydoc
   - pillow

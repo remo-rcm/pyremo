@@ -19,6 +19,7 @@ dependencies:
   - nbsphinx
   - nbsphinx-link
   - ipython
+  - ipykernel
   - py-cordex
   - cftime
   - cdo

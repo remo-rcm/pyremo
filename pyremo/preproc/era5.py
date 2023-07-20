@@ -171,7 +171,7 @@ class ERA5:
         """converts ecmwf spectral grib data to regular gaussian netcdf.
 
         cdo is used to convert ecmwf grid data to netcdf depending on the gridtype:
-        For 'gaussian_reduced': cdo -R
+        For 'gaussian_reduced': cdo setgridtype,regular
             'spectral'        : cdo sp2gpl
 
         This follows the recommendation from the ECMWF Era5 Documentation.

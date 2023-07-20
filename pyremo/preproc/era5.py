@@ -11,50 +11,10 @@ from warnings import warn
 import pandas as pd
 import xarray as xr
 from cdo import Cdo
-from utils import read_yaml
+
+# from ..utils import read_yaml
 
 xr.set_options(keep_attrs=True)
-
-
-varmap = {
-    130: "ta",
-    134: "ps",
-    131: "ua",
-    132: "va",
-    133: "hus",
-    34: "tos",
-    31: "sic",
-    129: "orog",
-    172: "sftlf",
-    139: "tsl1",
-    170: "tsl2",
-    183: "tsl3",
-    238: "tsn",
-    236: "tsl4",
-    246: "clw",
-    141: "snd",
-    198: "src",
-    235: "skt",
-    39: "swvl1",
-    40: "swvl2",
-    41: "swvl2",
-    138: "svo",
-    155: "sd",
-}
-
-levelmap = {
-    129: "surface",
-    130: "model_level",
-    131: "model_level",
-    132: "model_level",
-    133: "model_level",
-    246: "model_level",
-    138: "model_level",
-    155: "model_level",
-}
-
-
-config = read_yaml("input.yaml")
 
 
 def params_by_code(params, code):

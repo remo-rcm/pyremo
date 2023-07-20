@@ -93,9 +93,7 @@ Converting ECMWF data
 .. autosummary::
    :toctree: generated/
 
-   preproc.ERA5.to_xarray
    preproc.ERA5.gfile
-   preproc.ERA5.wind
 
 
 Cmorization

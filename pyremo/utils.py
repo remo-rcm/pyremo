@@ -13,3 +13,10 @@ def encode(ds, coord_fill_value=None):
     for coord in ds.coords:
         ds.coords[coord].encoding["_FillValue"] = coord_fill_value
     return ds
+
+
+def read_yaml(filename):
+    import yaml
+
+    with open(filename, "r") as f:
+        return yaml.safe_load(f)

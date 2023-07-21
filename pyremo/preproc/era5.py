@@ -71,23 +71,35 @@ def get_files(cat, params, date=None):
 
 class ERA5:
     dynamic = ["ta", "hus", "ps", "tos", "sic", "clw", "snd"]
+    wind = ["svo", "sd"]
     fx = ["orog", "sftlf"]
     chunks = {}
 
-    def __init__(self, cat, config, scratch=None, show_cdo=True):
-        self.cat = cat  # intake.open_esm_datastore(config["catalog"])
-        self.config = config
+    def __init__(self, cat, params, scratch=None):
+        if isinstance(cat, str):
+            import intake
+
+            self.cat = intake.open_esm_datastore(cat)
+        else:
+            self.cat = cat
         self.scratch = scratch
-        self.params = {
-            k: config.get("defaults", {}) | v for k, v in config["parameters"].items()
-        }
-        self.cdo = Cdo(tempdir=scratch, silent=False, logging=True)
+        self.params = params
+        self.cdo = Cdo(tempdir=scratch)
 
     def _get_files(self, date):
-        return get_files(self.cat, self.params, date)
+        return get_files(
+            self.cat,
+            {
+                k: v
+                for k, v in self.params.items()
+                if k in self.dynamic + self.fx + self.wind
+            },
+            date,
+        )
 
     def _seldate(self, filename, date):
-        return self.cdo.seldate(date, input=filename)
+        return f"--seldate,{date} {filename}"
+        # return self.cdo.seldate(date, input=filename)
 
     def _seldates(self, filenames, date):
         return {
@@ -99,12 +111,18 @@ class ERA5:
             for v, f in filenames.items()
         }
 
-    def _to_netcdf(self, filenames):
+    def _to_regulars(self, filenames, gridtypes):
         return {
-            v: self._to_regular(f, setname=v)
+            v: self._to_regular(f, gridtype=gridtypes[v], setname=v)
             for v, f in filenames.items()
             if v in self.dynamic + self.fx
         }
+
+    def _get_gridtypes(self, filenames):
+        return {v: self._gridtype(f) for v, f in filenames.items()}
+
+    def _to_netcdf(self, filenames):
+        pass
 
     def _open_dsets(self, filenames):
         dsets = {}
@@ -127,7 +145,7 @@ class ERA5:
     def _gridtype(self, filename):
         return self._griddes(filename)["gridtype"]
 
-    def _to_regular(self, filename, table="ecmwf", setname=""):
+    def _to_regular(self, filename, gridtype=None, setname="", table="ecmwf"):
         """converts ecmwf spectral grib data to regular gaussian netcdf.
 
         cdo is used to convert ecmwf grid data to netcdf depending on the gridtype:
@@ -142,31 +160,39 @@ class ERA5:
             table = ""
         # from cdo import Cdo
         # cdo = Cdo(tempdir=scratch)
-        gridtype = self._gridtype(filename)
-        options = f"-f nc4 -t {table}"
+        if gridtype is None:
+            gridtype = self._gridtype(filename)
+        # options = f"-f nc4 -t {table}"
         if setname:
-            filename = f"--setname,{setname} {filename}"
+            setname = f"--setname,{setname}"  # {filename}"
         print(filename)
         print(gridtype)
         if gridtype == "gaussian_reduced":
-            gaussian = self.cdo.setgridtype("regular", options=options, input=filename)
+            # gaussian = self.cdo.setgridtype("regular", options=options, input=filename)
+            gaussian = "--setgridtype,regular"
         elif gridtype == "spectral":
-            gaussian = self.cdo.sp2gpl(options=options, input=filename)
+            # gaussian = self.cdo.sp2gpl(options=options, input=filename)
+            gaussian = "--sp2gpl"
         elif gridtype == "gaussian":
-            gaussian = self.cdo.copy(options=options, input=filename)
+            # gaussian = self.cdo.copy(options=options, input=filename)
+            gaussian = ""
         else:
             raise Exception(
                 "unknown grid type for conversion to regular grid: {}".format(gridtype)
             )
+        command = f"{setname} {gaussian} {filename}"
+        return command
         return self.cdo.invertlat(input=gaussian)
 
     def _compute_wind(self, vort, div):
         """compute wind from vorticity and divergence"""
         # ds = xr.merge([vort_ds, div_ds])
-        merge = self.cdo.merge(input=[vort, div])
-        uv = self.cdo.dv2uvl(options="-f nc4", input=merge)
-        uv = self.cdo.invertlat(input=uv)
-        return xr.open_dataset(uv, chunks=self.chunks).rename({"u": "ua", "v": "va"})
+        # merge = self.cdo.merge(input=[vort, div])
+        # uv = self.cdo.dv2uvl(options="-f nc4", input=merge)
+        # uv = self.cdo.invertlat(input=uv)
+        merge = f"--dv2uvl --merge {vort} {div}"
+        return merge
+        # return xr.open_dataset(uv, chunks=self.chunks).rename({"u": "ua", "v": "va"})
 
     def gfile(
         self,
@@ -199,18 +225,27 @@ class ERA5:
         Dataset
 
         """
+        gridfile = "/work/ch0636/g300046/remo/era5-cmor/notebooks/grid.txt"
+        options = "-f nc4"
+        print("getting files...")
         files = self._get_files(date)
-        print(files.values())
+        print("getting gridtypes...")
+        gridtypes = self._get_gridtypes(files)
+        print("selecting dates...")
         seldates = self._seldates(files, date)
-        print(seldates.values())
-        regulars = self._to_netcdf(seldates)
-        print(regulars)
+        print("convert to regular grid...")
+        regulars = self._to_regulars(seldates, gridtypes)
         print("computing wind...")
         wind = self._compute_wind(seldates["svo"], seldates["sd"])
-        dsets = self._open_dsets(regulars)
 
-        gds = xr.merge(
-            list(dsets.values()) + [wind], join="override", compat="override"
-        )
+        merge = "--invertlat --merge " + " ".join(list(regulars.values()) + [wind])
 
-        return gds
+        # dsets = self._open_dsets(regulars)
+        print("execute...")
+        return self.cdo.setgrid(gridfile, options=options, input=merge)
+
+        # gds = xr.merge(
+        #    list(dsets.values()) + [wind], join="override", compat="override"
+        # )
+
+        # return gds

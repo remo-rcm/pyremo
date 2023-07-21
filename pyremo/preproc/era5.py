@@ -6,6 +6,7 @@ https://confluence.ecmwf.int/display/OIFS/How+to+convert+GRIB+to+netCDF
 
 """
 
+from os import path as op
 from warnings import warn
 
 import pandas as pd
@@ -69,13 +70,21 @@ def get_files(cat, params, date=None):
     return files
 
 
+def get_filename(date, expid, path=None):
+    if path is None:
+        path = "./"
+    date = pd.to_datetime(date).strftime("%Y%m%d%H")
+    return op.join(path, f"g{expid}a{date}.nc")
+
+
 class ERA5:
     dynamic = ["ta", "hus", "ps", "tos", "sic", "clw", "snd"]
     wind = ["svo", "sd"]
     fx = ["orog", "sftlf"]
     chunks = {}
+    options = "-f nc4"
 
-    def __init__(self, cat, params, scratch=None):
+    def __init__(self, cat, params, gridfile=None, scratch=None):
         if isinstance(cat, str):
             import intake
 
@@ -84,6 +93,7 @@ class ERA5:
             self.cat = cat
         self.scratch = scratch
         self.params = params
+        self.gridfile = gridfile
         self.cdo = Cdo(tempdir=scratch)
 
     def _get_files(self, date):
@@ -165,16 +175,11 @@ class ERA5:
         # options = f"-f nc4 -t {table}"
         if setname:
             setname = f"--setname,{setname}"  # {filename}"
-        print(filename)
-        print(gridtype)
         if gridtype == "gaussian_reduced":
-            # gaussian = self.cdo.setgridtype("regular", options=options, input=filename)
             gaussian = "--setgridtype,regular"
         elif gridtype == "spectral":
-            # gaussian = self.cdo.sp2gpl(options=options, input=filename)
             gaussian = "--sp2gpl"
         elif gridtype == "gaussian":
-            # gaussian = self.cdo.copy(options=options, input=filename)
             gaussian = ""
         else:
             raise Exception(
@@ -182,23 +187,12 @@ class ERA5:
             )
         command = f"{setname} {gaussian} {filename}"
         return command
-        return self.cdo.invertlat(input=gaussian)
 
     def _compute_wind(self, vort, div):
         """compute wind from vorticity and divergence"""
-        # ds = xr.merge([vort_ds, div_ds])
-        # merge = self.cdo.merge(input=[vort, div])
-        # uv = self.cdo.dv2uvl(options="-f nc4", input=merge)
-        # uv = self.cdo.invertlat(input=uv)
-        merge = f"--dv2uvl --merge {vort} {div}"
-        return merge
-        # return xr.open_dataset(uv, chunks=self.chunks).rename({"u": "ua", "v": "va"})
+        return f"--chname,u,ua,v,va --dv2uvl --merge {vort} {div}"
 
-    def gfile(
-        self,
-        date,
-        write=True,
-    ):
+    def gfile(self, date, path=None, expid=None, filename=None):
         """Create an ERA5 gfile dataset.
 
         Main function to convert ERA5 grib data to a regular gaussian Dataset
@@ -206,27 +200,23 @@ class ERA5:
 
         Parameters
         ----------
-        dates : date or list of dates in ISO 8601 format.
-            A single date or list of dates for which the variables should
-            be converted.
-        cf_meta : bool
-            Rename variables to CF standard names.
-        clean_coords: bool
-            Drop time coordinate from coordinate variables.
-        add_fx: bool
-            Add static fields, e.g., orography and land sea mask.
-        fx_date: str
-            Date used for adding fx variables. If ``fx_date=None``,
-            the default date `"1979-01-01T00:00:00"` is used. Defaults
-            to ``None``.
+        date : date in ISO 8601 format.
+            Date for which the variables should be converted.
+        output: str
+            Name of output file.
 
         Returns
         -------
-        Dataset
+        Output filename.
 
         """
-        gridfile = "/work/ch0636/g300046/remo/era5-cmor/notebooks/grid.txt"
-        options = "-f nc4"
+        if expid is None:
+            expid = "000000"
+        if filename is None:
+            filename = get_filename(date, expid, path)
+        print(f"filename: {filename}")
+        # gridfile = "/work/ch0636/g300046/remo/era5-cmor/notebooks/grid.txt"
+
         print("getting files...")
         files = self._get_files(date)
         print("getting gridtypes...")
@@ -238,14 +228,9 @@ class ERA5:
         print("computing wind...")
         wind = self._compute_wind(seldates["svo"], seldates["sd"])
 
-        merge = "--invertlat --merge " + " ".join(list(regulars.values()) + [wind])
+        merge = f"--setgrid,{self.gridfile} --merge " + " ".join(
+            list(regulars.values()) + [wind]
+        )
 
-        # dsets = self._open_dsets(regulars)
         print("execute...")
-        return self.cdo.setgrid(gridfile, options=options, input=merge)
-
-        # gds = xr.merge(
-        #    list(dsets.values()) + [wind], join="override", compat="override"
-        # )
-
-        # return gds
+        return self.cdo.invertlat(options=self.options, input=merge, output=filename)

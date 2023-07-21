@@ -71,20 +71,31 @@ def get_files(cat, params, date=None):
 
 class ERA5:
     dynamic = ["ta", "hus", "ps", "tos", "sic", "clw", "snd"]
+    wind = ["svo", "sd"]
     fx = ["orog", "sftlf"]
     chunks = {}
 
-    def __init__(self, cat, config, scratch=None, show_cdo=True):
-        self.cat = cat  # intake.open_esm_datastore(config["catalog"])
-        self.config = config
+    def __init__(self, cat, params, scratch=None, show_cdo=True):
+        if isinstance(cat, str):
+            import intake
+
+            self.cat = intake.open_esm_datastore(cat)
+        else:
+            self.cat = cat
         self.scratch = scratch
-        self.params = {
-            k: config.get("defaults", {}) | v for k, v in config["parameters"].items()
-        }
-        self.cdo = Cdo(tempdir=scratch, silent=False, logging=True)
+        self.params = params
+        self.cdo = Cdo(tempdir=scratch)
 
     def _get_files(self, date):
-        return get_files(self.cat, self.params, date)
+        return get_files(
+            self.cat,
+            {
+                k: v
+                for k, v in self.params.items()
+                if k in self.dynamic + self.fx + self.wind
+            },
+            date,
+        )
 
     def _seldate(self, filename, date):
         return self.cdo.seldate(date, input=filename)
@@ -199,14 +210,15 @@ class ERA5:
         Dataset
 
         """
+        print("getting files...")
         files = self._get_files(date)
-        print(files.values())
+        print("selecting dates...")
         seldates = self._seldates(files, date)
-        print(seldates.values())
+        print("to netcdf..")
         regulars = self._to_netcdf(seldates)
-        print(regulars)
         print("computing wind...")
         wind = self._compute_wind(seldates["svo"], seldates["sd"])
+        print("merging...")
         dsets = self._open_dsets(regulars)
 
         gds = xr.merge(

@@ -232,5 +232,5 @@ class ERA5:
             list(regulars.values()) + [wind]
         )
 
-        print("execute...")
+        print(f"execute: {merge}")
         return self.cdo.invertlat(options=self.options, input=merge, output=filename)

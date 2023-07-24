@@ -78,6 +78,18 @@ def get_filename(date, expid, path=None):
 
 
 class ERA5:
+    """
+    Class for cmorizing original ERA5 GRIB data.
+
+    Notes
+    -----
+    The cmorizer class mostly works with the intake catalog provided by DKRZ.
+
+    References
+    ----------
+    Please refer to the DKRZ data pool documentation: https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data
+
+    """
     dynamic = ["ta", "hus", "ps", "tos", "sic", "clw", "snd"]
     wind = ["svo", "sd"]
     fx = ["orog", "sftlf"]
@@ -204,6 +216,13 @@ class ERA5:
             Date for which the variables should be converted.
         output: str
             Name of output file.
+        path: str
+            Output path for the gfile.
+        expid: str
+            Experiment id for the filenaming template.
+        filename: str
+            Filename including path for the output filename. If not provided,
+            the filename will be created automatically from path and expid.
 
         Returns
         -------

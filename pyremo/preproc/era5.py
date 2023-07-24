@@ -6,16 +6,28 @@ https://confluence.ecmwf.int/display/OIFS/How+to+convert+GRIB+to+netCDF
 
 """
 
+import os
 from os import path as op
+from pprint import pprint
 from warnings import warn
 
 import pandas as pd
 import xarray as xr
 from cdo import Cdo
 
-# from ..utils import read_yaml
+# path and file templates at DKRZ
+# see https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/#file-and-directory-names
+path_template = (
+    "/pool/data/ERA5/{era_id}/{level_type}/{dataType}/{frequency}/{code:03d}"
+)
+file_template = "{era_id}{level_type}{typeid}_{frequency}_{date}_{code:03d}.grb"
 
-xr.set_options(keep_attrs=True)
+
+def get_output_filename(date, expid, path=None):
+    if path is None:
+        path = "./"
+    date = pd.to_datetime(date).strftime("%Y%m%d%H")
+    return op.join(path, f"g{expid}a{date}.nc")
 
 
 def params_by_code(params, code):
@@ -51,7 +63,8 @@ def check_search(result):
     return result.iloc[0].path
 
 
-def get_file(cat, params, date=None):
+def get_file_from_intake(cat, params, date=None):
+    """get filename entry from intake catalog"""
     if date is not None:
         date = pd.to_datetime(date).strftime("%Y-%m-%d")
     freq = params.get("frequency", None)
@@ -60,21 +73,63 @@ def get_file(cat, params, date=None):
     return cat.search(**params, validation_date=date)
 
 
-def get_files(cat, params, date=None):
+def get_files_from_intake(cat, params, date=None):
     files = {}
     for k, v in params.items():
-        f = check_search(get_file(cat, params=v, date=date).df)
+        f = check_search(get_file_from_intake(cat, params=v, date=date).df)
         if not f:
             warn(f"no result for {k} --> params: {v}")
         files[k] = f
     return files
 
 
-def get_filename(date, expid, path=None):
-    if path is None:
-        path = "./"
-    date = pd.to_datetime(date).strftime("%Y%m%d%H")
-    return op.join(path, f"g{expid}a{date}.nc")
+def get_file_from_template(date, era_id, frequency, dataType, code, level_type):
+    """Derive filename from filename template
+
+    Derives filename according to https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/#file-and-directory-names
+
+    """
+    lt = {
+        "model_level": "ml",
+        "surface": "sf",
+    }
+    freqs = {
+        "hourly": "1H",
+        "daily": "1D",
+        "monthly": "1M",
+        "invariant": "IV",
+    }
+    typeids = {
+        "an": "00",
+        "fc": "12",
+    }
+
+    level_type = lt.get(level_type, level_type)
+    frequency = freqs.get(frequency, frequency)
+    typeid = typeids.get(dataType, dataType)
+    if frequency == "IV":
+        date = "INVARIANT"
+    else:
+        date = pd.to_datetime(date).strftime("%Y-%m-%d")
+    return op.join(path_template, file_template).format(
+        date=date,
+        era_id=era_id,
+        frequency=frequency,
+        dataType=dataType,
+        code=code,
+        level_type=level_type,
+        typeid=typeid,
+    )
+
+
+def get_files_from_template(params, date):
+    files = {}
+    for k, v in params.items():
+        f = get_file_from_template(date=date, **v)
+        if not f:
+            warn(f"no result for {k} --> params: {v}")
+        files[k] = f
+    return files
 
 
 class ERA5:
@@ -97,28 +152,40 @@ class ERA5:
     chunks = {}
     options = "-f nc4"
 
-    def __init__(self, cat, params, gridfile=None, scratch=None):
+    def __init__(self, params, cat=None, gridfile=None, scratch=None):
         if isinstance(cat, str):
             import intake
 
             self.cat = intake.open_esm_datastore(cat)
         else:
             self.cat = cat
+        if scratch is None:
+            scratch = os.environ.get("SCRATCH", "./")
         self.scratch = scratch
         self.params = params
         self.gridfile = gridfile
         self.cdo = Cdo(tempdir=scratch)
 
     def _get_files(self, date):
-        return get_files(
-            self.cat,
-            {
-                k: v
-                for k, v in self.params.items()
-                if k in self.dynamic + self.fx + self.wind
-            },
-            date,
-        )
+        if self.cat:
+            return get_files_from_intake(
+                self.cat,
+                {
+                    k: v
+                    for k, v in self.params.items()
+                    if k in self.dynamic + self.fx + self.wind
+                },
+                date,
+            )
+        else:
+            return get_files_from_template(
+                date=date,
+                params={
+                    k: v
+                    for k, v in self.params.items()
+                    if k in self.dynamic + self.fx + self.wind
+                },
+            )
 
     def _seldate(self, filename, date):
         return f"--seldate,{date} {filename}"
@@ -233,12 +300,13 @@ class ERA5:
         if expid is None:
             expid = "000000"
         if filename is None:
-            filename = get_filename(date, expid, path)
-        print(f"filename: {filename}")
+            filename = get_output_filename(date, expid, path)
+        print(f"output filename: {filename}")
         # gridfile = "/work/ch0636/g300046/remo/era5-cmor/notebooks/grid.txt"
 
         print("getting files...")
         files = self._get_files(date)
+        pprint(f"using files: \n{files}")
         print("getting gridtypes...")
         gridtypes = self._get_gridtypes(files)
         print("selecting dates...")

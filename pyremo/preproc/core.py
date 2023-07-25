@@ -10,17 +10,10 @@ import cf_xarray as cfxr
 import numpy as np
 import xarray as xr
 
-from .constants import lev, lev_gm, lev_i
+from .constants import const, lev, lev_gm, lev_i
 from .utils import horizontal_dims
 
 xr.set_options(keep_attrs=True)
-
-
-class const:
-    """constants used for unit conversion"""
-
-    grav_const = 9.806805923
-    absolute_zero = 273.5
 
 
 def open_mfdataset(

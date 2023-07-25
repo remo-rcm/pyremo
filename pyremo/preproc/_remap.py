@@ -27,6 +27,7 @@ from .core import (
     relative_humidity,
     rotate_uv,
 )
+from .utils import update_attrs
 
 # from pyremo.core.remo_ds import update_meta_info
 
@@ -36,18 +37,6 @@ xr.set_options(keep_attrs=True)
 
 # variables that should have a mask with fill values
 fillvars = ["TSW", "SEAICE", "TSI"]
-
-vcs = [
-    "hyai",
-    "hybi",
-    "hyam",
-    "hybm",
-    "akgm",
-    "bkgm",
-    "ak",
-    "bk",
-    "rotated_latitude_longitude",
-]
 
 
 def get_filename(date, expid="000000", template=None):
@@ -155,23 +144,6 @@ def remap(gds, domain_info, vc, surflib):
     gds = gds.copy()
     gds = gds.rename({gds.cf["vertical"].name: lev_input})
 
-    # if "clw" in gds:
-    #    gds["clw"] = gds.clw.clip(min=0.0)
-    # invalid = (gds.hus <= 0.0) | (gds.hus > 1.0) | (gds.clw > 1)
-    # gds["hus"] = xr.where(invalid, 0.0, gds.hus)
-    # gds["clw"] = xr.where(invalid, 0.0, gds.clw)
-    # DO ij = 1, IJGM
-    # QWGm(ij, k) = MAX(0.0_DP, QWGm(ij, k))
-    # IF ( QDGm(ij, k)<=0.0_DP ) THEN
-    #   QDGm(ij, k) = 0.0_DP
-    #   QWGm(ij, k) = 0.0_DP
-    # END IF
-    # IF ( QDGm(ij, k)>1.0_DP .OR. QWGm(ij, k)>1.0_DP ) THEN
-    #   QDGm(ij, k) = 0.0_DP
-    #   QWGm(ij, k) = 0.0_DP
-    # END IF
-    # END DO
-
     # remove time dimension if there is one
     fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
 
@@ -205,20 +177,6 @@ def remap(gds, domain_info, vc, surflib):
     fibge = interpolate_horizontal(
         gds.orog, lamem, phiem, lamgm, phigm, "FIB", indii=indii, indjj=indjj
     )
-    # return uge, vge
-    # geopotential
-    #     if "time" in gds.hus.dims:
-    #         hus = gds.hus.isel(time=0)
-    #     else:
-    #         hus = gds.hus
-    #     if "time" in gds.ta.dims:
-    #         ta = gds.ta.isel(time=0)
-    #     else:
-    #         ta = gds.ta
-    #     if "time" in gds.ps.dims:
-    #         ps = gds.ps.isel(time=0)
-    #     else:
-    #         ps = gds.ps
 
     ficgm = geopotential(
         gds.orog, gds.ta, gds.hus, gds.ps, gds.akgm, gds.bkgm
@@ -263,7 +221,7 @@ def remap(gds, domain_info, vc, surflib):
     arfem = interpolate_vertical(
         arfge, psge, ps1em, akhgm, bkhgm, akbkem.akh, akbkem.bkh, "RF", kpbl, ptop=ptop
     )
-    # return arfem
+
     # second pressure correction and vertical interpolation of wind
     psem = pressure_correction_ge(ps1em, tem, arfem, ficge, fibem, akbkem.ak, akbkem.bk)
     psem.name = "PS"
@@ -290,7 +248,6 @@ def remap(gds, domain_info, vc, surflib):
         phiem,
         lamgm,
         phigm,
-        # blagm=np.around(gds.sftlf),
         blagm=xr.where(gds.tos.isnull(), 1.0, 0.0),
         blaem=surflib.BLA.squeeze(drop=True),
     )
@@ -331,7 +288,7 @@ def remap(gds, domain_info, vc, surflib):
     ads.attrs = gds.attrs
 
     ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
-    ads.attrs["CORDEX_domain"] = domain_info.get("short_name", "no name")
+    ads.attrs["CORDEX_domain"] = domain_info.get("domain_id", "no name")
 
     ads = update_attrs(ads)
 
@@ -1091,23 +1048,6 @@ def encoding(da, missval):
         return {"_FillValue": missval}
     else:
         return {"_FillValue": None}
-
-
-def update_attrs(ds):
-    for var, da in ds.items():
-        try:
-            attrs = pr.codes.get_dict(var)
-            da.attrs = {}
-            for attr, value in attrs.items():
-                if value is not None:
-                    da.attrs[attr] = value
-
-            da.attrs["grid_mapping"] = "rotated_latitude_longitude"
-            da.attrs["coordinates"] = "lon lat"
-
-        except Exception:
-            pass
-    return ds
 
 
 # variables in a-file required

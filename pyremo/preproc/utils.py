@@ -43,17 +43,18 @@ def encode_missval(da, missval=None):
 
 
 def update_attrs(ds):
+    """Update attributes of all variables for CF compliance"""
     for var, da in ds.items():
         try:
             attrs = pr.codes.get_dict(var)
             da.attrs = {}
-            da.attrs["name"] = attrs["variable"]
-            da.attrs["code"] = attrs["code"]
-            da.attrs["description"] = attrs["description"]
-            da.attrs["units"] = attrs["units"]
-            # da.attrs['layer'] = attrs['layer']
+            for attr, value in attrs.items():
+                if value is not None:
+                    da.attrs[attr] = value
+
             da.attrs["grid_mapping"] = "rotated_latitude_longitude"
             da.attrs["coordinates"] = "lon lat"
+
         except Exception:
             pass
     return ds

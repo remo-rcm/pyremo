@@ -166,12 +166,8 @@ class CFModelSelector:
             raise Exception("no file found: {}, date: {}".format(kwargs, datetime))
         return sel.iloc[0].path
 
-    # def _cdo_call(self, options="", op="", input="", output="temp", print_command=True):
-    #    cdo = Cdo(tempdir=self.scratch)
-    #    getattr(cdo, op)(options=options, input=input)
 
-
-def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None, use_cftime=True):
+def gfile(ds, ref_ds=None, attrs=None, use_cftime=True):
     """Creates a global dataset ready for preprocessing.
 
     This function creates a homogenized global dataset. If neccessary,
@@ -188,12 +184,6 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None, use_cftime=Tru
         coordinates and the global attributes. If ``ref_ds=None``, ``ta`` from
         the input dataset is used as a reference.
 
-    tos : xarray.Dataset
-        Sea surface dataset.
-
-    time_rage :
-        The common time range from the input and sst that should be used.
-
     attrs:
         Global attributes for the output dataset. If ``attrs=None``, the global
         attributes from ``ref_ds`` are used.
@@ -205,19 +195,13 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None, use_cftime=Tru
 
     """
     if isinstance(ds, dict):
-        ds = open_datasets(ds, ref_ds, time_range)
-        if time_range is None:
-            time_range = ds.time
+        ds = open_datasets(ds, ref_ds)
     else:
         ds = ds.copy()
-        if time_range is None:
-            time_range = ds.time
-        ds = ds.sel(time=time_range)
         ds["akgm"], ds["bkgm"] = get_vc2(ds)
         ds = check_lev(ds)
-    # if tos is not None:
-    #    ds["tos"] = map_sst(tos, ds.sel(time=time_range))
-    # ds = ds.rename({"lev": lev_i})
+
+    # ensure correct units
     ds = convert_units(ds)
     if "sftlf" in ds:
         ds["sftlf"] = np.around(ds.sftlf)
@@ -251,8 +235,8 @@ class GFile:
                 self.scratch = os.path.join(os.environ["SCRATCH"], ".cf-selector")
             except Exception:
                 pass
-        # self.cdo = Cdo(tempdir=self.scratch)
-        self.regridder = None
+
+        self.tos_regridder = None
 
     def get_files(self, variables, datetime, **kwargs):
         datetime = to_cfdatetime(datetime, self.calendar)
@@ -268,6 +252,7 @@ class GFile:
     def extract_dynamic_timesteps(self, datetime=None, **kwargs):
         datetime = to_cfdatetime(datetime, self.calendar)
         files = self.get_files(self.dynamics, datetime=datetime, **kwargs)
+        print(files)
         if datetime is None:
             return files
         if self.scratch is not None:
@@ -289,9 +274,8 @@ class GFile:
                 for var, f in self.get_files(self.fx, datetime=None, **kwargs).items()
             }
         )
-        # files.update(self.get_files(self.sst, datetime=datetime, **kwargs))
+
         return xr.merge(files.values(), compat="override", join="override")
-        # return files
 
     def get_sst(self, datetime, atmo_grid=None):
         datetime = to_cfdatetime(datetime, self.calendar)
@@ -324,16 +308,19 @@ class GFile:
         attrs = da.attrs
         atmo_grid = atmo_grid.copy()
         atmo_grid["mask"] = ~(atmo_grid.sftlf > 0).squeeze(drop=True)
-        # if self.regridder is None:
+
         ds = da.to_dataset()
-        ds["mask"] = ~ds.tos.isnull().squeeze(drop=True)
-        print("creating regridder")
-        self.regridder = xe.Regridder(
-            ds, atmo_grid, method="nearest_s2d", extrap_method="nearest_s2d"
-        )
-        da = self.regridder(ds.tos)
-        da.attrs = attrs
-        return da
+
+        if not self.tos_regridder:
+            ds["mask"] = ~ds.tos.isnull().squeeze(drop=True)
+            print("creating tos regridder")
+            self.tos_regridder = xe.Regridder(
+                ds, atmo_grid, method="nearest_s2d", extrap_method="nearest_s2d"
+            )
+
+        out = self.tos_regridder(da)
+        out.attrs = attrs
+        return out
 
     def gfile(self, datetime, sst=True, **kwargs):
         gds = self.extract_data(datetime=datetime, **kwargs)
@@ -342,10 +329,6 @@ class GFile:
         if "variable_id" in gds.attrs:
             del gds.attrs["variable_id"]
         return gfile(gds)
-        # gds = convert_units(gds)
-        # if "sftlf" in gds:
-        #    gds["sftlf"] = np.around(gds.sftlf)
-        # return gds
 
 
 def get_sst_times(dt):
@@ -363,7 +346,7 @@ def get_sst_times(dt):
     )
 
 
-def open_datasets(datasets, ref_ds=None, time_range=None):
+def open_datasets(datasets, ref_ds=None):
     """Creates a virtual gfile"""
     if ref_ds is None:
         try:
@@ -372,13 +355,10 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
             raise Exception("ta is required in the datasets dict if no ref_ds is given")
     lon, lat = horizontal_dims(ref_ds)
     # ak_bnds, bk_bnds = get_ab_bnds(ref_ds)
-    if time_range is None:
-        time_range = ref_ds.time
     dsets = []
     for var, f in datasets.items():
         try:
             da = open_mfdataset(f, chunks={"time": 1})[var]
-            da = da.sel(time=time_range)
         except Exception:
             da = open_mfdataset(f, chunks={})[var]
         if "vertical" in da.cf:

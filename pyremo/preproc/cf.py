@@ -14,11 +14,9 @@ import pandas as pd
 import xarray as xr
 from cdo import Cdo
 
-# from .constants import lev_i
 from .core import check_lev, convert_units, get_vc2, horizontal_dims, open_mfdataset
 
 cdo_exe = "cdo"
-default_catalog = "/work/ik1017/Catalogs/dkrz_cmip6_disk.csv.gz"
 
 cdo_datetime_format = "%Y-%m-%dT%H:%M:%S"
 
@@ -76,6 +74,13 @@ def create_df(data):
 
 
 def create_catalog(**args):
+    """Scan directories for files and add time min and time max
+
+    This function is supposed to scan directories for global model input files.
+    It will create a catalog that contains the path to the file and the
+    min and max times of that file.
+
+    """
     files = {}
     print(args)
     for v, d in args.items():
@@ -93,7 +98,6 @@ def to_datetime(time):
 
 
 def to_cfdatetime(time, calendar="standard"):
-    # time = str(int(time))
     try:
         return xr.cftime_range(start=time, end=time, calendar=calendar)[0]
     except Exception:
@@ -124,33 +128,19 @@ def cdo_call(self, options="", op="", input="", output="temp", print_command=Tru
 
 
 class CFModelSelector:
-    def __init__(self, df=None, calendar="standard", **kwargs):
-        if df is None:
-            df = pd.read_csv(default_catalog)
+    """CF Model Selector
+
+    The CF model selector class simply selects files by a certain timestep.
+
+    """
+
+    def __init__(self, df, calendar="standard", **kwargs):
         df = df.copy()
         if kwargs:
             df = search_df(df, **kwargs)
         self.calendar = calendar
         self.tempfiles = []
         self.df = self._update_time(df)
-
-    def __repr__(self):
-        return repr(self._group())
-
-    def _repr_html_(self):
-        return self._group()._repr_html_()
-
-    def _group(self):
-        groups = ["source_id", "member_id", "experiment_id", "table_id"]
-        return self.df.groupby(groups)[
-            [
-                "variable_id",
-                #  "member_id",
-                "institution_id",
-                #  "table_id",
-                "activity_id",
-            ]
-        ].agg(["unique"])
 
     def _update_time(self, df):
         df["time_min"] = df["time_min"].apply(to_cfdatetime, calendar=self.calendar)
@@ -161,7 +151,6 @@ class CFModelSelector:
         sel = get_var_by_time(self.df, datetime=datetime, **kwargs)
         if len(sel.index) > 1:
             return list(sel.path)
-            # raise Exception("file selection is not unique")
         if sel.empty:
             raise Exception("no file found: {}, date: {}".format(kwargs, datetime))
         return sel.iloc[0].path
@@ -250,9 +239,10 @@ class GFile:
         pass
 
     def extract_dynamic_timesteps(self, datetime=None, **kwargs):
+        """Extract timesteps for a certain date from input files."""
+
         datetime = to_cfdatetime(datetime, self.calendar)
         files = self.get_files(self.dynamics, datetime=datetime, **kwargs)
-        print(files)
         if datetime is None:
             return files
         if self.scratch is not None:
@@ -278,6 +268,8 @@ class GFile:
         return xr.merge(files.values(), compat="override", join="override")
 
     def get_sst(self, datetime, atmo_grid=None):
+        """Extract and interpolate SST in space and time."""
+
         datetime = to_cfdatetime(datetime, self.calendar)
         times = get_sst_times(datetime)
         files = {
@@ -303,6 +295,7 @@ class GFile:
         return self.regrid_to_atmosphere(sst_da.squeeze(drop=True), atmo_grid)
 
     def regrid_to_atmosphere(self, da, atmo_grid):
+        """Regrid tos to atmoshperic grid."""
         import xesmf as xe
 
         attrs = da.attrs
@@ -323,6 +316,7 @@ class GFile:
         return out
 
     def gfile(self, datetime, sst=True, **kwargs):
+        """Creates a gfile from CF input data."""
         gds = self.extract_data(datetime=datetime, **kwargs)
         if sst is True:
             gds[self.sst] = self.get_sst(datetime, gds)
@@ -372,6 +366,8 @@ def get_gfile(scratch=None, **kwargs):
     if "df" in kwargs:
         df = kwargs["df"]
     else:
+        # create a file catalog containing files and their
+        # start and end times.
         files = create_catalog(**kwargs)
         data = dask.compute(files)
         df = create_df(data[0])

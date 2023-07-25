@@ -85,7 +85,7 @@ def write_forcing_file(
     for v in ds.data_vars:
         var = ds[v]
         var.encoding = encoding(var, missval)
-        # expand time dim is neccessary
+        # expand time dim is neccessary for REMO input forcing
         if v not in static and "time" not in var.dims:
             ds[v] = var.expand_dims("time")
     ds.to_netcdf(fname, **kwargs)

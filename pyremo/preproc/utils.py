@@ -23,6 +23,15 @@ vcs = [
 static = vcs + ["rotated_latitude_longitude"]
 
 
+def horizontal_dims(da):
+    for dim in da.dims:
+        if "lon" in dim:
+            lon_dim = dim
+        if "lat" in dim:
+            lat_dim = dim
+    return (lon_dim, lat_dim)
+
+
 def get_grid(domain_info):
     return cx.create_dataset(**domain_info)
 

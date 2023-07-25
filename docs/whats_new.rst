@@ -18,6 +18,11 @@ Internal Changes
 - Refactoring of core modules, now using `domain_id` keyword instead of `short_name` (:pull:`125`).
 - Renamed ``master`` to ``main``.
 
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+-  Refactoring of :py:meth:`preproc.ERA5` for new DKRZ data pool conventions (:pull:`129`).
+
 v0.5.1 (24 May 2023)
 --------------------
 

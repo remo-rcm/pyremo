@@ -21,7 +21,8 @@ Internal Changes
 Breaking Changes
 ~~~~~~~~~~~~~~~~
 
--  Refactoring of :py:meth:`preproc.ERA5` for new DKRZ data pool conventions (:pull:`129`).
+- Refactoring of :py:meth:`preproc.ERA5` for new DKRZ data pool conventions (:pull:`129`).
+- Refactoring and clean up of preprocessing module (:pull:`130`).
 
 v0.5.1 (24 May 2023)
 --------------------

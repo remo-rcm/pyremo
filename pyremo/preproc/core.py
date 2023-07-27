@@ -10,7 +10,7 @@ import cf_xarray as cfxr
 import numpy as np
 import xarray as xr
 
-from .constants import const, lev, lev_gm, lev_i
+from .constants import const, lev, lev_i
 from .utils import horizontal_dims
 
 xr.set_options(keep_attrs=True)
@@ -68,25 +68,6 @@ def get_akbkem(vc):
     akhem.name = "akh"
     bkhem.name = "bkh"
     return xr.merge([akem, bkem, akhem, bkhem])
-    # return akem, bkem, akhem, bkhem
-
-
-# def interp_horiz_2d(field, lamgm, phigm, lamem, phiem, indii, indjj, name):
-#     """interpolates 2d global data horizontally.
-
-#     Interpolates 2d data from the global grid to the regional grid.
-#     """
-#     #from intorg import intorg
-#     return intf.hiobla(field, lamgm, phigm, lamem, phiem, indii, indjj, name)
-
-
-# def interp_horiz_2d_cm(field, lamgm, phigm, lamem, phiem, indii, indjj, name):
-#     """interpolates 2d global data horizontally.
-
-#     Interpolates 2d data from the global grid to the regional grid.
-#     """
-#     from intorg import intorg
-#     return intorg.hiobla(field, lamgm, phigm, lamem, phiem, indii, indjj, name)
 
 
 def get_ab_bnds(ds):
@@ -278,7 +259,7 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         ds = check_lev(ds)
     if tos is not None:
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
-    ds = ds.rename({"lev": lev_gm})
+    # ds = ds.rename({"lev": lev_gm})
     ds = convert_units(ds)
     # if "sftlf" in ds:
     #    ds["sftlf"] = np.around(ds.sftlf)

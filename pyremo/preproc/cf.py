@@ -36,7 +36,6 @@ def get_min_max_time(filename):
             return np.nan, np.nan
 
 
-# @dask.delayed
 def get_times_from_files(files):
     result = {}
     for f in files:

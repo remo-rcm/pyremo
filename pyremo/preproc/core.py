@@ -25,7 +25,7 @@ def open_mfdataset(
     coords="minimal",
     compat="override",
     drop=None,
-    **kwargs
+    **kwargs,
 ):
     """optimized function for opening CMIP6 6hrLev 3d datasets
 
@@ -86,8 +86,9 @@ def get_ab_bnds(ds):
     return ak_bnds, bk_bnds
 
 
-def get_vc2(ds):
+def get_vc(ds, invert=None):
     """Reads the vertical hybrid coordinate from a dataset."""
+    invert = ds.cf["vertical"].attrs.get("positive") == "down" or invert
     ak_bnds, bk_bnds = get_ab_bnds(ds)
     if ak_bnds.ndim > 1:
         ak = cfxr.bounds_to_vertices(ak_bnds, bounds_dim="bnds")
@@ -95,16 +96,10 @@ def get_vc2(ds):
     else:
         ak = ak_bnds
         bk = bk_bnds
-    try:
-        if ak_bnds.cf["vertical"].positive == "down":
-            ak = np.flip(ak)
-    except Exception:
-        pass
-    try:
-        if bk_bnds.cf["vertical"].positive == "down":
-            bk = np.flip(bk)
-    except Exception:
-        pass
+    if invert:
+        print("inverting levels")
+        ak = np.flip(ak)
+        bk = np.flip(bk)
     ak.name = "akgm"
     bk.name = "bkgm"
     return ak, bk
@@ -182,6 +177,7 @@ def check_lev(ds):
         return ds
     elif positive == "down":
         kwargs = {ds.cf["vertical"].name: ds.cf["vertical"][::-1]}
+        print("inverting vertical axis")
         return ds.reindex(**kwargs)
     return ds
 
@@ -207,7 +203,7 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
         if "vertical" in da.cf:
             da = check_lev(da)
         dsets.append(da)
-    dsets += list(get_vc2(ref_ds))
+    dsets += list(get_vc(ref_ds))
     output = xr.merge(dsets, compat="override", join="override")
     output.attrs = ref_ds.attrs
     return output
@@ -255,7 +251,7 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
         if time_range is None:
             time_range = ds.time
         ds = ds.sel(time=time_range)
-        ds["akgm"], ds["bkgm"] = get_vc2(ds)
+        ds["akgm"], ds["bkgm"] = get_vc(ds)
         ds = check_lev(ds)
     if tos is not None:
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))

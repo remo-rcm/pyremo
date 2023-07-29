@@ -14,7 +14,7 @@ import pandas as pd
 import xarray as xr
 from cdo import Cdo
 
-from .core import check_lev, convert_units, get_vc2, horizontal_dims, open_mfdataset
+from .core import check_lev, convert_units, get_vc, horizontal_dims, open_mfdataset
 
 cdo_exe = "cdo"
 
@@ -186,7 +186,7 @@ def gfile(ds, ref_ds=None, attrs=None, use_cftime=True):
         ds = open_datasets(ds, ref_ds)
     else:
         ds = ds.copy()
-        ds["akgm"], ds["bkgm"] = get_vc2(ds)
+        ds["akgm"], ds["bkgm"] = get_vc(ds)
         ds = check_lev(ds)
 
     # ensure correct units
@@ -357,7 +357,7 @@ def open_datasets(datasets, ref_ds=None):
         if "vertical" in da.cf:
             da = check_lev(da)
         dsets.append(da)
-    dsets += list(get_vc2(ref_ds))
+    dsets += list(get_vc(ref_ds))
     return xr.merge(dsets, compat="override", join="override")
 
 

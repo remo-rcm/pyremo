@@ -575,7 +575,7 @@ def remap_remo(
             pshm,
             arfhm,
             water_content,
-            # pseh,
+            pseh,
             tsweh,
             tsieh,
             sicehm,

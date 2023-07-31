@@ -30,13 +30,13 @@ def output_pattern(
 
     """
     wild = "*"
-    if middle is None:
-        middle = ""
+    # if middle is None:
+    #    middle = ""
     if expid is None:
         expid = wild
     else:
         expid = f"{int(expid):06d}"
-    if type in ["e", "n", "p"]:
+    if type in ["e", "n", "p"] and middle is None:
         if code is None:
             middle = "_c*_"
         else:

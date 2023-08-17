@@ -73,15 +73,8 @@ def _resample_op(ds, hfreq, op, **kwargs):
     return rolling.resample(time=freq, loffset=0.5 * pd.Timedelta(hfreq, "H")).nearest()
 
 
-# def ensure_cftime(func):
-#    def wrapper(date, **kwargs):
-#        return func(_to_cftime(date), **kwargs)
-#
-#    return wrapper
-
-
 def to_cftime(date, calendar="proleptic_gregorian"):
-    if type(date) == dt.date:
+    if isinstance(date, dt.date) and not isinstance(date, dt.datetime):
         date = dt.datetime.combine(date, dt.time())
     elif isinstance(date, cfdt.datetime):
         # do nothing

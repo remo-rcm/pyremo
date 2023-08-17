@@ -10,7 +10,7 @@ ureg.define("percent = 0.01*count = %")
 def units(units):
     if units == "%":
         return ureg.percent
-    elif type(units) == str and hasattr(ureg, units):
+    elif isinstance(units, str) and hasattr(ureg, units):
         return getattr(ureg, units)
     else:
         print("Warning, unknown unit: {}".format(units))

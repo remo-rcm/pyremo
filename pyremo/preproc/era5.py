@@ -7,6 +7,7 @@ https://confluence.ecmwf.int/display/OIFS/How+to+convert+GRIB+to+netCDF
 """
 
 import os
+import subprocess
 from os import path as op
 from pprint import pprint
 from warnings import warn
@@ -319,6 +320,10 @@ class ERA5:
         merge = f"--setgrid,{self.gridfile} --merge " + " ".join(
             list(regulars.values()) + [wind]
         )
+        call = f"cdo {self.options} invertlat {merge} {filename}"
+        print(f"execute: {call}")
 
-        print(f"execute: {merge}")
-        return self.cdo.invertlat(options=self.options, input=merge, output=filename)
+        output = subprocess.Popen(call, shell=True, stdout=subprocess.PIPE)
+
+        return output
+        # return self.cdo.invertlat(options=self.options, input=merge, output=filename)

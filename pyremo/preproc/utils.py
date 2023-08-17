@@ -23,6 +23,15 @@ vcs = [
 static = vcs + ["rotated_latitude_longitude"]
 
 
+def horizontal_dims(da):
+    for dim in da.dims:
+        if "lon" in dim:
+            lon_dim = dim
+        if "lat" in dim:
+            lat_dim = dim
+    return (lon_dim, lat_dim)
+
+
 def get_grid(domain_info):
     return cx.create_dataset(**domain_info)
 
@@ -43,17 +52,18 @@ def encode_missval(da, missval=None):
 
 
 def update_attrs(ds):
+    """Update attributes of all variables for CF compliance"""
     for var, da in ds.items():
         try:
             attrs = pr.codes.get_dict(var)
             da.attrs = {}
-            da.attrs["name"] = attrs["variable"]
-            da.attrs["code"] = attrs["code"]
-            da.attrs["description"] = attrs["description"]
-            da.attrs["units"] = attrs["units"]
-            # da.attrs['layer'] = attrs['layer']
+            for attr, value in attrs.items():
+                if value is not None:
+                    da.attrs[attr] = value
+
             da.attrs["grid_mapping"] = "rotated_latitude_longitude"
             da.attrs["coordinates"] = "lon lat"
+
         except Exception:
             pass
     return ds
@@ -84,7 +94,7 @@ def write_forcing_file(
     for v in ds.data_vars:
         var = ds[v]
         var.encoding = encoding(var, missval)
-        # expand time dim is neccessary
+        # expand time dim is neccessary for REMO input forcing
         if v not in static and "time" not in var.dims:
             ds[v] = var.expand_dims("time")
     ds.to_netcdf(fname, **kwargs)

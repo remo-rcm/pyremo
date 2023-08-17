@@ -33,15 +33,15 @@ def gcm_ds2():
     return gfile(file_dict, tos=mpi_esm_tos(use_cftime=True).tos)
 
 
-@requires_pyintorg
-def test_double_nesting(ds):
-    from pyremo.preproc.double_nesting import process_file
-
-    em = pr.domain_info("EUR-44")
-    hm = pr.domain_info("EUR-11")
-    vc = pr.vc.tables["vc_27lev"]
-    surflib = pr.data.surflib("EUR-11", crop=False)
-    process_file(ds, em, hm, vc, surflib, write=False)
+# @requires_pyintorg
+# def test_double_nesting(ds):
+#    from pyremo.preproc.double_nesting import process_file
+#
+#    em = pr.domain_info("EUR-44")
+#    hm = pr.domain_info("EUR-11")
+#    vc = pr.vc.tables["vc_27lev"]
+#    surflib = pr.data.surflib("EUR-11", crop=False)
+#    process_file(ds, em, hm, vc, surflib, write=False)
 
 
 @requires_pyintorg

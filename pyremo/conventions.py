@@ -35,7 +35,7 @@ def file_pattern(
     wild = "*"
     lead = "e"
 
-    if type in ["a", "g"]:
+    if type == "a":
         lead = "a"
 
     if expid is None:

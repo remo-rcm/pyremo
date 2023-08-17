@@ -22,7 +22,7 @@ Top-level functions
    preprocess
    magic_number
    magic_numbers
-   output_pattern
+   file_pattern
 
 
 Physics

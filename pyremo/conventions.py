@@ -1,4 +1,7 @@
-def output_pattern(
+import warnings
+
+
+def file_pattern(
     type, expid=None, date=None, code=None, middle=None, end=None, suffix=".nc"
 ):
     """Create a REMO output file pattern
@@ -30,8 +33,11 @@ def output_pattern(
 
     """
     wild = "*"
-    # if middle is None:
-    #    middle = ""
+    lead = "e"
+
+    if type == "a":
+        lead = "a"
+
     if expid is None:
         expid = wild
     else:
@@ -45,12 +51,28 @@ def output_pattern(
         middle = ""
     if date is None:
         date = wild
-    if type in ["t", "f", "g"] and len(date) < 10 and end is None:
+    if type in ["a", "g", "t", "f", "g"] and len(date) < 10 and end is None:
         end = wild
     if type in ["e", "n", "p"] and len(date) < 6 and end is None:
         end = wild
     if end is None:
         end = ""
-    return "e{expid}{type}{middle}{date}{end}{suffix}".format(
-        expid=expid, type=type, middle=middle, date=date, end=end, suffix=suffix
+    return "{lead}{expid}{type}{middle}{date}{end}{suffix}".format(
+        lead=lead,
+        expid=expid,
+        type=type,
+        middle=middle,
+        date=date,
+        end=end,
+        suffix=suffix,
     )
+
+
+def output_pattern(*args, **kwargs):
+    warnings.warn(
+        "output_pattern is deprecated and will be retired soon, please "
+        "use file_pattern instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return file_pattern(*args, **kwargs)

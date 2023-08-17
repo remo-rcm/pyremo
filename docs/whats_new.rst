@@ -14,9 +14,16 @@ v0.6.0 (Unreleased)
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Fixed E721 rule, switched to `ruff <https://github.com/astral-sh/ruff>`_ for linting in pre-commit, added ``dependabot.yml`` (:pull:`132`).
+- Renamed `output_pattern` to :py:meth:`file_pattern` and added afile patterns (:pull:`132`).
 - Domain notebook running on readthedocs (:pull:`126`).
 - Refactoring of core modules, now using `domain_id` keyword instead of `short_name` (:pull:`125`).
 - Renamed ``master`` to ``main``.
+
+Deprecations
+~~~~~~~~~~~~
+
+- `output_pattern` is deprecated, please use to :py:meth:`file_pattern` instead.
 
 Breaking Changes
 ~~~~~~~~~~~~~~~~

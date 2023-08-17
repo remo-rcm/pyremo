@@ -1,4 +1,4 @@
-from pyremo import output_pattern
+from pyremo import file_pattern as output_pattern
 
 
 def test_output_pattern():
@@ -15,3 +15,10 @@ def test_output_pattern():
     assert "e000000t196801*.nc" == output_pattern("t", expid=0, date="196801")
     assert "e000000t1968010100.nc" == output_pattern("t", expid=0, date="1968010100")
     assert "e000000t196801.nc" == output_pattern("t", expid=0, date="196801", end="")
+
+    assert "a000000a196801.nc" == output_pattern("a", expid=0, date="196801", end="")
+
+    assert "a065004a2000*.tar" == output_pattern("a", "065004", "2000", suffix=".tar")
+    assert "a065004a2000010100.nc" == output_pattern(
+        "a", "065004", "2000010100", suffix=".nc"
+    )

@@ -8,8 +8,13 @@ What's New
 
     import pyremo
 
-v0.6.0 (Unreleased)
--------------------
+v0.6.0 (25 August 2023)
+-----------------------
+
+This release contains some internal refactoring for upcoming CMIP6 simulations. There has also been an update on the
+documentation. The :py:meth:`preproc.ERA5` version is now compatible with the latest conventions of the
+`DKRZ ECMWF data pool <https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/>`_. There
+has also been some significant clean up of the internal preprocessor modules.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

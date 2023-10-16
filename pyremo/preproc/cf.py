@@ -14,6 +14,8 @@ import pandas as pd
 import xarray as xr
 from cdo import Cdo
 
+from warnings import warn
+
 from .core import check_lev, convert_units, get_vc, horizontal_dims, open_mfdataset
 
 cdo_exe = "cdo"
@@ -104,6 +106,12 @@ def to_cfdatetime(time, calendar="standard"):
 
 
 def search_df(df, **kwargs):
+    """Search dataframe by arbitray conditions
+
+    Converts kwargs to pandas search conditions. If kwargs is a list,
+    pandas isin is used as condition.
+
+    """
     condition_list = []
     for key, item in kwargs.items():
         if isinstance(item, list):
@@ -120,6 +128,25 @@ def get_var_by_time(df, datetime=None, **kwargs):
     if datetime is not None and len(df) > 1:
         df = df[(datetime >= df.time_min) & (datetime <= df.time_max)]
     return df
+
+
+def get_sst_times(dt):
+    """Get daily dates from which the SST is interpolated in time"""
+    cal = dt.calendar
+    if dt.hour == 12:
+        # no interpolation neccessary
+        return (dt,)
+    if dt.hour > 12:
+        # interpolate between today and tomorrow
+        dt1 = dt + td(days=1)
+    else:
+        # interpolated betweend today and yesterday
+        dt1 = dt
+        dt = dt + td(days=-1)
+    return (
+        cfdt.datetime(dt.year, dt.month, dt.day, 12, calendar=cal),
+        cfdt.datetime(dt1.year, dt1.month, dt1.day, 12, calendar=cal),
+    )
 
 
 def cdo_call(self, options="", op="", input="", output="temp", print_command=True):
@@ -151,7 +178,9 @@ class CFModelSelector:
         if len(sel.index) > 1:
             return list(sel.path)
         if sel.empty:
-            raise Exception("no file found: {}, date: {}".format(kwargs, datetime))
+            raise FileNotFoundError(
+                "no file found: {}, date: {}".format(kwargs, datetime)
+            )
         return sel.iloc[0].path
 
 
@@ -271,9 +300,18 @@ class GFile:
 
         datetime = to_cfdatetime(datetime, self.calendar)
         times = get_sst_times(datetime)
-        files = {
-            t: self.selector.get_file(variable_id=self.sst, datetime=t) for t in times
-        }
+        # files = {
+        #    t: self.selector.get_file(variable_id=self.sst, datetime=t) for t in times
+        # }
+        files = {}
+        for t in times:
+            try:
+                f = self.selector.get_file(variable_id=self.sst, datetime=t)
+                files[t] = f
+            except FileNotFoundError:
+                warn(f"sst not found for {datetime}, will extrapolate...")
+                pass
+
         if self.scratch is not None:
             cdo = Cdo(tempdir=self.scratch)
         else:
@@ -288,7 +326,11 @@ class GFile:
             self.sst
         ]  # xr.open_mfdataset(sst_extract, use_cftime=True)
         if len(sst_da.time) > 1:
-            sst_da = sst_da.interp(time=datetime.strftime(cdo_datetime_format))
+            sst_da = sst_da.interp(
+                time=datetime.strftime(cdo_datetime_format),
+                method="linear",
+                kwargs={"fill_value": "extrapolate"},
+            )
         if atmo_grid is None:
             return sst_da
         return self.regrid_to_atmosphere(sst_da.squeeze(drop=True), atmo_grid)
@@ -316,27 +358,14 @@ class GFile:
 
     def gfile(self, datetime, sst=True, **kwargs):
         """Creates a gfile from CF input data."""
+        print(f"extracting: {datetime}")
         gds = self.extract_data(datetime=datetime, **kwargs)
         if sst is True:
+            print("interpolating SST")
             gds[self.sst] = self.get_sst(datetime, gds)
         if "variable_id" in gds.attrs:
             del gds.attrs["variable_id"]
         return gfile(gds)
-
-
-def get_sst_times(dt):
-    cal = dt.calendar
-    if dt.hour == 12:
-        return (dt,)
-    if dt.hour > 12:
-        dt1 = dt + td(days=1)
-    else:
-        dt1 = dt
-        dt = dt + td(days=-1)
-    return (
-        cfdt.datetime(dt.year, dt.month, dt.day, 12, calendar=cal),
-        cfdt.datetime(dt1.year, dt1.month, dt1.day, 12, calendar=cal),
-    )
 
 
 def open_datasets(datasets, ref_ds=None):

@@ -5,6 +5,7 @@ import os
 # import tempfile
 from datetime import timedelta as td
 from os import path as op
+from warnings import warn
 
 import cftime as cfdt
 import dask
@@ -13,8 +14,6 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from cdo import Cdo
-
-from warnings import warn
 
 from .core import check_lev, convert_units, get_vc, horizontal_dims, open_mfdataset
 

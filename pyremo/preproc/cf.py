@@ -130,23 +130,27 @@ def get_var_by_time(df, datetime=None, **kwargs):
     return df
 
 
-def get_sst_times(dt):
+def get_sst_times(date):
     """Get daily dates from which the SST is interpolated in time"""
-    cal = dt.calendar
-    if dt.hour == 12:
+    if date.hour == 12:
         # no interpolation neccessary
-        return (dt,)
-    if dt.hour > 12:
-        # interpolate between today and tomorrow
-        dt1 = dt + td(days=1)
-    else:
-        # interpolated betweend today and yesterday
-        dt1 = dt
-        dt = dt + td(days=-1)
-    return (
-        cfdt.datetime(dt.year, dt.month, dt.day, 12, calendar=cal),
-        cfdt.datetime(dt1.year, dt1.month, dt1.day, 12, calendar=cal),
-    )
+        return (date,)
+    # if dt.hour > 12:
+    #     # interpolate between today and tomorrow
+    #     dt1 = dt + td(days=1)
+    # else:
+    #     # interpolated betweend today and yesterday
+    #     dt1 = dt
+    #     dt = dt + td(days=-1)
+    # return (
+    #     cfdt.datetime(dt.year, dt.month, dt.day, 12, calendar=cal),
+    #     cfdt.datetime(dt1.year, dt1.month, dt1.day, 12, calendar=cal),
+    # )
+
+    days = (date + td(days=i) for i in range(-2, 3))
+    return [
+        cfdt.datetime(d.year, d.month, d.day, 12, calendar="standard") for d in days
+    ]
 
 
 def cdo_call(self, options="", op="", input="", output="temp", print_command=True):
@@ -305,9 +309,11 @@ class GFile:
         # }
         files = {}
         for t in times:
+            print(t)
             try:
                 f = self.selector.get_file(variable_id=self.sst, datetime=t)
                 files[t] = f
+                print(f)
             except FileNotFoundError:
                 warn(f"sst not found for {datetime}, will extrapolate...")
                 pass

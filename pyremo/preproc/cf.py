@@ -124,7 +124,7 @@ def search_df(df, **kwargs):
 
 def get_var_by_time(df, datetime=None, **kwargs):
     df = search_df(df, **kwargs)
-    if datetime is not None and len(df) > 1:
+    if datetime:
         df = df[(datetime >= df.time_min) & (datetime <= df.time_max)]
     return df
 
@@ -182,7 +182,7 @@ class CFModelSelector:
             return list(sel.path)
         if sel.empty:
             raise FileNotFoundError(
-                "no file found: {}, date: {}".format(kwargs, datetime)
+                "no file found: {}, datetime: {}".format(kwargs, datetime)
             )
         return sel.iloc[0].path
 
@@ -258,8 +258,9 @@ class GFile:
 
         self.tos_regridder = None
 
-    def get_files(self, variables, datetime, **kwargs):
-        datetime = to_cfdatetime(datetime, self.calendar)
+    def get_files(self, variables, datetime=None, **kwargs):
+        if datetime:
+            datetime = to_cfdatetime(datetime, self.calendar)
         files = {
             var: self.selector.get_file(variable_id=var, datetime=datetime, **kwargs)
             for var in variables

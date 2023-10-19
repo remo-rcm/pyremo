@@ -8,6 +8,14 @@ What's New
 
     import pyremo
 
+v0.6.1 (Unreleased)
+-------------------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Fix SST interpolation and extrapolation for CF preprocessor (:pull:`140`).
+
 v0.6.0 (25 August 2023)
 -----------------------
 

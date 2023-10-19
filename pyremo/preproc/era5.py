@@ -323,7 +323,12 @@ class ERA5:
         call = f"cdo {self.options} invertlat {merge} {filename}"
         print(f"execute: {call}")
 
-        output = subprocess.Popen(call, shell=True, stdout=subprocess.PIPE)
+        subprocess.run(
+            call.split(),
+            check=True,
+            shell=False,
+        )
+        # stdout, stderr = process.communicate()
 
-        return output
+        return filename
         # return self.cdo.invertlat(options=self.options, input=merge, output=filename)

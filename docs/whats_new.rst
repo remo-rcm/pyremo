@@ -15,6 +15,7 @@ Internal Changes
 ~~~~~~~~~~~~~~~~
 
 - Fix SST interpolation and extrapolation for CF preprocessor (:pull:`140`).
+- Fix ERA5 cmorizer subprocess call (:pull:`141`).
 
 v0.6.0 (25 August 2023)
 -----------------------

@@ -187,7 +187,7 @@ class CFModelSelector:
         return sel.iloc[0].path
 
 
-def gfile(ds, ref_ds=None, attrs=None, use_cftime=True):
+def gfile(ds, ref_ds=None, attrs=None, use_cftime=True, invertlev=None):
     """Creates a global dataset ready for preprocessing.
 
     This function creates a homogenized global dataset. If neccessary,
@@ -218,8 +218,8 @@ def gfile(ds, ref_ds=None, attrs=None, use_cftime=True):
         ds = open_datasets(ds, ref_ds)
     else:
         ds = ds.copy()
-        ds["akgm"], ds["bkgm"] = get_vc(ds)
-        ds = check_lev(ds)
+        ds["akgm"], ds["bkgm"] = get_vc(ds, invertlev)
+        ds = check_lev(ds, invertlev)
 
     # ensure correct units
     ds = convert_units(ds)

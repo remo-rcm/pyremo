@@ -88,7 +88,8 @@ def get_ab_bnds(ds):
 
 def get_vc(ds, invert=None):
     """Reads the vertical hybrid coordinate from a dataset."""
-    invert = ds.cf["vertical"].attrs.get("positive") == "down" or invert
+    if ds.cf["vertical"].attrs.get("positive") == "down" and invert is None:
+        invert = True
     ak_bnds, bk_bnds = get_ab_bnds(ds)
     if ak_bnds.ndim > 1:
         ak = cfxr.bounds_to_vertices(ak_bnds, bounds_dim="bnds")
@@ -96,8 +97,8 @@ def get_vc(ds, invert=None):
     else:
         ak = ak_bnds
         bk = bk_bnds
-    if invert:
-        print("inverting levels")
+    if invert is True:
+        print("inverting vertical coordinates")
         ak = np.flip(ak)
         bk = np.flip(bk)
     ak.name = "akgm"
@@ -165,17 +166,19 @@ def convert_units(ds):
     return ds
 
 
-def check_lev(ds):
+def check_lev(ds, invert=None):
     """Check for order of levels and invert if neccessary"""
 
-    if "vertical" in ds.cf:
-        positive = ds.cf["vertical"].attrs.get("positive", None)
-    else:
-        positive = None
-    if positive is None:
-        warnings.warn("could not determine positive attribute of vertical axis.")
-        return ds
-    elif positive == "down":
+    if ds.cf["vertical"].attrs.get("positive") == "down" and invert is None:
+        invert = True
+    # if "vertical" in ds.cf and auto is True:
+    #    positive = ds.cf["vertical"].attrs.get("positive", None)
+    # else:
+    #    positive = None
+    # if positive is None and auto is True:
+    #    warnings.warn("could not determine positive attribute of vertical axis.")
+    #    return ds
+    if invert is True:
         kwargs = {ds.cf["vertical"].name: ds.cf["vertical"][::-1]}
         print("inverting vertical axis")
         return ds.reindex(**kwargs)
@@ -229,7 +232,7 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
     tos : xarray.Dataset
         Sea surface dataset.
 
-    time_rage :
+    time_range :
         The common time range from the input and sst that should be used.
 
     attrs:

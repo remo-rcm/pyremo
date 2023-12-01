@@ -212,9 +212,6 @@ class ERA5:
     def _get_gridtypes(self, filenames):
         return {v: self._gridtype(f) for v, f in filenames.items()}
 
-    def _to_netcdf(self, filenames):
-        pass
-
     def _open_dsets(self, filenames):
         dsets = {}
         for v, f in filenames.items():
@@ -320,7 +317,7 @@ class ERA5:
         merge = f"--setgrid,{self.gridfile} --merge " + " ".join(
             list(regulars.values()) + [wind]
         )
-        call = f"cdo {self.options} invertlat {merge} {filename}"
+        call = f"cdo {self.options} invertlev --invertlat {merge} {filename}"
         print(f"execute: {call}")
 
         subprocess.run(
@@ -331,4 +328,3 @@ class ERA5:
         # stdout, stderr = process.communicate()
 
         return filename
-        # return self.cdo.invertlat(options=self.options, input=merge, output=filename)

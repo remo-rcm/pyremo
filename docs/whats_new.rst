@@ -8,6 +8,14 @@ What's New
 
     import pyremo
 
+(Unreleased)
+------------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Pin ``numpy!=1.26.3``, causes problems with installing Fortran extensions (:pull:`152`).
+
 v0.6.1 (20 October 2023)
 ------------------------
 

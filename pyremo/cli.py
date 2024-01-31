@@ -1,4 +1,5 @@
 """Console script for pyremo."""
+
 import argparse
 import os
 from os import path as op

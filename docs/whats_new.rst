@@ -17,6 +17,11 @@ Internal Changes
 - Pin ``numpy < 1.26.3``, causes problems with installing Fortran extensions (:pull:`158`).
 - Update ERA5 cmorizer and preprocessor (:pull:`146`).
 
+Breaking Changes
+~~~~~~~~~~~~~~~~
+
+- CMOR module is retired and removed in favour of `py-cordex <https://py-cordex.readthedocs.io/en/latest/generated/cordex.cmor.cmorize_variable.html#cordex-cmor-cmorize-variable>`_ (:pull:`157`).
+
 v0.6.1 (20 October 2023)
 ------------------------
 

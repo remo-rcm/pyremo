@@ -13,7 +13,7 @@ dependencies:
   - dask
   - cf_xarray>=0.8.0
   - xesmf>=0.7.0
-  - numba
+ # - numba
   - netCDF4
 # for testing
   - pytest

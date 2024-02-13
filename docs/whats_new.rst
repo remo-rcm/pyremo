@@ -14,7 +14,7 @@ What's New
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
-- Pin ``numpy!=1.26.3``, causes problems with installing Fortran extensions (:pull:`152`).
+- Pin ``numpy < 1.26.3``, causes problems with installing Fortran extensions (:pull:`158`).
 - Update ERA5 cmorizer and preprocessor (:pull:`146`).
 
 v0.6.1 (20 October 2023)

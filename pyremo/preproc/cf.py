@@ -15,7 +15,14 @@ import pandas as pd
 import xarray as xr
 from cdo import Cdo
 
-from .core import check_lev, convert_units, get_vc, horizontal_dims, open_mfdataset
+from .core import (
+    check_lev,
+    convert_units,
+    get_vc,
+    horizontal_dims,
+    map_sst,
+    open_mfdataset,
+)
 
 cdo_exe = "cdo"
 
@@ -187,7 +194,7 @@ class CFModelSelector:
         return sel.iloc[0].path
 
 
-def gfile(ds, ref_ds=None, attrs=None, use_cftime=True):
+def gfile(ds, ref_ds=None, tos=None, attrs=None, use_cftime=True, invertlev=None):
     """Creates a global dataset ready for preprocessing.
 
     This function creates a homogenized global dataset. If neccessary,
@@ -218,9 +225,11 @@ def gfile(ds, ref_ds=None, attrs=None, use_cftime=True):
         ds = open_datasets(ds, ref_ds)
     else:
         ds = ds.copy()
-        ds["akgm"], ds["bkgm"] = get_vc(ds)
-        ds = check_lev(ds)
+        ds["akgm"], ds["bkgm"] = get_vc(ds, invertlev)
+        ds = check_lev(ds, invertlev)
 
+    if tos is not None:
+        ds["tos"] = map_sst(tos, ds)
     # ensure correct units
     ds = convert_units(ds)
     if "sftlf" in ds:

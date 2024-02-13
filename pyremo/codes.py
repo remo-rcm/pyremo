@@ -47,7 +47,23 @@ import pandas as pd
 
 from .tables import codes
 
+tables = codes.tables
+
 # table = pd.concat([table for name, table in code_table.items()])
+
+
+def _code_from_varname(varname):
+    """Returns a code from a varname.
+
+    Used typically for varnames create by a `cdo -f nc copy` command
+    on IEG files.
+    """
+    if "var" in varname:
+        import re
+
+        return int(re.findall("[0-9]+", varname)[0])
+    else:
+        return None
 
 
 def get_dict(id):
@@ -124,15 +140,29 @@ def get_dict_by_code(code):
     return dict
 
 
-def _code_from_varname(varname):
-    """Returns a code from a varname.
+def _search_df(df, **kwargs):
+    """Search dataframe by arbitray conditions
 
-    Used typically for varnames create by a `cdo -f nc copy` command
-    on IEG files.
+    Converts kwargs to pandas search conditions. If kwargs is a list,
+    pandas isin is used as condition.
+
     """
-    if "var" in varname:
-        import re
+    condition_list = []
+    for key, item in kwargs.items():
+        if isinstance(item, list):
+            cond = "(df['{0}'].isin({1}))".format(key, repr(item))
+        else:
+            cond = "(df['{0}'] == {1})".format(key, repr(item))
+        condition_list.append(cond)
+    conditions = " & ".join(condition_list)
+    return df[eval(conditions)]
 
-        return int(re.findall("[0-9]+", varname)[0])
-    else:
-        return None
+
+def search(**kwargs):
+    """Returns a dictionary with variable info.
+
+    Searches the code table by arbitrary attributes.
+
+    """
+    table = pd.concat(codes.tables.values())
+    return _search_df(table, **kwargs)

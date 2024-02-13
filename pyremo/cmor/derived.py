@@ -1,7 +1,6 @@
 """Compute derived variables for cmorization.
 """
 
-
 import inspect
 from warnings import warn
 

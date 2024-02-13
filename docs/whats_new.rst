@@ -8,13 +8,24 @@ What's New
 
     import pyremo
 
-v0.6.1 (Unreleased)
--------------------
+(Unreleased)
+------------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Pin ``numpy!=1.26.3``, causes problems with installing Fortran extensions (:pull:`152`).
+
+v0.6.1 (20 October 2023)
+------------------------
+
+Patch release to fix preprocessing issues.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
 - Fix SST interpolation and extrapolation for CF preprocessor (:pull:`140`).
+- Fix ERA5 cmorizer subprocess call (:pull:`141`).
 
 v0.6.0 (25 August 2023)
 -----------------------

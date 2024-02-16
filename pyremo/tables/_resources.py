@@ -1,3 +1,5 @@
+from os import path as op
+
 import pandas as pd
 import pooch
 
@@ -75,6 +77,13 @@ def read_remo_code_tables():
         table.split(".")[0]: read_remote_table(table, resource, index_col="code")
         for table in resource.registry.keys()
     }
+
+
+def get_remo_code_table():
+    filename = pooch.retrieve(
+        op.join(base_url, "code-list", "table.csv"), known_hash=None, path=cache_url
+    )
+    return pd.read_csv(filename, index_col="code")
 
 
 def read_remo_vc_tables():

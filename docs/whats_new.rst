@@ -11,6 +11,11 @@ What's New
 (Unreleased)
 ------------
 
+New Features
+~~~~~~~~~~~~
+
+- Added :py:meth:`codes.search` for searching in the code table using keyword arguments (:pull:`160`).
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 

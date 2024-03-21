@@ -24,6 +24,14 @@ Top-level functions
    magic_numbers
    file_pattern
 
+Codes
+=====
+
+.. autosummary::
+   :toctree: generated/
+
+   codes.get_dict
+   codes.search
 
 Physics
 =======

@@ -40,8 +40,6 @@ Example:
 
 """
 
-# from .tables import codes as code_table  # code_table, read_table
-
 import numpy as np
 import pandas as pd
 
@@ -147,9 +145,10 @@ def _search_df(df, **kwargs):
     pandas isin is used as condition.
 
     """
+    df = df.reset_index()
     condition_list = []
     for key, item in kwargs.items():
-        if isinstance(item, list):
+        if isinstance(item, (list, tuple)):
             cond = "(df['{0}'].isin({1}))".format(key, repr(item))
         else:
             cond = "(df['{0}'] == {1})".format(key, repr(item))
@@ -159,9 +158,31 @@ def _search_df(df, **kwargs):
 
 
 def search(**kwargs):
-    """Returns a dictionary with variable info.
+    """Returns a tables with variabl meta data.
 
     Searches the code table by arbitrary attributes.
+    All search parameters can also be iteratables.
+
+    Parameters
+    ----------
+    code: int
+        Variable code.
+    variable: str
+        Variable name (REMO standard).
+    cf_name: str
+        CF Variable name (Climate and Forecast convention).
+    description: str
+        Variable description (REMO standard).
+    units: str
+        Unit (REMO standard).
+    time_cell_method: str
+        Time cell method for standard Remo output (point or mean).
+
+
+    Returns
+    -------
+    df : pd.DataFrame
+        Search result.
 
     """
     table = pd.concat(codes.tables.values())

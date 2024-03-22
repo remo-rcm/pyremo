@@ -8,7 +8,7 @@ What's New
 
     import pyremo
 
-v0.7.0 (21 March 2024)
+v0.7.0 (22 March 2024)
 ----------------------
 
 This release makes the codes API public. It also completely retires the cmor module in favour of `py-cordex.cmor <https://py-cordex.readthedocs.io/en/latest/generated/cordex.cmor.cmorize_variable.html>`_.

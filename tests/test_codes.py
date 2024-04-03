@@ -9,7 +9,7 @@ def test_codes():
         "description": "temperature",
         "units": "K",
         "layer": 110.0,
-        "time_cell_method": None,
+        "time_cell_method": "mean",
         "cf_name": "ta",
         "code": 130,
     }

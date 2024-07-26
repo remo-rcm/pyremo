@@ -47,7 +47,7 @@ def to_netcdf(
     template=None,
     tempfiles=None,
     missval=1.0e20,
-    **kwargs
+    **kwargs,
 ):
     """write dataset to netcdf
 

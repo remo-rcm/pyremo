@@ -23,7 +23,7 @@ def open_mfdataset(
     coords="minimal",
     compat="override",
     drop=None,
-    **kwargs
+    **kwargs,
 ):
     """optimized function for opening large cf datasets.
 
@@ -45,7 +45,7 @@ def open_mfdataset(
         data_vars=data_vars,
         coords=coords,
         compat=compat,
-        **kwargs
+        **kwargs,
     )
     return xr.decode_cf(ds, use_cftime=use_cftime)
 
@@ -59,7 +59,7 @@ def open_mfdataset2(
     coords="minimal",
     compat="override",
     drop=None,
-    **kwargs
+    **kwargs,
 ):
     """optimized function for opening large cf datasets.
 
@@ -77,7 +77,7 @@ def open_mfdataset2(
         data_vars=data_vars,
         coords=coords,
         compat=compat,
-        **kwargs
+        **kwargs,
     )
     return ds  # xr.decode_cf(ds, use_cftime=use_cftime)
 
@@ -188,7 +188,7 @@ class CRU_TS4(Dataset):
         Dataset.__init__(
             self,
             **kwargs,
-            topo="/mnt/lustre02/work/ch0636/eddy/pool/obs/cru/CRU/TS4.04/original/cru404_c129.nc"
+            topo="/mnt/lustre02/work/ch0636/eddy/pool/obs/cru/CRU/TS4.04/original/cru404_c129.nc",
         )
 
 

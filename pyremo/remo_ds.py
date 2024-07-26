@@ -45,7 +45,7 @@ def open_remo_dataset(
     returnX=True,
     inplace=False,
     parse_time=False,
-    **kwargs
+    **kwargs,
 ):
     """Read a REMO dataset.
 

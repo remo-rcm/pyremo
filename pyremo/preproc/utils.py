@@ -82,7 +82,7 @@ def write_forcing_file(
     template=None,
     tempfiles=None,
     missval=1.0e20,
-    **kwargs
+    **kwargs,
 ):
     if path is None:
         path = "./"
@@ -108,7 +108,7 @@ def to_netcdf(
     template=None,
     tempfiles=None,
     missval=1.0e20,
-    **kwargs
+    **kwargs,
 ):
     """write dataset to netcdf
 

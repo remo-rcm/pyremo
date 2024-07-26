@@ -18,7 +18,7 @@ def open_mfdataset(
     coords="minimal",
     compat="override",
     drop=None,
-    **kwargs
+    **kwargs,
 ):
     """optimized function for opening large cf datasets.
 
@@ -40,7 +40,7 @@ def open_mfdataset(
         data_vars=data_vars,
         coords=coords,
         compat=compat,
-        **kwargs
+        **kwargs,
     )
     return xr.decode_cf(ds, use_cftime=use_cftime)
 

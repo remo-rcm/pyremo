@@ -1,5 +1,6 @@
 import glob
 import os
+
 # import subprocess
 # import tempfile
 from datetime import timedelta as td
@@ -14,8 +15,14 @@ import pandas as pd
 import xarray as xr
 from cdo import Cdo
 
-from .core import (check_lev, convert_units, get_vc, horizontal_dims, map_sst,
-                   open_mfdataset)
+from .core import (
+    check_lev,
+    convert_units,
+    get_vc,
+    horizontal_dims,
+    map_sst,
+    open_mfdataset,
+)
 
 cdo_exe = "cdo"
 

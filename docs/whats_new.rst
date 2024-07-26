@@ -8,6 +8,14 @@ What's New
 
     import pyremo
 
+Unreleased
+----------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Drop python 3.8 support and update tests (:pull:`179`).
+
 v0.7.0 (22 March 2024)
 ----------------------
 

@@ -12,6 +12,7 @@ def test_codes():
         "time_cell_method": "mean",
         "cf_name": "ta",
         "code": 130,
+        "module": "atmos",
     }
     assert codes.get_dict(130) == expected
     assert codes.get_dict("T") == expected
@@ -27,6 +28,7 @@ def test_code_search():
             "layer": 1.0,
             "time_cell_method": "mean",
             "cf_name": "tas",
+            "module": "atmos",
         },
         index=[0],
     )

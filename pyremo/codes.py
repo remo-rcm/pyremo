@@ -45,7 +45,7 @@ import pandas as pd
 
 from .tables import codes
 
-tables = codes.tables
+table = codes.table
 
 # table = pd.concat([table for name, table in code_table.items()])
 
@@ -107,7 +107,6 @@ def get_dict_by_name(varname):
         varinfo (dict): Dictionary with variable information.
 
     """
-    table = pd.concat(codes.tables.values())
     df = table.loc[table["variable"] == varname]
     if df.empty:
         # try with cf name
@@ -131,7 +130,6 @@ def get_dict_by_code(code):
         varinfo (dict): Dictionary with variable information.
 
     """
-    table = pd.concat(codes.tables.values())
     series = table.loc[code]
     dict = series.where(pd.notnull(series), None).to_dict()
     dict["code"] = code
@@ -142,7 +140,8 @@ def _search_df(df, **kwargs):
     """Search dataframe by arbitray conditions
 
     Converts kwargs to pandas search conditions. If kwargs is a list,
-    pandas isin is used as condition.
+    pandas isin is used as condition. If keyword value is None, isna()
+    will be used.
 
     """
     df = df.reset_index()
@@ -150,6 +149,8 @@ def _search_df(df, **kwargs):
     for key, item in kwargs.items():
         if isinstance(item, (list, tuple)):
             cond = "(df['{0}'].isin({1}))".format(key, repr(item))
+        elif item is None:
+            cond = "(df['{0}'].isna())".format(key)
         else:
             cond = "(df['{0}'] == {1})".format(key, repr(item))
         condition_list.append(cond)
@@ -185,5 +186,4 @@ def search(**kwargs):
         Search result.
 
     """
-    table = pd.concat(codes.tables.values())
     return _search_df(table, **kwargs)

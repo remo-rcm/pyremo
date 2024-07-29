@@ -151,6 +151,8 @@ def _search_df(df, **kwargs):
             cond = "(df['{0}'].isin({1}))".format(key, repr(item))
         elif item is None:
             cond = "(df['{0}'].isna())".format(key)
+        else:
+            cond = "(df['{0}'] == {1})".format(key, repr(item))
         condition_list.append(cond)
     conditions = " & ".join(condition_list)
     return df[eval(conditions)]

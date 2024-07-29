@@ -5,16 +5,15 @@ channels:
 dependencies:
   - cartopy
   - matplotlib-base
-  - numpy<1.26.3
+  - numpy<2 #1.26.3
   - pooch
   - regionmask
   #- setuptools
   - xarray
   - dask
-  - cf_xarray>=0.8.0
+  - cf_xarray>=0.8.1
   - xesmf>=0.7.0
- # - numba
-  - netCDF4
+  - netCDF4=1.5 # until REMO has all NetCFD4 output
 # for testing
   - pytest
   - pytest-cov
@@ -26,5 +25,4 @@ dependencies:
   - cmor
   - cdo
   - python-cdo
-  - pip:
-    - git+https://github.com/euro-cordex/py-cordex.git # always use master for now
+  - py-cordex

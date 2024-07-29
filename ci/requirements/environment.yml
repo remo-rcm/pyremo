@@ -13,7 +13,7 @@ dependencies:
   - dask
   - cf_xarray>=0.8.1
   - xesmf>=0.7.0
-  - netCDF4=1.5 # until REMO has all NetCFD4 output
+  - netCDF4
 # for testing
   - pytest
   - pytest-cov

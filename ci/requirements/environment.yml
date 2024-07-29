@@ -5,10 +5,9 @@ channels:
 dependencies:
   - cartopy
   - matplotlib-base
-  - numpy<2 #1.26.3
+  - numpy<1.26.3 https://numpy.org/doc/stable/reference/distutils_status_migration.html
   - pooch
   - regionmask
-  #- setuptools
   - xarray
   - dask
   - cf_xarray>=0.8.1

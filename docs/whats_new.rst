@@ -8,8 +8,10 @@ What's New
 
     import pyremo
 
-Unreleased
-----------
+v0.7.1 (30 July 2024)
+---------------------
+
+Patch release with updates to the github workflows and code module.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

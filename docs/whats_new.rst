@@ -14,6 +14,7 @@ Unreleased
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- New release workflow (:pull:`185`).
 - Update codes module (:pull:`182`).
 - Update build system (:pull:`181`).
 - Drop python 3.8 support and update tests (:pull:`179`).

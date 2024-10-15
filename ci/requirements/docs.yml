@@ -17,7 +17,6 @@ dependencies:
   - pip
   - nbconvert
   - nbsphinx
-  - nbsphinx-link
   - ipython
   - ipykernel
   - py-cordex

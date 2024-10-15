@@ -8,12 +8,11 @@
    usage
    notebooks/domains
    processing
-   remo-dataset
-   production-analysis
-   ghg-forcing
-   preprocessing-cf
-   cmorization
-   ar
+   notebooks/remo-dataset
+   notebooks/production-analysis
+   notebooks/ghg-forcing
+   notebooks/preprocessing-cf
+   notebooks/atmospheric-river
    contributing
    authors
    whats_new

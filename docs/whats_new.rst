@@ -8,6 +8,14 @@ What's New
 
     import pyremo
 
+UNRELEASED
+----------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Removed ``nblink`` dependency (:pull:`196`).
+
 v0.7.1 (2 August 2024)
 ----------------------
 

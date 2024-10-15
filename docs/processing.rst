@@ -14,5 +14,5 @@ from these tutorials is based on some notebooks you can download directly from t
 .. toctree::
    :maxdepth: 2
 
-   warm-start
-   prsint
+   notebooks/warm-start
+   notebooks/prsint

@@ -1,6 +1,5 @@
 # flake8: noqa
-"""collection of common Remo physics constants.
-"""
+"""collection of common Remo physics constants."""
 
 # descritions from REMO
 #!C**

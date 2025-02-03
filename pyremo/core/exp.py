@@ -1,5 +1,4 @@
-"""Module for working and parsing Remo output files.
-"""
+"""Module for working and parsing Remo output files."""
 
 import os
 from pathlib import Path

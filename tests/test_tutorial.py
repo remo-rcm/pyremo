@@ -1,5 +1,4 @@
-"""Test loading of tutorial data
-"""
+"""Test loading of tutorial data"""
 
 import pyremo as pr
 

@@ -1,5 +1,4 @@
-"""default values for the command line interface
-"""
+"""default values for the command line interface"""
 
 # RELHUM not yet available
 variables = ["T", "FI", "U", "V", "QD", "QW"]

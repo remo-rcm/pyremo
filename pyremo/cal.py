@@ -1,5 +1,4 @@
-"""this module handles absolute calendars that occur in REMO datasets.
-"""
+"""this module handles absolute calendars that occur in REMO datasets."""
 
 import datetime as dt
 import math

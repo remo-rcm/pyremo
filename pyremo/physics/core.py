@@ -1,6 +1,5 @@
 # flake8: noqa
-"""physics module that contains some common Remo physics functions.
-"""
+"""physics module that contains some common Remo physics functions."""
 
 import numpy as np
 import xarray as xr

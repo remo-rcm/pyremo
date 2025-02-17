@@ -1,10 +1,7 @@
 import glob
 import os
-
-# import subprocess
-# import tempfile
 from datetime import timedelta as td
-from os import path as op
+from pathlib import Path
 from warnings import warn
 
 import cftime as cfdt
@@ -25,7 +22,6 @@ from .core import (
 )
 
 cdo_exe = "cdo"
-
 cdo_datetime_format = "%Y-%m-%dT%H:%M:%S"
 
 
@@ -45,24 +41,20 @@ def get_min_max_time(filename):
 
 
 def get_times_from_files(files):
-    result = {}
-    for f in files:
-        result[f] = get_min_max_time(f)
-    return result
+    return {f: get_min_max_time(f) for f in files}
 
 
 def get_files(dirs):
-    """get files from a list of directories"""
+    """Get files from a list of directories"""
     if not isinstance(dirs, list):
         dirs = [dirs]
     files = []
     for d in dirs:
-        d = op.abspath(d)
-        # print('looking into', directory, op.isdir(directory), op.isfile(directory), Path(directory).is_dir())
-        if op.isdir(d):
-            files += glob.glob(os.path.join(d, "*.nc"))
+        d = Path(d).resolve()
+        if d.is_dir():
+            files += glob.glob(str(d / "*.nc"))
         else:
-            files += glob.glob(d)
+            files += glob.glob(str(d))
     files.sort()
     return files
 
@@ -81,17 +73,8 @@ def create_df(data):
 
 
 def create_catalog(**args):
-    """Scan directories for files and add time min and time max
-
-    This function is supposed to scan directories for global model input files.
-    It will create a catalog that contains the path to the file and the
-    min and max times of that file.
-
-    """
-    files = {}
-    print(args)
-    for v, d in args.items():
-        files[v] = get_files(d)
+    """Scan directories for files and add time min and time max"""
+    files = {v: get_files(d) for v, d in args.items()}
     for v, fs in files.items():
         files[v] = get_times_from_files(fs)
     return files
@@ -112,21 +95,17 @@ def to_cfdatetime(time, calendar="standard"):
 
 
 def search_df(df, **kwargs):
-    """Search dataframe by arbitray conditions
-
-    Converts kwargs to pandas search conditions. If kwargs is a list,
-    pandas isin is used as condition.
-
-    """
-    condition_list = []
-    for key, item in kwargs.items():
-        if isinstance(item, list):
-            cond = "(df['{0}'].isin({1}))".format(key, repr(item))
-        else:
-            cond = "(df['{0}'] == {1})".format(key, repr(item))
-        condition_list.append(cond)
+    """Search dataframe by arbitrary conditions"""
+    condition_list = [
+        (
+            f"(df['{key}'].isin({repr(item)}))"
+            if isinstance(item, list)
+            else f"(df['{key}'] == {repr(item)})"
+        )
+        for key, item in kwargs.items()
+    ]
     conditions = " & ".join(condition_list)
-    return df[eval(conditions)]
+    return df.query(conditions)
 
 
 def get_var_by_time(df, datetime=None, **kwargs):
@@ -139,20 +118,7 @@ def get_var_by_time(df, datetime=None, **kwargs):
 def get_sst_times(date):
     """Get daily dates from which the SST is interpolated in time"""
     if date.hour == 12:
-        # no interpolation neccessary
         return (date,)
-    # if dt.hour > 12:
-    #     # interpolate between today and tomorrow
-    #     dt1 = dt + td(days=1)
-    # else:
-    #     # interpolated betweend today and yesterday
-    #     dt1 = dt
-    #     dt = dt + td(days=-1)
-    # return (
-    #     cfdt.datetime(dt.year, dt.month, dt.day, 12, calendar=cal),
-    #     cfdt.datetime(dt1.year, dt1.month, dt1.day, 12, calendar=cal),
-    # )
-
     days = (date + td(days=i) for i in range(-2, 3))
     return [
         cfdt.datetime(d.year, d.month, d.day, 12, calendar="standard") for d in days
@@ -167,7 +133,6 @@ class CFModelSelector:
     """CF Model Selector
 
     The CF model selector class simply selects files by a certain timestep.
-
     """
 
     def __init__(self, df, calendar="standard", **kwargs):
@@ -188,16 +153,14 @@ class CFModelSelector:
         if len(sel.index) > 1:
             return list(sel.path)
         if sel.empty:
-            raise FileNotFoundError(
-                "no file found: {}, datetime: {}".format(kwargs, datetime)
-            )
+            raise FileNotFoundError(f"no file found: {kwargs}, datetime: {datetime}")
         return sel.iloc[0].path
 
 
 def gfile(ds, ref_ds=None, tos=None, attrs=None, use_cftime=True, invertlev=None):
     """Creates a global dataset ready for preprocessing.
 
-    This function creates a homogenized global dataset. If neccessary,
+    This function creates a homogenized global dataset. If necessary,
     units are converted and the sea surface temperature ``tos`` is
     interpolated spatially and temporally to the atmospheric grid.
 
@@ -237,8 +200,6 @@ def gfile(ds, ref_ds=None, tos=None, attrs=None, use_cftime=True, invertlev=None
     if attrs is None:
         attrs = ds.attrs
     if use_cftime is True:
-        # what for https://github.com/pydata/xarray/pull/7399
-        # return ds.convert_calendar(ds.time.dt.calendar, use_cftime=True)
         return ds.assign_coords(
             time=ds.time.convert_calendar(ds.time.dt.calendar, use_cftime=True).time
         )
@@ -261,7 +222,7 @@ class GFile:
         self.scratch = scratch
         if self.scratch is None:
             try:
-                self.scratch = os.path.join(os.environ["SCRATCH"], ".cf-selector")
+                self.scratch = Path(os.environ["SCRATCH"]) / ".cf-selector"
             except Exception:
                 pass
 
@@ -270,26 +231,21 @@ class GFile:
     def get_files(self, variables, datetime=None, **kwargs):
         if datetime:
             datetime = to_cfdatetime(datetime, self.calendar)
-        files = {
+        return {
             var: self.selector.get_file(variable_id=var, datetime=datetime, **kwargs)
             for var in variables
         }
-        return files
 
     def extract_timestep(self, datetime=None, **kwargs):
         pass
 
     def extract_dynamic_timesteps(self, datetime=None, **kwargs):
         """Extract timesteps for a certain date from input files."""
-
         datetime = to_cfdatetime(datetime, self.calendar)
         files = self.get_files(self.dynamics, datetime=datetime, **kwargs)
         if datetime is None:
             return files
-        if self.scratch is not None:
-            cdo = Cdo(tempdir=self.scratch)
-        else:
-            cdo = Cdo()
+        cdo = Cdo(tempdir=self.scratch) if self.scratch else Cdo()
         return {
             v: cdo.seldate(
                 datetime.strftime(cdo_datetime_format), input=f, returnXDataset=True
@@ -305,41 +261,29 @@ class GFile:
                 for var, f in self.get_files(self.fx, datetime=None, **kwargs).items()
             }
         )
-
         return xr.merge(files.values(), compat="override", join="override")
 
     def get_sst(self, datetime, atmo_grid=None):
         """Extract and interpolate SST in space and time."""
-
         datetime = to_cfdatetime(datetime, self.calendar)
         times = get_sst_times(datetime)
-        # files = {
-        #    t: self.selector.get_file(variable_id=self.sst, datetime=t) for t in times
-        # }
         files = {}
         for t in times:
-            print(t)
             try:
                 f = self.selector.get_file(variable_id=self.sst, datetime=t)
                 files[t] = f
-                print(f)
             except FileNotFoundError:
                 warn(f"sst not found for {datetime}, will extrapolate...")
                 pass
 
-        if self.scratch is not None:
-            cdo = Cdo(tempdir=self.scratch)
-        else:
-            cdo = Cdo()
+        cdo = Cdo(tempdir=self.scratch) if self.scratch else Cdo()
         sst_extract = [
             cdo.seldate(
                 t.strftime(cdo_datetime_format), input=f, returnXDataset=True
             ).load()
             for t, f in files.items()
         ]
-        sst_da = xr.merge(sst_extract)[
-            self.sst
-        ]  # xr.open_mfdataset(sst_extract, use_cftime=True)
+        sst_da = xr.merge(sst_extract)[self.sst]
         if len(sst_da.time) > 1:
             sst_da = sst_da.interp(
                 time=datetime.strftime(cdo_datetime_format),
@@ -351,7 +295,7 @@ class GFile:
         return self.regrid_to_atmosphere(sst_da.squeeze(drop=True), atmo_grid)
 
     def regrid_to_atmosphere(self, da, atmo_grid):
-        """Regrid tos to atmoshperic grid."""
+        """Regrid tos to atmospheric grid."""
         import xesmf as xe
 
         attrs = da.attrs
@@ -362,7 +306,6 @@ class GFile:
 
         if not self.tos_regridder:
             ds["mask"] = ~ds.tos.isnull().squeeze(drop=True)
-            print("creating tos regridder")
             self.tos_regridder = xe.Regridder(
                 ds, atmo_grid, method="nearest_s2d", extrap_method="nearest_s2d"
             )
@@ -373,10 +316,8 @@ class GFile:
 
     def gfile(self, datetime, sst=True, **kwargs):
         """Creates a gfile from CF input data."""
-        print(f"extracting: {datetime}")
         gds = self.extract_data(datetime=datetime, **kwargs)
-        if sst is True:
-            print("interpolating SST")
+        if sst:
             gds[self.sst] = self.get_sst(datetime, gds)
         if "variable_id" in gds.attrs:
             del gds.attrs["variable_id"]
@@ -391,7 +332,6 @@ def open_datasets(datasets, ref_ds=None):
         except Exception:
             raise Exception("ta is required in the datasets dict if no ref_ds is given")
     lon, lat = horizontal_dims(ref_ds)
-    # ak_bnds, bk_bnds = get_ab_bnds(ref_ds)
     dsets = []
     for var, f in datasets.items():
         try:
@@ -409,8 +349,6 @@ def get_gfile(scratch=None, **kwargs):
     if "df" in kwargs:
         df = kwargs["df"]
     else:
-        # create a file catalog containing files and their
-        # start and end times.
         files = create_catalog(**kwargs)
         data = dask.compute(files)
         df = create_df(data[0])

@@ -72,7 +72,7 @@ REMO preprocessor
    preproc.get_gcm_dataset
    preproc.get_gcm_gfile
    preproc.remap
-   preppro.remap_remo
+   preproc.remap_remo
    preproc.ERA5
    preproc.ERA5.gfile
 

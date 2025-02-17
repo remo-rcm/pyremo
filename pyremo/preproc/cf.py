@@ -91,7 +91,21 @@ def to_cfdatetime(time, calendar="standard"):
 
 
 def search_df(df, **kwargs):
-    """Search dataframe by arbitrary conditions"""
+    """
+    Search dataframe by arbitrary conditions.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe to search.
+    **kwargs : dict
+        Arbitrary conditions to filter the dataframe. The keys are column names and the values are the conditions.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The filtered dataframe.
+    """
     condition_list = [
         (
             f"(df['{key}'].isin({repr(item)}))"
@@ -105,6 +119,23 @@ def search_df(df, **kwargs):
 
 
 def get_var_by_time(df, datetime=None, **kwargs):
+    """
+    Get variables by time.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe to search.
+    datetime : datetime, optional
+        The datetime to filter the dataframe.
+    **kwargs : dict
+        Arbitrary conditions to filter the dataframe. The keys are column names and the values are the conditions.
+
+    Returns
+    -------
+    pandas.DataFrame
+        The filtered dataframe.
+    """
     df = search_df(df, **kwargs)
     if datetime:
         df = df[(datetime >= df.time_min) & (datetime <= df.time_max)]
@@ -112,7 +143,19 @@ def get_var_by_time(df, datetime=None, **kwargs):
 
 
 def get_sst_times(date):
-    """Get daily dates from which the SST is interpolated in time"""
+    """
+    Get daily dates from which the SST is interpolated in time.
+
+    Parameters
+    ----------
+    date : datetime
+        The date to get the SST times.
+
+    Returns
+    -------
+    list of cftime.datetime
+        The list of SST times.
+    """
     if date.hour == 12:
         return (date,)
     days = (date + td(days=i) for i in range(-2, 3))
@@ -122,13 +165,52 @@ def get_sst_times(date):
 
 
 def cdo_call(self, options="", op="", input="", output="temp", print_command=True):
+    """
+    Call CDO (Climate Data Operators) with the given options and operation.
+
+    Parameters
+    ----------
+    options : str, optional
+        The options to pass to CDO.
+    op : str, optional
+        The CDO operation to perform.
+    input : str, optional
+        The input file for the CDO operation.
+    output : str, optional
+        The output file for the CDO operation.
+    print_command : bool, optional
+        Whether to print the CDO command.
+
+    Returns
+    -------
+    None
+    """
     pass
 
 
 class CFModelSelector:
-    """CF Model Selector
+    """
+    CF Model Selector
 
     The CF model selector class simply selects files by a certain timestep.
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        The dataframe containing the file information.
+    calendar : str, optional
+        The calendar type.
+    **kwargs : dict
+        Arbitrary conditions to filter the dataframe.
+
+    Attributes
+    ----------
+    calendar : str
+        The calendar type.
+    tempfiles : list
+        The list of temporary files.
+    df : pandas.DataFrame
+        The filtered dataframe.
     """
 
     def __init__(self, df, calendar="standard", **kwargs):
@@ -140,11 +222,44 @@ class CFModelSelector:
         self.df = self._update_time(df)
 
     def _update_time(self, df):
+        """
+        Update the time columns in the dataframe.
+
+        Parameters
+        ----------
+        df : pandas.DataFrame
+            The dataframe to update.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The updated dataframe.
+        """
         df["time_min"] = df["time_min"].apply(to_cfdatetime, calendar=self.calendar)
         df["time_max"] = df["time_max"].apply(to_cfdatetime, calendar=self.calendar)
         return df
 
     def get_file(self, datetime=None, **kwargs):
+        """
+        Get the file for the given datetime and conditions.
+
+        Parameters
+        ----------
+        datetime : datetime, optional
+            The datetime to filter the dataframe.
+        **kwargs : dict
+            Arbitrary conditions to filter the dataframe. The keys are column names and the values are the conditions.
+
+        Returns
+        -------
+        str
+            The path to the file.
+
+        Raises
+        ------
+        FileNotFoundError
+            If no file is found for the given conditions.
+        """
         if datetime:
             datetime = to_cfdatetime(datetime, self.calendar)
         sel = get_var_by_time(self.df, datetime=datetime, **kwargs)
@@ -356,6 +471,27 @@ def open_datasets(datasets, ref_ds=None):
 
 
 def get_gcm_gfile(scratch=None, **kwargs):
+    """
+    Create a GFile object for GCM data.
+
+    This function creates a GFile object which is used to handle and process
+    global climate model (GCM) data. It can either take a pre-existing dataframe
+    or create one by scanning directories for files and extracting time information.
+
+    Parameters
+    ----------
+    scratch : str or None, optional
+        Path to a scratch directory for temporary files. If None, the default
+        scratch directory is used.
+    **kwargs : dict
+        This should be a dictionary of cf variable names as keys and directories
+        of netCDF files as values. These are scanned to be used for the preprocessing.
+
+    Returns
+    -------
+    GFile
+        An instance of the GFile class containing the processed GCM data.
+    """
     if "df" in kwargs:
         df = kwargs["df"]
     else:

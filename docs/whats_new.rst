@@ -14,6 +14,7 @@ UNRELEASED
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Updates for ``cdo > 2.1`` (:pull:`217`).
 - Removed ``nblink`` dependency (:pull:`196`).
 
 v0.7.1 (2 August 2024)

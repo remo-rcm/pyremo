@@ -66,41 +66,14 @@ Pressure interpolation
 REMO preprocessor
 =================
 
-CMIP (CF) preprocessor
-----------------------
-
 .. autosummary::
    :toctree: generated/
 
-   preproc.gfile
+   preproc.get_gcm_dataset
+   preproc.get_gcm_gfile
    preproc.remap
-   preproc.to_netcdf
-   preproc.to_tar
-
-Double nesting preprocessor
----------------------------
-
-.. autosummary::
-   :toctree: generated/
-
-   preproc.remap_remo
-
-
-ECMWF cmorizer (ERA5)
----------------------
-
-.. autosummary::
-   :toctree: generated/
-
+   preppro.remap_remo
    preproc.ERA5
-
-
-Converting ECMWF data
-^^^^^^^^^^^^^^^^^^^^^
-
-.. autosummary::
-   :toctree: generated/
-
    preproc.ERA5.gfile
 
 

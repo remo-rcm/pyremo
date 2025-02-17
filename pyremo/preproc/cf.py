@@ -80,14 +80,10 @@ def create_catalog(**args):
     return files
 
 
-def to_datetime(time):
-    try:
-        return pd.to_datetime(str(int(time)))
-    except Exception:
-        return time
-
-
 def to_cfdatetime(time, calendar="standard"):
+    if isinstance(time, pd.Timestamp):
+        # convert to string to handle precision issues with microseconds
+        time = time.strftime("%Y-%m-%d %H:%M:%S")
     try:
         return xr.cftime_range(start=time, end=time, calendar=calendar)[0]
     except Exception:
@@ -105,7 +101,7 @@ def search_df(df, **kwargs):
         for key, item in kwargs.items()
     ]
     conditions = " & ".join(condition_list)
-    return df.query(conditions)
+    return df[eval(conditions)]
 
 
 def get_var_by_time(df, datetime=None, **kwargs):
@@ -149,6 +145,8 @@ class CFModelSelector:
         return df
 
     def get_file(self, datetime=None, **kwargs):
+        if datetime:
+            datetime = to_cfdatetime(datetime, self.calendar)
         sel = get_var_by_time(self.df, datetime=datetime, **kwargs)
         if len(sel.index) > 1:
             return list(sel.path)
@@ -157,7 +155,9 @@ class CFModelSelector:
         return sel.iloc[0].path
 
 
-def gfile(ds, ref_ds=None, tos=None, attrs=None, use_cftime=True, invertlev=None):
+def create_gcm_dataset(
+    ds, ref_ds=None, tos=None, attrs=None, use_cftime=True, invertlev=None
+):
     """Creates a global dataset ready for preprocessing.
 
     This function creates a homogenized global dataset. If necessary,
@@ -204,6 +204,16 @@ def gfile(ds, ref_ds=None, tos=None, attrs=None, use_cftime=True, invertlev=None
             time=ds.time.convert_calendar(ds.time.dt.calendar, use_cftime=True).time
         )
     return ds
+
+
+def gfile(*args, **kwargs):
+    warn(
+        "The 'gfile' function is deprecated and will be removed in a future version. "
+        "Please use 'create_gcm_dataset' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return create_gcm_dataset(*args, **kwargs)
 
 
 class GFile:
@@ -345,7 +355,7 @@ def open_datasets(datasets, ref_ds=None):
     return xr.merge(dsets, compat="override", join="override")
 
 
-def get_gfile(scratch=None, **kwargs):
+def create_gcm_gfile(scratch=None, **kwargs):
     if "df" in kwargs:
         df = kwargs["df"]
     else:
@@ -353,3 +363,13 @@ def get_gfile(scratch=None, **kwargs):
         data = dask.compute(files)
         df = create_df(data[0])
     return GFile(df=df, scratch=scratch)
+
+
+def get_gfile(*args, **kwargs):
+    warn(
+        "The 'get_gfile' function is deprecated and will be removed in a future version. "
+        "Please use 'create_gcm_gfile' instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return create_gcm_gfile(*args, **kwargs)

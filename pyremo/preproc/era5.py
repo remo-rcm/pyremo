@@ -189,7 +189,7 @@ class ERA5:
             )
 
     def _seldate(self, filename, date):
-        return f"--seldate,{date} {filename}"
+        return f"-seldate,{date} {filename}"
         # return self.cdo.seldate(date, input=filename)
 
     def _seldates(self, filenames, date):
@@ -252,11 +252,11 @@ class ERA5:
             gridtype = self._gridtype(filename)
         # options = f"-f nc4 -t {table}"
         if setname:
-            setname = f"--setname,{setname}"  # {filename}"
+            setname = f"-setname,{setname}"  # {filename}"
         if gridtype == "gaussian_reduced":
-            gaussian = "--setgridtype,regular"
+            gaussian = "-setgridtype,regular"
         elif gridtype == "spectral":
-            gaussian = "--sp2gpl"
+            gaussian = "-sp2gpl"
         elif gridtype == "gaussian":
             gaussian = ""
         else:
@@ -268,7 +268,7 @@ class ERA5:
 
     def _compute_wind(self, vort, div):
         """compute wind from vorticity and divergence"""
-        return f"--chname,u,ua,v,va --dv2uvl --merge {vort} {div}"
+        return f"-chname,u,ua,v,va -dv2uvl -merge [ {vort} {div} ]"
 
     def gfile(self, date, path=None, expid=None, filename=None):
         """Create an ERA5 gfile dataset.
@@ -314,10 +314,12 @@ class ERA5:
         print("computing wind...")
         wind = self._compute_wind(seldates["svo"], seldates["sd"])
 
-        merge = f"--setgrid,{self.gridfile} --merge " + " ".join(
-            list(regulars.values()) + [wind]
+        merge = (
+            f"-setgrid,{self.gridfile} -merge [ "
+            + " ".join(list(regulars.values()) + [wind])
+            + " ]"
         )
-        call = f"cdo {self.options} invertlev --invertlat {merge} {filename}"
+        call = f"cdo {self.options} invertlev -invertlat {merge} {filename}"
         print(f"execute: {call}")
 
         subprocess.run(

@@ -155,7 +155,7 @@ class CFModelSelector:
         return sel.iloc[0].path
 
 
-def create_gcm_dataset(
+def get_gcm_dataset(
     ds, ref_ds=None, tos=None, attrs=None, use_cftime=True, invertlev=None
 ):
     """Creates a global dataset ready for preprocessing.
@@ -209,11 +209,11 @@ def create_gcm_dataset(
 def gfile(*args, **kwargs):
     warn(
         "The 'gfile' function is deprecated and will be removed in a future version. "
-        "Please use 'create_gcm_dataset' instead.",
+        "Please use 'get_gcm_dataset' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return create_gcm_dataset(*args, **kwargs)
+    return get_gcm_dataset(*args, **kwargs)
 
 
 class GFile:
@@ -355,7 +355,7 @@ def open_datasets(datasets, ref_ds=None):
     return xr.merge(dsets, compat="override", join="override")
 
 
-def create_gcm_gfile(scratch=None, **kwargs):
+def get_gcm_gfile(scratch=None, **kwargs):
     if "df" in kwargs:
         df = kwargs["df"]
     else:
@@ -368,8 +368,8 @@ def create_gcm_gfile(scratch=None, **kwargs):
 def get_gfile(*args, **kwargs):
     warn(
         "The 'get_gfile' function is deprecated and will be removed in a future version. "
-        "Please use 'create_gcm_gfile' instead.",
+        "Please use 'get_gcm_gfile' instead.",
         DeprecationWarning,
         stacklevel=2,
     )
-    return create_gcm_gfile(*args, **kwargs)
+    return get_gcm_gfile(*args, **kwargs)

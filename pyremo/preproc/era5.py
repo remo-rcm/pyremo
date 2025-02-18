@@ -18,10 +18,11 @@ from cdo import Cdo
 
 # path and file templates at DKRZ
 # see https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/#file-and-directory-names
-path_template = (
-    "/pool/data/ERA5/{era_id}/{level_type}/{dataType}/{frequency}/{code:03d}"
-)
-file_template = "{era_id}{level_type}{typeid}_{frequency}_{date}_{code:03d}.grb"
+
+dkrz_template = {
+    "path_template": "/pool/data/ERA5/{era_id}/{level_type}/{dataType}/{frequency}/{code:03d}",
+    "file_template": "{era_id}{level_type}{typeid}_{frequency}_{date}_{code:03d}.grb",
+}
 
 
 def get_output_filename(date, expid, path=None):
@@ -84,12 +85,26 @@ def get_files_from_intake(cat, params, date=None):
     return files
 
 
-def get_file_from_template(date, era_id, frequency, dataType, code, level_type):
+def get_file_from_template(
+    date,
+    era_id,
+    frequency,
+    dataType,
+    code,
+    level_type,
+    template=None,
+):
     """Derive filename from filename template
 
     Derives filename according to https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/#file-and-directory-names
 
     """
+    if template is None:
+        template = dkrz_template
+
+    path_template = template["path_template"]
+    file_template = template["file_template"]
+
     lt = {
         "model_level": "ml",
         "surface": "sf",
@@ -123,10 +138,10 @@ def get_file_from_template(date, era_id, frequency, dataType, code, level_type):
     )
 
 
-def get_files_from_template(params, date):
+def get_files_from_template(params, date, template=None):
     files = {}
     for k, v in params.items():
-        f = get_file_from_template(date=date, **v)
+        f = get_file_from_template(date=date, template=template, **v)
         if not f:
             warn(f"no result for {k} --> params: {v}")
         files[k] = f
@@ -153,7 +168,7 @@ class ERA5:
     chunks = {}
     options = "-f nc4"
 
-    def __init__(self, params, cat=None, gridfile=None, scratch=None):
+    def __init__(self, params, cat=None, gridfile=None, scratch=None, template=None):
         if isinstance(cat, str):
             import intake
 
@@ -165,6 +180,9 @@ class ERA5:
         self.scratch = scratch
         self.params = params
         self.gridfile = gridfile
+        if template is None:
+            template = dkrz_template
+        self.template = template
         self.cdo = Cdo(tempdir=scratch)
 
     def _get_files(self, date):
@@ -181,6 +199,7 @@ class ERA5:
         else:
             return get_files_from_template(
                 date=date,
+                template=self.template,
                 params={
                     k: v
                     for k, v in self.params.items()

@@ -11,11 +11,22 @@ What's New
 UNRELEASED
 ----------
 
+This release introduces a new API for the preprocessing module and better documentation. The function
+:py:meth:`pyremo.preproc.gfile` is deprecated in favour on the new API in :py:meth:`pyremo.preproc.get_gcm_dataset`.
+Furthermore, :py:meth:`pyremo.preproc.get_gfile` is deprecated and :py:meth:`pyremo.preproc.get_gcm_gfile` should be used instead.
+
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- New functions :py:meth:`pyremo.preproc.get_gcm_dataset` and :py:meth:`pyremo.preproc.get_gfile` are introduced for handling CMIP and ERA5 preprocessing (:pull:`219`).
 - Updates for ``cdo > 2.1`` (:pull:`217`).
 - Removed ``nblink`` dependency (:pull:`196`).
+
+Deprecations
+~~~~~~~~~~~~
+
+-  :py:meth:`pyremo.preproc.gfile` and :py:meth:`pyremo.preproc.get_gfile` are deprecated.
+
 
 v0.7.1 (2 August 2024)
 ----------------------

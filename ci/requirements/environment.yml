@@ -5,7 +5,7 @@ channels:
 dependencies:
   - cartopy
   - matplotlib-base
-  - numpy<1.26.3
+  - numpy #<1.26.3
   - pooch
   - regionmask
   - xarray
@@ -19,7 +19,7 @@ dependencies:
   - pytest-env
   - fsspec
   - requests
-  - setuptools<60.0 # see https://numpy.org/doc/stable/reference/distutils_status_migration.html
+  #- setuptools<60.0 # see https://numpy.org/doc/stable/reference/distutils_status_migration.html
   - aiohttp
   - cmor
   - cdo

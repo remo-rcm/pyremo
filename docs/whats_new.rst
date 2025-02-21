@@ -8,8 +8,8 @@ What's New
 
     import pyremo
 
-UNRELEASED
-----------
+v0.8.0 (UNRELEASED)
+-------------------
 
 This release introduces a new API for the preprocessing module and better documentation. The function
 :py:meth:`pyremo.preproc.gfile` is deprecated in favour on the new API in :py:meth:`pyremo.preproc.get_gcm_dataset`.

@@ -14,10 +14,13 @@ UNRELEASED
 This release introduces a new API for the preprocessing module and better documentation. The function
 :py:meth:`pyremo.preproc.gfile` is deprecated in favour on the new API in :py:meth:`pyremo.preproc.get_gcm_dataset`.
 Furthermore, :py:meth:`pyremo.preproc.get_gfile` is deprecated and :py:meth:`pyremo.preproc.get_gcm_gfile` should be used instead.
+``pyremo`` now supports ``python3.12`` since we could relax ``setuptools<60.0`` in the preprocessor and pressure interpolation
+backends by `migrating to meson build system <https://numpy.org/doc/stable/reference/distutils_status_migration.html>`_.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Relaxed ``setuptools<60.0`` and ``numpy<1.26.3`` by migration of ``pyintorg`` and ``pydruint`` upstream dependencies (:pull:`220`).
 - New functions :py:meth:`pyremo.preproc.get_gcm_dataset` and :py:meth:`pyremo.preproc.get_gfile` are introduced for handling CMIP and ERA5 preprocessing (:pull:`219`).
 - Updates for ``cdo > 2.1`` (:pull:`217`).
 - Removed ``nblink`` dependency (:pull:`196`).

@@ -247,15 +247,15 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
     """
     if isinstance(ds, dict):
         ds = open_datasets(ds, ref_ds, time_range)
-        if time_range is None:
-            time_range = ds.time
     else:
         ds = ds.copy()
-        if time_range is None:
-            time_range = ds.time
-        ds = ds.sel(time=time_range)
         ds["akgm"], ds["bkgm"] = get_vc(ds)
         ds = check_lev(ds)
+
+    if time_range is None:
+        time_range = ds.time
+        ds = ds.sel(time=time_range)
+
     if tos is not None:
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
     # ds = ds.rename({"lev": lev_gm})

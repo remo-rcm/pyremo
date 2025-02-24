@@ -1,8 +1,10 @@
 import pytest
 
+import pandas as pd
 import pyremo as pr
 from pyremo.preproc import gfile, remap
 from pyremo.tutorial import load_dataset, mpi_esm, mpi_esm_tos
+from pyremo.preproc.utils import get_filename
 
 from . import requires_pyintorg
 
@@ -52,3 +54,10 @@ def test_cf_preproc(gcm_ds):
     vc = pr.vc.tables["vc_27lev"]
     ads = remap(gcm_ds, domain_info, vc, surflib)
     assert "T" in ads
+
+
+def test_filename():
+    assert (
+        get_filename(expid="000000", date=pd.Timestamp("1979-01-01"))
+        == "a000000a1979010100.nc"
+    )

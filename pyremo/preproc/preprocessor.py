@@ -1,6 +1,5 @@
 import os
 import tempfile
-from os import path as op
 
 import dask
 import xarray as xr
@@ -9,22 +8,7 @@ from pyremo.preproc import get_gcm_dataset, get_gcm_gfile, remap
 import pyremo as pr
 from ..remo_ds import update_meta_info
 from .era5 import compute_gfile
-from .utils import datelist, ensure_dir
-
-fillvars = ["TSW", "SEAICE", "TSI"]
-vcs = [
-    "hyai",
-    "hybi",
-    "hyam",
-    "hybm",
-    "akgm",
-    "bkgm",
-    "ak",
-    "bk",
-    "rotated_latitude_longitude",
-]
-static = vcs + ["rotated_latitude_longitude"]
-
+from .utils import datelist, ensure_dir, write_forcing_file
 
 dkrz_template = {
     "path_template": "/pool/data/ERA5/{era_id}/{level_type}/{dataType}/{frequency}/{code:03d}",
@@ -190,47 +174,6 @@ def get_outpath(path, time):
     if not os.path.isdir(outpath):
         os.makedirs(outpath)
     return outpath
-
-
-def write_forcing_file(
-    ds, path=None, expid="000000", template=None, missval=1.0e20, **kwargs
-):
-    """
-    Write a forcing file.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-        Dataset to write.
-    path : str, optional
-        Output path, by default None.
-    expid : str, optional
-        Experiment ID, by default "000000".
-    template : str, optional
-        Filename template, by default None.
-    missval : float, optional
-        Missing value, by default 1.0e20.
-
-    Returns
-    -------
-    str
-        Path to the written file.
-    """
-    if path is None:
-        path = "./"
-    fname = op.join(path, get_filename(ds.time.item(), expid, template))
-    for v in ds.data_vars:
-        var = ds[v]
-        if v in fillvars:
-            var.encoding = {"_FillValue": missval}
-        else:
-            var.encoding = {"_FillValue": None}
-        # expand time dim is necessary for REMO input forcing
-        if v not in static and "time" not in var.dims:
-            ds[v] = var.expand_dims("time")
-    ds.to_netcdf(fname, **kwargs)
-    ds.close()
-    return fname
 
 
 def prepare_surflib(surflib):

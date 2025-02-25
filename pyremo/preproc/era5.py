@@ -29,6 +29,7 @@ dkrz_template = {
 
 era5_params_file = files("pyremo.preproc").joinpath("era5-params.yaml")
 era5_grid_file = files("pyremo.preproc").joinpath("grid.txt")
+ecmwf_params_file = files("pyremo.preproc").joinpath("ecmwf_128.csv")
 
 era5_params_config = read_yaml(era5_params_file)
 
@@ -36,6 +37,8 @@ era5_params = {
     k: era5_params_config.get("defaults", {}) | v
     for k, v in era5_params_config["parameters"].items()
 }
+
+ecmwf_params = pd.read_csv(ecmwf_params_file)
 
 
 def get_output_filename(date, expid, path=None):

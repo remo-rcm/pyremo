@@ -7,7 +7,7 @@ from pyremo.preproc import get_gcm_dataset, get_gcm_gfile, remap
 
 import pyremo as pr
 from ..remo_ds import update_meta_info
-from .era5 import compute_gfile
+from .era5 import era5_gfile_from_dkrz
 from .utils import datelist, ensure_dir, write_forcing_file
 
 dkrz_template = {
@@ -418,7 +418,7 @@ class ERA5Preprocessor(Preprocessor):
         xarray.Dataset
             Input dataset.
         """
-        filename = compute_gfile(date, self.scratch.name)
+        filename = era5_gfile_from_dkrz(date, self.scratch.name)
         # logger.debug(f"created: {filename}")
         ds = xr.open_dataset(filename).load()
         return get_gcm_dataset(ds)

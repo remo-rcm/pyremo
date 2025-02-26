@@ -4,79 +4,182 @@ defaults:
    dataType: an
 
 parameters:
-    ta:
-       code: 130
-       level_type: model_level
-    ps:
-       code: 134
-       level_type: surface
-    # ua:
-    #    code: 131
-    #    level_type: model_level
-    # va:
-    #    code: 132
-    #    level_type: model_level
-    hus:
-       code: 133
-       level_type: model_level
-    clw:
-       code: 246
-       level_type: model_level
-    orog:
-       code: 129
-       level_type: surface
-       frequency: "invariant"
-    sic:
-       code: 31
-       level_type: surface
-    sftlf:
-       code: 172
-       level_type: surface
-       frequency: "invariant"
-    svo:
-       code: 138
-       level_type: model_level
-    sd:
-       code: 155
-       level_type: model_level
-    snd:
-       code: 141
-       level_type: surface
-    tos:
-       code: 34
-       level_type: surface
-    tsl1:
-       code: 139
-       level_type: surface
-    tsl2:
-       code: 170
-       level_type: surface
-    tsl3:
-       code: 183
-       level_type: surface
-    tsl4:
-       code: 236
-       level_type: surface
-    tsn:
-       code: 238
-       level_type: surface
-    src:
-       code: 198
-       level_type: surface
-    skt:
-       code: 235
-       level_type: surface
-    swvl1:
-       code: 39
-       level_type: surface
-    swvl2:
-       code: 40
-       level_type: surface
-    swvl3:
-       code: 41
-       level_type: surface
-    swvl4:
-       code: 42
-       level_type: surface
+   clw:
+      code: 246
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: specific_cloud_liquid_water_content
+      level_type: model_level
+      short_name: clwc
+   hus:
+      code: 133
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: specific_humidity
+      level_type: model_level
+      short_name: q
+   orog:
+      code: 129
+      dataType: an
+      era_id: E5
+      frequency: invariant
+      gc_name: geopotential
+      level_type: surface
+      short_name: z
+   ps:
+      code: 134
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: surface_pressure
+      level_type: surface
+      short_name: sp
+   sd:
+      code: 155
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: divergence
+      level_type: model_level
+      short_name: d
+   sftlf:
+      code: 172
+      dataType: an
+      era_id: E5
+      frequency: invariant
+      gc_name: land_sea_mask
+      level_type: surface
+      short_name: lsm
+   sic:
+      code: 31
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: siconc
+      level_type: surface
+      short_name: ci
+   skt:
+      code: 235
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: skin_temperature
+      level_type: surface
+      short_name: skt
+   snd:
+      code: 141
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: snow_depth
+      level_type: surface
+      short_name: sd
+   src:
+      code: 198
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: skin_reservoir_content
+      level_type: surface
+      short_name: src
+   svo:
+      code: 138
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: vorticity
+      level_type: model_level
+      short_name: vo
+   swvl1:
+      code: 39
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: volumetric_soil_water_layer_1
+      level_type: surface
+      short_name: swvl1
+   swvl2:
+      code: 40
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: volumetric_soil_water_layer_2
+      level_type: surface
+      short_name: swvl2
+   swvl3:
+      code: 41
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: volumetric_soil_water_layer_3
+      level_type: surface
+      short_name: swvl3
+   swvl4:
+      code: 42
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: volumetric_soil_water_layer_4
+      level_type: surface
+      short_name: swvl4
+   ta:
+      code: 130
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: temperature
+      level_type: model_level
+      short_name: t
+   tos:
+      code: 34
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: sea_surface_temperature
+      level_type: surface
+      short_name: sst
+   tsl1:
+      code: 139
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: soil_temperature_level_1
+      level_type: surface
+      short_name: stl1
+   tsl2:
+      code: 170
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: soil_temperature_level_2
+      level_type: surface
+      short_name: stl2
+   tsl3:
+      code: 183
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: soil_temperature_level_3
+      level_type: surface
+      short_name: stl3
+   tsl4:
+      code: 236
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: soil_temperature_level_4
+      level_type: surface
+      short_name: stl4
+   tsn:
+      code: 238
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: temperature_of_snow_layer
+      level_type: surface
+      short_name: tsn
+
 
 #CODE="31 34 39 40 41 42 129 139 141 170 172 183 198 235 236 238"

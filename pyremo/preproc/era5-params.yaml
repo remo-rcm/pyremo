@@ -180,6 +180,22 @@ parameters:
       gc_name: temperature_of_snow_layer
       level_type: surface
       short_name: tsn
+   ua:
+      code: null
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: u_component_of_wind
+      level_type: model_level
+      short_name: null
+   va:
+      code: null
+      dataType: an
+      era_id: E5
+      frequency: hourly
+      gc_name: v_component_of_wind
+      level_type: model_level
+      short_name: null
 
 
 #CODE="31 34 39 40 41 42 129 139 141 170 172 183 198 235 236 238"

@@ -418,6 +418,8 @@ def era5_from_gcloud(time=None, chunks="auto", hfreq=6):
         "sea_surface_temperature": "tos",
     }
 
+    era5_to_cmip_cf = {v["gc_name"]: k for k, v in era5_params.items()}
+
     if chunks == "auto":
         chunks = {"time": 48}
 

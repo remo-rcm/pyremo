@@ -404,19 +404,19 @@ def era5_from_gcloud(time=None, chunks="auto", hfreq=6):
         The selected ERA5 dataset.
     """
 
-    era5_to_cmip_cf = {
-        "temperature": "ta",
-        "surface_pressure": "ps",
-        "u_component_of_wind": "ua",
-        "v_component_of_wind": "va",
-        "specific_humidity": "hus",
-        "specific_cloud_liquid_water_content": "clw",
-        "geopotential_at_surface": "orog",
-        "land_sea_mask": "sftlf",
-        "sea_ice_cover": "sic",
-        "snow_depth": "snd",
-        "sea_surface_temperature": "tos",
-    }
+    # era5_to_cmip_cf = {
+    #     "temperature": "ta",
+    #     "surface_pressure": "ps",
+    #     "u_component_of_wind": "ua",
+    #     "v_component_of_wind": "va",
+    #     "specific_humidity": "hus",
+    #     "specific_cloud_liquid_water_content": "clw",
+    #     "geopotential_at_surface": "orog",
+    #     "land_sea_mask": "sftlf",
+    #     "sea_ice_cover": "sic",
+    #     "snow_depth": "snd",
+    #     "sea_surface_temperature": "tos",
+    # }
 
     era5_to_cmip_cf = {v["gc_name"]: k for k, v in era5_params.items()}
 

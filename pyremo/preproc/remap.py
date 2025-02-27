@@ -100,7 +100,7 @@ def broadcast_coords(ds, coords=("lon", "lat")):
     return lam, phi
 
 
-def remap(gds, domain_info, vc, surflib):
+def remap(gds, domain_info, vc, surflib, initial=False, lice=None):
     """remapping workflow
 
     This function should be similar to the ones in the
@@ -666,6 +666,70 @@ def update_soil_temperatures(ds):
     ds["TDCL"] = ds.TDCL + zdts
     ds["WS"] = ds.WS * ds.WSMX
     return ds
+
+
+def create_initial_soil(ds, domain_info, surflib):
+    """Create initial soil dataset from atmospheric dataset."""
+    # rename vertical coordinate of input to avoid conflict with output lev
+    ds = ds.copy()
+
+    fak1 = 0.07
+    fak2 = 0.21
+    fak3 = 0.72
+    # WSGm(ij) = (fak1*zwb1(ij)) + (fak2*zwb2(ij)) + (fak3*zwb3(ij))
+    wsgm = fak1 * ds.swvl1 + fak2 * ds.swvl2 + fak3 * ds.swvl3
+
+    # remove time dimension if there is one
+    fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
+    blaem = surflib.BLA.squeeze(drop=True)
+
+    lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
+
+    # broadcast 1d global coordinates
+    lamgm, phigm = broadcast_coords(ds)
+
+    # compute remap matrix
+    indii, indjj = intersect(lamgm, phigm, lamem, phiem)  # .compute()
+
+    # horizontal interpolation
+    wsge = interpolate_horizontal(
+        wsgm, lamem, phiem, lamgm, phigm, "WS", indii=indii, indjj=indjj
+    )
+    td3ge = interpolate_horizontal(
+        ds.tsl1, lamem, phiem, lamgm, phigm, "TD3", indii=indii, indjj=indjj
+    )
+    td4ge = interpolate_horizontal(
+        ds.tsl2, lamem, phiem, lamgm, phigm, "TD4", indii=indii, indjj=indjj
+    )
+    td5ge = interpolate_horizontal(
+        ds.tsl3, lamem, phiem, lamgm, phigm, "TD5", indii=indii, indjj=indjj
+    )
+    tdge = interpolate_horizontal(
+        ds.tsl4, lamem, phiem, lamgm, phigm, "TD", indii=indii, indjj=indjj
+    )
+    snge = interpolate_horizontal(
+        ds.snd, lamem, phiem, lamgm, phigm, "SN", indii=indii, indjj=indjj
+    )
+    wlge = interpolate_horizontal(
+        ds.src, lamem, phiem, lamgm, phigm, "WL", indii=indii, indjj=indjj
+    )
+    tswge = remap_sst(
+        ds.tos,
+        lamem,
+        phiem,
+        lamgm,
+        phigm,
+        blagm=xr.where(ds.tos.isel(time=0).isnull(), 1.0, 0.0),
+        blaem=blaem,
+    )
+    soil = xr.merge([wsge, td3ge, td4ge, td5ge, tdge, snge, wlge, tswge])
+    soil.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
+    soil.attrs["domain_id"] = domain_info.get("domain_id", "no name")
+
+    soil = update_attrs(soil)
+
+    # transpose to remo convention
+    return soil.transpose(..., "rlat", "rlon")
 
 
 #  dpeh(ij) = pseh(ij) - GETP(akem(KEEM),bkem(KEEM),pseh(ij),akem(1))

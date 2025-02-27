@@ -7,11 +7,11 @@ import pyremo.physics as prp
 
 from . import constants as const
 
+# Constants
 zds3 = (3.25 - 0.0) / (3.5 - 0.0)
 zds4 = (19.2 - 17.5) / (64.0 - 17.5)
 zds5 = (77.55 - 64.0) / (194.5 - 64.0)
 zdtfak = 0.00065
-
 
 # freezing and melting point for
 # seaice derivation
@@ -220,3 +220,186 @@ def derive_soil_temperatures(tds, ads):
 #   tdhm(ij) = tdeh(ij) + zdts(ij)
 #   tdclhm(ij) = tdcleh(ij) + zdts(ij)
 # ENDDO
+
+
+# def calculate_dp(ps, ak, bk):
+#     return ps - (ak[-1] + bk[-1] * ps)
+
+
+def calculate_zdts(fibem, fibge):
+    """height correction"""
+    return (fibem - fibge) * zdtfak
+
+
+def initialize_soil_temperatures(
+    tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, iland
+):
+    zdts = calculate_zdts(fibem, fibge)
+    tslem = xr.where(iland == 0, tswge, tslge - zdts)
+    tswem = tswge.copy()
+    tsnem = xr.where(iland == 0, tswge, tslem)
+    td3em = xr.where(iland == 0, tswge, tslge - ((tslge - td3ge) * zds3) - zdts)
+    td4em = xr.where(iland == 0, tswge, td4ge - ((td4ge - td5ge) * zds4) - zdts)
+    td5em = xr.where(iland == 0, tswge, td5ge - ((td5ge - tdge) * zds5) - zdts)
+    tdem = td5em.copy()
+    tdclem = td5em.copy()
+    return tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem
+
+
+def calculate_seaice(tswem):
+    seaem = xr.zeros_like(tswem)
+    seaem = xr.where(tswem > melt, 0.0, seaem)
+    seaem = xr.where(tswem < frozen, 1.0, seaem)
+    seaem = xr.where(
+        (tswem >= frozen) & (tswem <= melt), (melt - tswem) / (melt - frozen), seaem
+    )
+    return seaem
+
+
+def calculate_tsi(tswem):
+    tsiem = tswem.copy()
+    tswem = xr.where(tswem < frozen, frozen, tswem)
+    tsiem = xr.where(tsiem > frozen, frozen, tsiem)
+    return tswem, tsiem
+
+
+def diagnose_ice_mask(snem):
+    return xr.where(snem > 9.50, 1.0, 0.0)
+
+
+def bodfld(
+    psge,
+    psem,
+    akgm,
+    bkgm,
+    akem,
+    bkem,
+    snge,
+    wsge,
+    wsmxem,
+    wlge,
+    blaem,
+    fibem,
+    fibge,
+    tswge,
+    tslge,
+    td3ge,
+    td4ge,
+    td5ge,
+    tdge,
+    prgpk=False,
+    ipr=None,
+    jpr=None,
+):
+    # Calculate dpge and dpem
+    # dpge = calculate_dp(psge, akgm, bkgm)
+    # dpem = calculate_dp(psem, akem, bkem)
+
+    # fak1 = 0.07_DP
+    # fak2 = 0.21_DP
+    # fak3 = 0.72_DP
+
+    # WSGm(ij) = (fak1*zwb1(ij)) + (fak2*zwb2(ij)) + (fak3*zwb3(ij))
+
+    # Initialize arrays
+    snem = snge.copy()
+    wsem = xr.ufuncs.minimum(wsmxem, wsge * wsmxem)
+    wlem = wlge.copy()
+    iland = xr.ufuncs.round(blaem * 1.0).astype(
+        int
+    )  # Assuming FAKINF is 1.0 for simplicity
+
+    # Initialize temperatures
+    tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem = (
+        initialize_soil_temperatures(
+            tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, iland
+        )
+    )
+
+    # Calculate sea ice and tsi
+    seaem = calculate_seaice(tswem)
+    tswem, tsiem = calculate_tsi(tswem)
+
+    # Diagnose ice mask from snow height
+    glacem = diagnose_ice_mask(snem)
+
+    return (
+        tslem,
+        tswem,
+        tsnem,
+        td3em,
+        td4em,
+        td5em,
+        tdem,
+        tdclem,
+        seaem,
+        tsiem,
+        glacem,
+        wsem,
+        wlem,
+        snem,
+    )
+
+    # results = bodfld(psge, psem, akgm, bkgm, akem, bkem, snge, wsge, wsmxem, wlge, blaem, fibem, fibge, tswge, tslge, td3ge, td4ge, td5ge, tdge)
+    # print(results)
+
+
+#  & 'FIB     ',   129    ,    1.0   ,      0.0  ,                              &
+#   & 'BLA     ',   172    ,    1.0   ,      0.0  ,                              &
+#   & 'PHI     ',   253    ,   57.296 ,      0.0  ,                              &
+#   & 'LAM     ',   254    ,   57.296 ,      0.0  ,                              &
+#   & 'PS      ',   152    ,    1.0   ,      0.0  ,                              &
+#   & 'T       ',   130    ,    1.0   ,      0.0  ,                              &
+#   & 'QD      ',   133    ,    1.0   ,      0.0  ,                              &
+#   & 'QW      ',   246    ,    1.0   ,      0.0  ,                              &
+#   & 'U       ',   131    ,    1.0   ,      0.0  ,                              &
+#   & 'V       ',   132    ,    1.0   ,      0.0  /
+
+# DATA(GMNAME(I), GMGBNR(I), GMGBFK(I), GMGBBS(I) , I = 11,20) /                 &
+#   & 'WB1     ',    39    ,    1.0   ,      0.0  ,                              &
+#   & 'WB2     ',    40    ,    1.0   ,      0.0  ,                              &
+#   & 'WB3     ',    41    ,    1.0   ,      0.0  ,                              &
+#   & 'SN      ',   141    ,    1.0   ,      0.0  ,                              &
+#   & 'WL      ',   198    ,    1.0   ,      0.0  ,                              &
+#   & 'TS      ',   235    ,    1.0   ,      0.0  ,                              &
+#   & 'TD3     ',   139    ,    1.0   ,      0.0  ,                              &
+#   & 'TD4     ',   170    ,    1.0   ,      0.0  ,                              &
+#   & 'TD5     ',   183    ,    1.0   ,      0.0  ,                              &
+#   & 'TD      ',   236    ,    1.0   ,      0.0  /
+
+# DATA(GMNAME(I), GMGBNR(I), GMGBFK(I), GMGBBS(I) , I = 21,NFGM) /               &
+#   & 'TSN     ',   238    ,    1.0   ,      0.0  ,                              &
+#   & 'SEAICE  ',    31    ,    1.0   ,      0.0  ,                              &
+#   & 'SST     ',    34    ,    1.0   ,      0.0  /
+
+
+#     CALL HIMBLA(TSGm, TSLge, 'TSL ')
+# CALL HIMBLA(TSGm, TSWge, 'TSW ')
+# CALL HIMBLA(TD3gm, TD3ge, 'TD3 ')
+# CALL HIMBLA(TD4gm, TD4ge, 'TD4 ')
+# CALL HIMBLA(TD5gm, TD5ge, 'TD5 ')
+# CALL HIMBLA(TDGm, TDGe, 'TD  ')
+# CALL HIMBLA(TSNgm, TSNge, 'TSN ')
+# !
+# !     SKIN-RESERVOIR OF PLANTS HORIZONTAL INTERPOLIEREN
+# CALL HIMBLA(WLGm, WLGe, 'WL ')
+# !
+# !     ZONALEN WIND HORIZONTAL INTERPOLIEREN UND
+# !
+# !     SCHNEEHOEHE HORIZONTAL INTERPOLIEREN
+# CALL HIMBLA(SNGm, SNGe, 'SN ')
+# !
+# !     WASSERGEHALT (OBERE SCHICHT) HORIZONTAL INTERPOLIEREN
+# CALL HIMBLA(WSGm, WSGe, 'WS ')
+# !
+# !     SEE-EIS-BEDECKUNG HORIZONTAL INTERPOLIEREN
+# CALL HIMBLA(SEAgm, SEAem, 'SEAICE')
+# !
+# !     TEMPERATUR - DIFFERENZ TP - TB HORIZONTAL INTERPOLIEREN
+# CALL HIMBLA(DTPbgm, DTPbge, 'DTPB  ')
+# !
+# !     GEOPOTENTIAL CHECK-FLAECHE HORIZONTAL INTERPOLIEREN
+# CALL HIOBLA(FICgm, FICge, 'FIC   ', 1)
+# !
+# !     DRUCKTENDENZ AM BODEN HORIZONTAL INTERPOLIEREN
+# CALL HIOBLA(DPDtgm, DPDtge, 'DPDT  ', 1)

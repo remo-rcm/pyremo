@@ -4,6 +4,7 @@ from warnings import warn
 import cordex as cx
 import numpy as np
 import xarray as xr
+import pandas as pd
 
 import pyremo as pr
 
@@ -327,3 +328,16 @@ def encode(ds, expand_time, missval=1.0e20):
         else:
             ds[var].encoding["_FillValue"] = None
     return ds
+
+
+def datelist(startdate, enddate, freq, inclusive="both", **kwargs):
+    return pd.date_range(startdate, enddate, freq=freq, inclusive=inclusive, **kwargs)
+
+
+def ensure_dir(path):
+    if not os.path.exists(path):
+        # logger.debug(f"Creating directory {path}")
+        try:
+            os.makedirs(path)
+        except Exception as e:
+            warn(e)

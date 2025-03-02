@@ -30,6 +30,12 @@ from .xpyintorg import (
 
 # from pyremo.core.remo_ds import update_meta_info
 
+# required variables for initial conditions:
+
+# ['T', 'U', 'V', 'PS', 'RF', 'QW', 'QD', 'QDBL', 'PSEH', 'TSW', 'TSI', 'SEAICE', 'DTPB',
+#  'TSL', 'TSN', 'TD3', 'TD4', 'TD5', 'TD', 'TDCL', 'WS', 'WL', 'SN',
+#  'FIB', 'BLA', 'AZ0', 'ALB', 'VGRAT', 'VAROR', 'VLT',
+#  'FOREST', 'FAO', 'WSMX', 'BETA', 'WMINLOK', 'WMAXLOK', 'TSLEH', 'GLAC']
 
 xr.set_options(keep_attrs=True)
 
@@ -668,7 +674,7 @@ def update_soil_temperatures(ds):
     return ds
 
 
-def create_initial_soil(ds, domain_info, surflib):
+def remap_era5_soil(ds, domain_info, surflib):
     """Create initial soil dataset from atmospheric dataset."""
     # rename vertical coordinate of input to avoid conflict with output lev
     ds = ds.copy()
@@ -688,13 +694,16 @@ def create_initial_soil(ds, domain_info, surflib):
     # broadcast 1d global coordinates
     lamgm, phigm = broadcast_coords(ds)
 
+    print("getting matrix")
     # compute remap matrix
     indii, indjj = intersect(lamgm, phigm, lamem, phiem)  # .compute()
 
+    print("remapping")
     # horizontal interpolation
     wsge = interpolate_horizontal(
         wsgm, lamem, phiem, lamgm, phigm, "WS", indii=indii, indjj=indjj
     )
+
     td3ge = interpolate_horizontal(
         ds.tsl1, lamem, phiem, lamgm, phigm, "TD3", indii=indii, indjj=indjj
     )
@@ -707,24 +716,46 @@ def create_initial_soil(ds, domain_info, surflib):
     tdge = interpolate_horizontal(
         ds.tsl4, lamem, phiem, lamgm, phigm, "TD", indii=indii, indjj=indjj
     )
-    snge = interpolate_horizontal(
+    snem = interpolate_horizontal(
         ds.snd, lamem, phiem, lamgm, phigm, "SN", indii=indii, indjj=indjj
     )
-    wlge = interpolate_horizontal(
+    wlem = interpolate_horizontal(
         ds.src, lamem, phiem, lamgm, phigm, "WL", indii=indii, indjj=indjj
     )
+    fibge = interpolate_horizontal(
+        ds.orog, lamem, phiem, lamgm, phigm, "FIB", indii=indii, indjj=indjj
+    )
+    tslge = interpolate_horizontal(
+        ds.skt, lamem, phiem, lamgm, phigm, "TSL", indii=indii, indjj=indjj
+    )
+
     tswge = remap_sst(
         ds.tos,
         lamem,
         phiem,
         lamgm,
         phigm,
-        blagm=xr.where(ds.tos.isel(time=0).isnull(), 1.0, 0.0),
+        blagm=xr.where(
+            ds.tos.isel(time=0).isnull() if "time" in ds else ds.tos.isnull(), 1.0, 0.0
+        ),
         blaem=blaem,
     )
-    soil = xr.merge([wsge, td3ge, td4ge, td5ge, tdge, snge, wlge, tswge])
+
+    wsmxem = surflib.WSMX.squeeze(drop=True)
+    wsem = np.minimum(wsmxem, wsge * wsmxem)
+
+    # Initialize temperatures
+    tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem = (
+        physics.adapt_soil_temperatures(
+            tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
+        )
+    )
+
+    soil = xr.merge(
+        [tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem, wlem, snem, wsem]
+    )
     soil.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
-    soil.attrs["domain_id"] = domain_info.get("domain_id", "no name")
+    soil.attrs["domain_id"] = domain_info.get("domain_id", "UNKNOWNs")
 
     soil = update_attrs(soil)
 

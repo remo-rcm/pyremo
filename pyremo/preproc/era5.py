@@ -109,6 +109,7 @@ def get_file_from_template(
     code,
     level_type,
     template=None,
+    **kwargs,
 ):
     """Derive filename from filename template
 
@@ -181,18 +182,22 @@ class ERA5:
     dynamic = ["ta", "hus", "ps", "tos", "sic", "clw", "snd"]
     wind = ["svo", "sd"]
     fx = ["orog", "sftlf"]
-    soil = [
+    soil_vars = [
         "tsl1",
         "tsl2",
         "tsl3",
         "tsl4",
-        "tsn",
-        "src",
-        "skt",
         "swvl1",
         "swvl2",
         "swvl3",
         "swvl4",
+        "tsn",
+        "src",
+        "skt",
+        "tos",
+        "sic",
+        "skt",
+        "snd",
     ]
 
     chunks = {}
@@ -213,32 +218,28 @@ class ERA5:
         if params is None:
             params = era5_params
         self.params = params
+        if gridfile is None:
+            gridfile = era5_grid_file
         self.gridfile = gridfile
         if template is None:
             template = dkrz_template
         self.template = template
         self.cdo = Cdo(tempdir=scratch)
 
-    def _get_files(self, date):
+    def _get_files(self, date, variables=None):
+        if variables is None:
+            variables = self.dynamic + self.fx + self.wind
         if self.cat:
             return get_files_from_intake(
                 self.cat,
-                {
-                    k: v
-                    for k, v in self.params.items()
-                    if k in self.dynamic + self.fx + self.wind
-                },
+                {k: v for k, v in self.params.items() if k in variables},
                 date,
             )
         else:
             return get_files_from_template(
                 date=date,
                 template=self.template,
-                params={
-                    k: v
-                    for k, v in self.params.items()
-                    if k in self.dynamic + self.fx + self.wind
-                },
+                params={k: v for k, v in self.params.items() if k in variables},
             )
 
     def _seldate(self, filename, date):
@@ -259,7 +260,7 @@ class ERA5:
         return {
             v: self._to_regular(f, gridtype=gridtypes[v], setname=v)
             for v, f in filenames.items()
-            if v in self.dynamic + self.fx
+            if v in self.dynamic + self.fx + self.soil_vars
         }
 
     def _get_gridtypes(self, filenames):
@@ -381,6 +382,26 @@ class ERA5:
             shell=False,
         )
         # stdout, stderr = process.communicate()
+
+        return filename
+
+    def get_soil(self, date, path=None, expid=None, filename=None):
+        files = self._get_files(date, self.soil_vars + self.fx)
+        gridtypes = self._get_gridtypes(files)
+        seldates = self._seldates(files, date)
+        regulars = self._to_regulars(seldates, gridtypes)
+        merge = (
+            f"-setgrid,{self.gridfile} -merge [ "
+            + " ".join(list(regulars.values()))
+            + " ]"
+        )
+        call = f"cdo {self.options} invertlev -invertlat {merge} {filename}"
+        print(f"execute: {call}")
+        subprocess.run(
+            call.split(),
+            check=True,
+            shell=False,
+        )
 
         return filename
 

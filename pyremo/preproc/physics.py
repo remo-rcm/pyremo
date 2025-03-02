@@ -231,18 +231,28 @@ def calculate_zdts(fibem, fibge):
     return (fibem - fibge) * zdtfak
 
 
-def initialize_soil_temperatures(
-    tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, iland
+def adapt_soil_temperatures(
+    tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
 ):
+    # return tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
+    iland = (blaem * 10000).astype(int)
     zdts = calculate_zdts(fibem, fibge)
     tslem = xr.where(iland == 0, tswge, tslge - zdts)
+    tslem.name = "TSL"
     tswem = tswge.copy()
+    tswem.name = "TSW"
     tsnem = xr.where(iland == 0, tswge, tslem)
+    tsnem.name = "TSN"
     td3em = xr.where(iland == 0, tswge, tslge - ((tslge - td3ge) * zds3) - zdts)
+    td3em.name = "TD3"
     td4em = xr.where(iland == 0, tswge, td4ge - ((td4ge - td5ge) * zds4) - zdts)
+    td4em.name = "TD4"
     td5em = xr.where(iland == 0, tswge, td5ge - ((td5ge - tdge) * zds5) - zdts)
+    td5em.name = "TD5"
     tdem = td5em.copy()
+    tdem.name = "TD"
     tdclem = td5em.copy()
+    tdclem.name = "TDCL"
     return tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem
 
 
@@ -310,10 +320,8 @@ def bodfld(
     )  # Assuming FAKINF is 1.0 for simplicity
 
     # Initialize temperatures
-    tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem = (
-        initialize_soil_temperatures(
-            tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, iland
-        )
+    tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem = adapt_soil_temperatures(
+        tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, iland
     )
 
     # Calculate sea ice and tsi

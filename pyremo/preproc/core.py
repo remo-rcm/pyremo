@@ -88,7 +88,7 @@ def get_ab_bnds(ds):
 
 def get_vc(ds, invert=None):
     """Reads the vertical hybrid coordinate from a dataset."""
-    if ds.cf["vertical"].attrs.get("positive") == "down" and invert is None:
+    if ds.ta.cf["vertical"].attrs.get("positive") == "down" and invert is None:
         invert = True
     ak_bnds, bk_bnds = get_ab_bnds(ds)
     if ak_bnds.ndim > 1:
@@ -169,7 +169,7 @@ def convert_units(ds):
 def check_lev(ds, invert=None):
     """Check for order of levels and invert if neccessary"""
 
-    if ds.cf["vertical"].attrs.get("positive") == "down" and invert is None:
+    if ds.ta.cf["vertical"].attrs.get("positive") == "down" and invert is None:
         invert = True
     # if "vertical" in ds.cf and auto is True:
     #    positive = ds.cf["vertical"].attrs.get("positive", None)
@@ -179,7 +179,7 @@ def check_lev(ds, invert=None):
     #    warnings.warn("could not determine positive attribute of vertical axis.")
     #    return ds
     if invert is True:
-        kwargs = {ds.cf["vertical"].name: ds.cf["vertical"][::-1]}
+        kwargs = {ds.ta.cf["vertical"].name: ds.ta.cf["vertical"][::-1]}
         print("inverting vertical axis")
         return ds.reindex(**kwargs)
     return ds

@@ -324,7 +324,7 @@ class ERA5:
         """compute wind from vorticity and divergence"""
         return f"-chname,u,ua,v,va -dv2uvl -merge [ {vort} {div} ]"
 
-    def gfile(self, date, path=None, expid=None, filename=None):
+    def gfile(self, date, path=None, expid=None, filename=None, add_soil=False):
         """Create an ERA5 gfile dataset.
 
         Main function to convert ERA5 grib data to a regular gaussian Dataset
@@ -353,11 +353,16 @@ class ERA5:
             expid = "000000"
         if filename is None:
             filename = get_output_filename(date, expid, path)
+
+        variables = self.dynamic + self.fx + self.wind
+        if add_soil is True:
+            variables += self.soil_vars
+
         print(f"output filename: {filename}")
         # gridfile = "/work/ch0636/g300046/remo/era5-cmor/notebooks/grid.txt"
 
         print("getting files...")
-        files = self._get_files(date)
+        files = self._get_files(date, variables=variables)
         pprint(f"using files: \n{files}")
         print("getting gridtypes...")
         gridtypes = self._get_gridtypes(files)

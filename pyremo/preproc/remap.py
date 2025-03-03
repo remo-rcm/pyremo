@@ -106,7 +106,7 @@ def broadcast_coords(ds, coords=("lon", "lat")):
     return lam, phi
 
 
-def remap(gds, domain_info, vc, surflib, initial=False, lice=None):
+def remap(gds, domain_info, vc, surflib, initial=False):
     """remapping workflow
 
     This function should be similar to the ones in the
@@ -139,10 +139,11 @@ def remap(gds, domain_info, vc, surflib, initial=False, lice=None):
     """
     # rename vertical coordinate of input to avoid conflict with output lev
     gds = gds.copy()
-    gds = gds.rename({gds.cf["vertical"].name: lev_input})
+    gds = gds.rename({gds.ta.cf["vertical"].name: lev_input})
 
     # remove time dimension if there is one
     fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
+    blaem = surflib.BLA.squeeze(drop=True)
 
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
@@ -184,10 +185,11 @@ def remap(gds, domain_info, vc, surflib, initial=False, lice=None):
     )
 
     if "clw" in gds:
-        # if False:
-        arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm, gds.clw)
+        clw = gds.clw
     else:
-        arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm)
+        clw = None
+
+    arfgm = relative_humidity(gds.hus, gds.ta, gds.ps, gds.akgm, gds.bkgm, clw)
     arfge = interpolate_horizontal(
         arfgm, lamem, phiem, lamgm, phigm, "AREL HUM", indii=indii, indjj=indjj
     )
@@ -246,7 +248,7 @@ def remap(gds, domain_info, vc, surflib, initial=False, lice=None):
         lamgm,
         phigm,
         blagm=xr.where(gds.tos.isnull(), 1.0, 0.0),
-        blaem=surflib.BLA.squeeze(drop=True),
+        blaem=blaem,
     )
 
     # check if gcm contains seaice, else derive from sst
@@ -258,7 +260,7 @@ def remap(gds, domain_info, vc, surflib, initial=False, lice=None):
             lamgm,
             phigm,
             blagm=np.around(gds.sftlf),
-            blaem=surflib.BLA.squeeze(drop=True),
+            blaem=blaem,
         )
     else:
         seaice = physics.seaice(tsw)
@@ -270,14 +272,6 @@ def remap(gds, domain_info, vc, surflib, initial=False, lice=None):
         [tem, uem_corr, vem_corr, psem, arfem, tsw, seaice, water_content, tsi, akbkem]
     )
 
-    grid = get_grid(domain_info)
-
-    ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
-    ads["rlon"] = grid.rlon
-    ads["rlat"] = grid.rlat
-
-    ads = xr.merge([ads, grid])
-
     # rename for remo to recognize
     ads = ads.rename({"ak": "hyai", "bk": "hybi", "akh": "hyam", "bkh": "hybm"})
 
@@ -286,6 +280,25 @@ def remap(gds, domain_info, vc, surflib, initial=False, lice=None):
 
     ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
     ads.attrs["CORDEX_domain"] = domain_info.get("domain_id", "no name")
+
+    if initial is True:
+        ads = add_surflib(ads, surflib)
+        soil = _remap_era_soil(
+            gds, tsw, fibem, blaem, lamem, phiem, lamgm, phigm, indii, indjj
+        )
+        wsmxem = surflib.WSMX.squeeze(drop=True)
+        soil["WS"] = np.minimum(wsmxem, soil.WS * wsmxem)
+        # ads = xr.merge([ads, soil])
+        ads = ads.merge(soil, join="override")
+        ads["GLAC"] = xr.where(ads.SN > 9.5, 1.0, 0.0)
+
+    grid = get_grid(domain_info)
+
+    ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
+    ads["rlon"] = grid.rlon
+    ads["rlat"] = grid.rlat
+
+    ads = xr.merge([ads, grid])
 
     ads = update_attrs(ads)
 
@@ -658,6 +671,7 @@ def update_soil_temperatures(ds):
         Dataset containing ``T``, ``PS``, ``PSEH``, ``DTPB`` and ``TSL``
 
     """
+    # Reference: https://gitlab.dkrz.de/remo/RemapToRemo/-/blob/master/source/kernel/remo/bodfld.f90
     # BERECHNUNG DER SCHICHTDICKE DER PRANDTL-SCHICHT
     dpeh = ds.PSEH - pr.physics.pressure(ds.PSEH, ds.hyai[-2], ds.hybi[-2])
     dphm = ds.PS - pr.physics.pressure(ds.PS, ds.hyai[-2], ds.hybi[-2])
@@ -674,7 +688,61 @@ def update_soil_temperatures(ds):
     return ds
 
 
-def remap_era5_soil(ds, domain_info, surflib):
+def _remap_era_soil(ds, tswge, fibem, blaem, lamem, phiem, lamgm, phigm, indii, indjj):
+
+    # based on https://gitlab.dkrz.de/remo/RemapToRemo/-/blob/master/setups/era_interim/bodfld.f90
+    fak1 = 0.07
+    fak2 = 0.21
+    fak3 = 0.72
+    # WSGm(ij) = (fak1*zwb1(ij)) + (fak2*zwb2(ij)) + (fak3*zwb3(ij))
+    wsgm = fak1 * ds.swvl1 + fak2 * ds.swvl2 + fak3 * ds.swvl3
+
+    # horizontal interpolation
+    wsge = interpolate_horizontal(
+        wsgm, lamem, phiem, lamgm, phigm, "WS", indii=indii, indjj=indjj
+    )
+
+    td3ge = interpolate_horizontal(
+        ds.tsl1, lamem, phiem, lamgm, phigm, "TD3", indii=indii, indjj=indjj
+    )
+    td4ge = interpolate_horizontal(
+        ds.tsl2, lamem, phiem, lamgm, phigm, "TD4", indii=indii, indjj=indjj
+    )
+    td5ge = interpolate_horizontal(
+        ds.tsl3, lamem, phiem, lamgm, phigm, "TD5", indii=indii, indjj=indjj
+    )
+    tdge = interpolate_horizontal(
+        ds.tsl4, lamem, phiem, lamgm, phigm, "TD", indii=indii, indjj=indjj
+    )
+    snem = interpolate_horizontal(
+        ds.snd, lamem, phiem, lamgm, phigm, "SN", indii=indii, indjj=indjj
+    )
+    wlem = interpolate_horizontal(
+        ds.src, lamem, phiem, lamgm, phigm, "WL", indii=indii, indjj=indjj
+    )
+    fibge = interpolate_horizontal(
+        ds.orog, lamem, phiem, lamgm, phigm, "FIB", indii=indii, indjj=indjj
+    )
+    tslge = interpolate_horizontal(
+        ds.skt, lamem, phiem, lamgm, phigm, "TSL", indii=indii, indjj=indjj
+    )
+
+    # wsmxem = surflib.WSMX.squeeze(drop=True)
+    # wsem = np.minimum(wsmxem, wsge * wsmxem)
+
+    # Initialize temperatures
+    tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem = (
+        physics.adapt_soil_temperatures(
+            tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
+        )
+    )
+
+    return xr.merge(
+        [tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem, wlem, snem, wsge]
+    ).squeeze(drop=True)
+
+
+def remap_era_soil(ds, domain_info, surflib):
     """Create initial soil dataset from atmospheric dataset."""
     # rename vertical coordinate of input to avoid conflict with output lev
     ds = ds.copy()
@@ -794,7 +862,10 @@ def addem_remo(tds):
 
 
 def add_surflib(ads, surflib):
-    surflib = surflib.sel(rlon=surflib.rlon[1:-1], rlat=surflib.rlat[1:-1])
+    surflib = surflib.copy().sel(
+        rlon=slice(ads.rlon.min(), ads.rlon.max()),
+        rlat=slice(ads.rlat.min(), ads.rlat.max()),
+    )
     try:
         surflib = surflib.drop("rotated_pole")
     except Exception:

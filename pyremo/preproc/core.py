@@ -88,7 +88,7 @@ def get_ab_bnds(ds):
 
 def get_vc(ds, invert=None):
     """Reads the vertical hybrid coordinate from a dataset."""
-    if ds.cf["vertical"].attrs.get("positive") == "down" and invert is None:
+    if ds.ta.cf["vertical"].attrs.get("positive") == "down" and invert is None:
         invert = True
     ak_bnds, bk_bnds = get_ab_bnds(ds)
     if ak_bnds.ndim > 1:
@@ -247,15 +247,15 @@ def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
     """
     if isinstance(ds, dict):
         ds = open_datasets(ds, ref_ds, time_range)
-        if time_range is None:
-            time_range = ds.time
     else:
         ds = ds.copy()
-        if time_range is None:
-            time_range = ds.time
-        ds = ds.sel(time=time_range)
         ds["akgm"], ds["bkgm"] = get_vc(ds)
         ds = check_lev(ds)
+
+    if time_range is None:
+        time_range = ds.time
+        ds = ds.sel(time=time_range)
+
     if tos is not None:
         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
     # ds = ds.rename({"lev": lev_gm})

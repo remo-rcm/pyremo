@@ -169,7 +169,7 @@ def convert_units(ds):
 def check_lev(ds, invert=None):
     """Check for order of levels and invert if neccessary"""
 
-    if ds.ta.cf["vertical"].attrs.get("positive") == "down" and invert is None:
+    if ds.cf["vertical"].attrs.get("positive") == "down" and invert is None:
         invert = True
     # if "vertical" in ds.cf and auto is True:
     #    positive = ds.cf["vertical"].attrs.get("positive", None)
@@ -179,7 +179,7 @@ def check_lev(ds, invert=None):
     #    warnings.warn("could not determine positive attribute of vertical axis.")
     #    return ds
     if invert is True:
-        kwargs = {ds.ta.cf["vertical"].name: ds.ta.cf["vertical"][::-1]}
+        kwargs = {ds.cf["vertical"].name: ds.cf["vertical"][::-1]}
         print("inverting vertical axis")
         return ds.reindex(**kwargs)
     return ds

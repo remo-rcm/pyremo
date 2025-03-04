@@ -142,10 +142,14 @@ def remap(gds, domain_info, vc, surflib, initial=False):
     gds = gds.rename({gds.ta.cf["vertical"].name: lev_input})
 
     # remove time dimension if there is one
-    fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
-    blaem = surflib.BLA.squeeze(drop=True)
+    surflib = surflib.squeeze(drop=True)
+    surflib["rlon"] = np.round(surflib.rlon, 14)
+    surflib["rlat"] = np.round(surflib.rlat, 14)
 
-    lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
+    fibem = surflib.FIB * const.grav_const
+    blaem = surflib.BLA
+
+    lamem, phiem = geo_coords(domain_info, surflib.rlon, surflib.rlat)
 
     # broadcast 1d global coordinates
     lamgm, phigm = broadcast_coords(gds)
@@ -281,15 +285,17 @@ def remap(gds, domain_info, vc, surflib, initial=False):
     ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
     ads.attrs["CORDEX_domain"] = domain_info.get("domain_id", "no name")
 
+    # transpose to remo convention
+    ads = ads.transpose(..., "lev", "rlat", "rlon")
+
     if initial is True:
         ads = add_surflib(ads, surflib)
         soil = _remap_era_soil(
             gds, tsw, fibem, blaem, lamem, phiem, lamgm, phigm, indii, indjj
-        )
-        wsmxem = surflib.WSMX.squeeze(drop=True)
-        soil["WS"] = np.minimum(wsmxem, soil.WS * wsmxem)
+        ).transpose("rlat", "rlon")
         # ads = xr.merge([ads, soil])
         ads = ads.merge(soil, join="override")
+        ads["WS"] = np.minimum(ads.WSMX, ads.WS * ads.WSMX)
         ads["GLAC"] = xr.where(ads.SN > 9.5, 1.0, 0.0)
 
     grid = get_grid(domain_info)
@@ -297,13 +303,10 @@ def remap(gds, domain_info, vc, surflib, initial=False):
     ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
     ads["rlon"] = grid.rlon
     ads["rlat"] = grid.rlat
-
     ads = xr.merge([ads, grid])
-
     ads = update_attrs(ads)
 
-    # transpose to remo convention
-    return ads.transpose(..., "lev", "rlat", "rlon")
+    return ads
 
 
 def remap_remo(
@@ -699,9 +702,8 @@ def _remap_era_soil(ds, tswge, fibem, blaem, lamem, phiem, lamgm, phigm, indii, 
 
     # horizontal interpolation
     wsge = interpolate_horizontal(
-        wsgm, lamem, phiem, lamgm, phigm, "WS", indii=indii, indjj=indjj
-    )
-
+        wsgm.clip(min=0.0), lamem, phiem, lamgm, phigm, "WS", indii=indii, indjj=indjj
+    ).clip(min=0.0)
     td3ge = interpolate_horizontal(
         ds.tsl1, lamem, phiem, lamgm, phigm, "TD3", indii=indii, indjj=indjj
     )
@@ -718,8 +720,8 @@ def _remap_era_soil(ds, tswge, fibem, blaem, lamem, phiem, lamgm, phigm, indii, 
         ds.snd, lamem, phiem, lamgm, phigm, "SN", indii=indii, indjj=indjj
     )
     wlem = interpolate_horizontal(
-        ds.src, lamem, phiem, lamgm, phigm, "WL", indii=indii, indjj=indjj
-    )
+        ds.src.clip(min=0.0), lamem, phiem, lamgm, phigm, "WL", indii=indii, indjj=indjj
+    ).clip(min=0.0)
     fibge = interpolate_horizontal(
         ds.orog, lamem, phiem, lamgm, phigm, "FIB", indii=indii, indjj=indjj
     )
@@ -866,10 +868,8 @@ def add_surflib(ads, surflib):
         rlon=slice(ads.rlon.min(), ads.rlon.max()),
         rlat=slice(ads.rlat.min(), ads.rlat.max()),
     )
-    try:
+    if "rotated_pole" in surflib:
         surflib = surflib.drop("rotated_pole")
-    except Exception:
-        pass
     return xr.merge(
         (ads, surflib.squeeze(drop=True)), join="override", compat="override"
     )

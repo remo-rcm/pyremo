@@ -12,6 +12,7 @@
    notebooks/production-analysis
    notebooks/ghg-forcing
    notebooks/preprocessing-cf
+   notebooks/preprocessing
    notebooks/atmospheric-river
    contributing
    authors

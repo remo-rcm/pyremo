@@ -270,8 +270,41 @@ class CFModelSelector:
         return sel.iloc[0].path
 
 
+def open_datasets(datasets, ref_ds=None, time_range=None):
+    """Creates a virtual gfile"""
+    if ref_ds is None:
+        try:
+            ref_ds = open_mfdataset(datasets["ta"])
+        except Exception:
+            raise Exception("ta is required in the datasets dict if no ref_ds is given")
+    lon, lat = horizontal_dims(ref_ds)
+    # ak_bnds, bk_bnds = get_ab_bnds(ref_ds)
+    if time_range is None:
+        time_range = ref_ds.time
+    dsets = []
+    for var, f in datasets.items():
+        try:
+            da = open_mfdataset(f, chunks={"time": 1})[var]
+            da = da.sel(time=time_range)
+        except Exception:
+            da = open_mfdataset(f, chunks={})[var]
+        if "vertical" in da.cf:
+            da = check_lev(da)
+        dsets.append(da)
+    dsets += list(get_vc(ref_ds))
+    output = xr.merge(dsets, compat="override", join="override")
+    output.attrs = ref_ds.attrs
+    return output
+
+
 def get_gcm_dataset(
-    ds, ref_ds=None, tos=None, attrs=None, use_cftime=True, invertlev=None
+    ds,
+    ref_ds=None,
+    tos=None,
+    attrs=None,
+    use_cftime=True,
+    invertlev=None,
+    time_range=None,
 ):
     """Creates a global dataset ready for preprocessing.
 
@@ -300,7 +333,7 @@ def get_gcm_dataset(
 
     """
     if isinstance(ds, dict):
-        ds = open_datasets(ds, ref_ds)
+        ds = open_datasets(ds, ref_ds, time_range=time_range)
     else:
         ds = ds.copy()
         ds["akgm"], ds["bkgm"] = get_vc(ds, invertlev)
@@ -447,27 +480,6 @@ class GFile:
         if "variable_id" in gds.attrs:
             del gds.attrs["variable_id"]
         return gfile(gds)
-
-
-def open_datasets(datasets, ref_ds=None):
-    """Creates a virtual gfile"""
-    if ref_ds is None:
-        try:
-            ref_ds = open_mfdataset(datasets["ta"])
-        except Exception:
-            raise Exception("ta is required in the datasets dict if no ref_ds is given")
-    lon, lat = horizontal_dims(ref_ds)
-    dsets = []
-    for var, f in datasets.items():
-        try:
-            da = open_mfdataset(f, chunks={"time": 1})[var]
-        except Exception:
-            da = open_mfdataset(f, chunks={})[var]
-        if "vertical" in da.cf:
-            da = check_lev(da)
-        dsets.append(da)
-    dsets += list(get_vc(ref_ds))
-    return xr.merge(dsets, compat="override", join="override")
 
 
 def get_gcm_gfile(scratch=None, **kwargs):

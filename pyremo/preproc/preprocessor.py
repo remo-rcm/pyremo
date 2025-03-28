@@ -3,12 +3,14 @@ import tempfile
 
 import dask
 import xarray as xr
-from pyremo.preproc import get_gcm_dataset, get_gcm_gfile, remap
 
 import pyremo as pr
 from ..remo_ds import update_meta_info
 from .era5 import era5_gfile_from_dkrz
 from .utils import datelist, ensure_dir, write_forcing_file
+from .remapping import remap
+from .cf import get_gcm_dataset, get_gcm_gfile
+
 
 dkrz_template = {
     "path_template": "/pool/data/ERA5/{era_id}/{level_type}/{dataType}/{frequency}/{code:03d}",
@@ -268,7 +270,7 @@ class Preprocessor:
         return write_forcing_file(ds, path=outpath, expid=self.expid)
 
     @dask.delayed
-    def preprocess(self, date, outpath=None):
+    def preprocess(self, date=None, ds=None, outpath=None):
         """
         Preprocess the dataset for a given date.
 
@@ -284,7 +286,8 @@ class Preprocessor:
         xarray.Dataset or str
             Preprocessed dataset or path to the written file.
         """
-        ds = self.get_input_dataset(date)
+        if ds is None:
+            ds = self.get_input_dataset(date=date)
         ads = remap(ds, self.domain_info, self.vc, self.surflib)
         if outpath is None:
             return ads
@@ -324,7 +327,7 @@ class Preprocessor:
             ensure_dir(outpath)
         print(f"writing to {outpath}")
         result = [
-            self.preprocess(date, outpath=outpath if write is True else None)
+            self.preprocess(date=date, outpath=outpath if write is True else None)
             for date in dates
         ]
         if compute:
@@ -404,7 +407,7 @@ class ERA5Preprocessor(Preprocessor):
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
 
-    def get_input_dataset(self, date):
+    def get_input_dataset(self, date=None, filename=None):
         """
         Get the input dataset for a given date.
 
@@ -418,7 +421,52 @@ class ERA5Preprocessor(Preprocessor):
         xarray.Dataset
             Input dataset.
         """
-        filename = era5_gfile_from_dkrz(date, self.scratch.name)
+        if filename is None:
+            filename = era5_gfile_from_dkrz(date, self.scratch.name)
+            print(f"created: {filename}")
+        # logger.debug(f"created: {filename}")
+        ds = xr.open_dataset(filename).load()
+        return get_gcm_dataset(ds)
+
+
+class ERA5GCPreprocessor(Preprocessor):
+    """
+    ERA5Preprocessor class for preparing input data from ERA5 datasets.
+
+    Parameters
+    ----------
+    input_data : dict
+        Input data information.
+    *args : tuple
+        Additional arguments.
+    **kwargs : dict
+        Additional keyword arguments.
+    """
+
+    def __init__(
+        self, expid, surflib, domain=None, vc="vc_49lev", outpath=None, scratch=None
+    ):
+        super().__init__(
+            expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
+        )
+
+    def get_input_dataset(self, date=None, filename=None):
+        """
+        Get the input dataset for a given date.
+
+        Parameters
+        ----------
+        date : datetime-like
+            Date for the input dataset.
+
+        Returns
+        -------
+        xarray.Dataset
+            Input dataset.
+        """
+        if filename is None:
+            filename = era5_gfile_from_dkrz(date, self.scratch.name)
+            print(f"created: {filename}")
         # logger.debug(f"created: {filename}")
         ds = xr.open_dataset(filename).load()
         return get_gcm_dataset(ds)

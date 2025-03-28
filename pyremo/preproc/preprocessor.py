@@ -506,11 +506,15 @@ class CloudPreprocessor(Preprocessor):
             # "variable_id": self.atm + self.ocn,
         }
         intake_kwargs = intake_default_kwargs | input_data
-        cat = get_pangeo_catalog(self.url, **intake_kwargs)
-        dsets = get_dsets(cat.df[cat.df.variable_id.isin(self.atm)])
-        gcm = xr.merge(merge_dsets(dsets), join="override")
+        print(f"opening: {self.url}")
+        self.cat = get_pangeo_catalog(self.url, **intake_kwargs)
+        print("opening datasets...")
+        self.dsets = get_dsets(self.cat.df[self.cat.df.variable_id.isin(self.atm)])
+        print("merging datasets...")
+        return
+        gcm = xr.merge(merge_dsets(self.dsets), join="override")
 
-        tos = open_zstore(cat.df[cat.df.variable_id == "tos"].iloc[0].zstore)
+        tos = open_zstore(self.cat.df[self.cat.df.variable_id == "tos"].iloc[0].zstore)
         tos = tos.convert_calendar(tos.time.dt.calendar, use_cftime=True)
         self.tos = tos
         self.gcm = gcm

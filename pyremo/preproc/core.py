@@ -107,28 +107,26 @@ def get_vc(ds, invert=None):
 
 
 def map_sst(tos, ref_ds, resample="6H", regrid=True):
-    from datetime import timedelta as td
 
     import xesmf as xe
 
-    try:
-        tos = tos.to_dataset()
-    except Exception:
-        pass
-    # tos_res = tos
+    if isinstance(tos, xr.DataArray):
+        tos = tos.to_dataset(name="tos")
+
     attrs = tos.tos.attrs
-    tos_times = (ref_ds.time.min() - td(days=1), ref_ds.time.max() + td(days=1))
-    tos = tos.sel(time=slice(tos_times[0], tos_times[1]))
-    # return tos_res
-    # tos = tos.resample(time=resample).interpolate("linear").chunk({"time": 1})
-    tos = tos.resample(time=resample).interpolate("linear")
-    tos = tos.sel(time=ref_ds.time)
 
     if regrid:
         ref_ds["mask"] = ~(ref_ds.sftlf > 0)
         tos["mask"] = ~tos.tos.isel(time=0).isnull().squeeze(drop=True)
         regridder = xe.Regridder(tos, ref_ds, "nearest_s2d")
         tos = regridder(tos.tos)
+
+    tos = tos.interp(
+        time=ref_ds.time,
+        method="nearest",
+        kwargs={"fill_value": "extrapolate"},
+    )
+
     tos.attrs.update(attrs)
 
     return tos

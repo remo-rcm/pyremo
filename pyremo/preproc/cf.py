@@ -340,6 +340,7 @@ def get_gcm_dataset(
         ds = check_lev(ds, invertlev)
 
     if tos is not None:
+        print("adding sst...")
         ds["tos"] = map_sst(tos, ds)
     # ensure correct units
     ds = convert_units(ds)

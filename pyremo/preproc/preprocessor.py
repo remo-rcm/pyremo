@@ -511,14 +511,14 @@ class CloudPreprocessor(Preprocessor):
         print("opening datasets...")
         self.dsets = get_dsets(self.cat.df[self.cat.df.variable_id.isin(self.atm)])
         print("merging datasets...")
-        return
+
         gcm = xr.merge(merge_dsets(self.dsets), join="override")
 
         tos = open_zstore(self.cat.df[self.cat.df.variable_id == "tos"].iloc[0].zstore)
         tos = tos.convert_calendar(tos.time.dt.calendar, use_cftime=True)
         self.tos = tos
         self.gcm = gcm
-        self.gfile = get_gcm_dataset(gcm.sel(time="1950-01"), tos=tos)
+        self.gfile = get_gcm_dataset(gcm, tos=tos)
 
     def get_input_dataset(self, date):
         """
@@ -534,4 +534,4 @@ class CloudPreprocessor(Preprocessor):
         xarray.Dataset
             Input dataset.
         """
-        return self.gfile.sel(time=date).load()
+        return self.gfile.sel(time=date).compute()

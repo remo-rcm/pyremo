@@ -1,0 +1,255 @@
+name,short_name,units,code
+Stream function,strf,m2 s-1,1
+Velocity potential,vp,m2 s-1,2
+Potential temperature,pt,K,3
+Equivalent potential temperature,eqpt,K,4
+Saturated equivalent potential temperature,sept,K,5
+Soil sand fraction,ssfr,1,6
+Soil clay fraction,scfr,1,7
+Surface runoff,sro,m,8
+Sub-surface runoff,ssro,m,9
+Wind speed,ws,m s-1,10
+U component of divergent wind,udvw,m s-1,11
+V component of divergent wind,vdvw,m s-1,12
+U component of rotational wind,urtw,m s-1,13
+V component of rotational wind,vrtw,m s-1,14
+UV visible albedo for direct radiation,aluvp,1,15
+UV visible albedo for diffuse radiation,aluvd,1,16
+Near IR albedo for direct radiation,alnip,1,17
+Near IR albedo for diffuse radiation,alnid,1,18
+Clear sky surface UV,uvcs,J m-2,19
+Clear sky surface photosynthetically active radiation,parcs,J m-2,20
+Unbalanced component of temperature,uctp,K,21
+Unbalanced component of logarithm of surface pressure,ucln,1,22
+Unbalanced component of divergence,ucdv,s-1,23
+Reserved for future unbalanced components,~,~,24
+Reserved for future unbalanced components,~,~,25
+Lake cover,cl,1,26
+Low vegetation cover,cvl,1,27
+High vegetation cover,cvh,1,28
+Type of low vegetation,tvl,1,29
+Type of high vegetation,tvh,1,30
+Sea ice area fraction,ci,1,31
+Snow albedo,asn,1,32
+Snow density,rsn,kg m-3,33
+Sea surface temperature,sst,K,34
+Ice temperature layer 1,istl1,K,35
+Ice temperature layer 2,istl2,K,36
+Ice temperature layer 3,istl3,K,37
+Ice temperature layer 4,istl4,K,38
+Volumetric soil water layer 1,swvl1,m3 m-3,39
+Volumetric soil water layer 2,swvl2,m3 m-3,40
+Volumetric soil water layer 3,swvl3,m3 m-3,41
+Volumetric soil water layer 4,swvl4,m3 m-3,42
+Soil type,slt,1,43
+Snow evaporation,es,m,44
+Snowmelt,smlt,m,45
+Solar duration,sdur,s,46
+Direct solar radiation,dsrp,J m-2,47
+Magnitude of turbulent surface stress,magss,N m-2 s,48
+10 metre wind gust since previous post-processing,10fg,m s-1,49
+Large-scale precipitation fraction,lspf,1,50
+Maximum temperature at 2 metres in the last 24 hours,mx2t24,K,51
+Minimum temperature at 2 metres in the last 24 hours,mn2t24,K,52
+Montgomery potential,mont,m2 s-2,53
+Pressure,pres,Pa,54
+Mean temperature at 2 metres in the last 24 hours,mean2t24,K,55
+Mean 2 metre dewpoint temperature in the last 24 hours,mn2d24,K,56
+Downward UV radiation at the surface,uvb,J m-2,57
+Photosynthetically active radiation at the surface,par,J m-2,58
+Convective available potential energy,cape,J kg-1,59
+Potential vorticity,pv,K m2 kg-1 s-1,60
+Observation count,obct,1,62
+Start time for skin temperature difference,stsktd,s,63
+Finish time for skin temperature difference,ftsktd,s,64
+Skin temperature difference,sktd,K,65
+Leaf area index (low vegetation),lai_lv,m2 m-2,66
+Leaf area index (high vegetation),lai_hv,m2 m-2,67
+Minimum stomatal resistance (low vegetation),msr_lv,s m-1,68
+Minimum stomatal resistance (high vegetation),msr_hv,s m-1,69
+Biome cover (low vegetation),bc_lv,1,70
+Biome cover (high vegetation),bc_hv,1,71
+Instantaneous surface solar radiation downwards,issrd,W m-2,72
+Instantaneous surface thermal radiation downwards,istrd,W m-2,73
+Standard deviation of filtered subgrid orography,sdfor,m,74
+Specific rain water content,crwc,kg kg-1,75
+Specific snow water content,cswc,kg kg-1,76
+Eta-coordinate vertical velocity,etadot,s-1,77
+Total column cloud liquid water,tclw,kg m-2,78
+Total column cloud ice water,tciw,kg m-2,79
+Experimental product,~,~,80
+Experimental product,~,~,81
+Experimental product,~,~,82
+Experimental product,~,~,83
+Experimental product,~,~,84
+Experimental product,~,~,85
+Experimental product,~,~,86
+Experimental product,~,~,87
+Experimental product,~,~,88
+Experimental product,~,~,89
+Experimental product,~,~,90
+Experimental product,~,~,91
+Experimental product,~,~,92
+Experimental product,~,~,93
+Experimental product,~,~,94
+Experimental product,~,~,95
+Experimental product,~,~,96
+Experimental product,~,~,97
+Experimental product,~,~,98
+Experimental product,~,~,99
+Experimental product,~,~,100
+Experimental product,~,~,101
+Experimental product,~,~,102
+Experimental product,~,~,103
+Experimental product,~,~,104
+Experimental product,~,~,105
+Experimental product,~,~,106
+Experimental product,~,~,107
+Experimental product,~,~,108
+Experimental product,~,~,109
+Experimental product,~,~,110
+Experimental product,~,~,111
+Experimental product,~,~,112
+Experimental product,~,~,113
+Experimental product,~,~,114
+Experimental product,~,~,115
+Experimental product,~,~,116
+Experimental product,~,~,117
+Experimental product,~,~,118
+Experimental product,~,~,119
+Experimental product,~,~,120
+Maximum temperature at 2 metres in the last 6 hours,mx2t6,K,121
+Minimum temperature at 2 metres in the last 6 hours,mn2t6,K,122
+10 metre wind gust in the last 6 hours,10fg6,m s-1,123
+Surface emissivity,emis,1,124
+Vertically integrated total energy,vite,J m-2,125
+Generic parameter for sensitive area prediction,~,Various,126
+Atmospheric tide,at,1,127
+Budget values,bv,1,128
+Geopotential,z,m2 s-2,129
+Temperature,t,K,130
+U component of wind,u,m s-1,131
+V component of wind,v,m s-1,132
+Specific humidity,q,kg kg-1,133
+Surface pressure,sp,Pa,134
+Vertical velocity,w,Pa s-1,135
+Total column water,tcw,kg m-2,136
+Total column water vapour,tcwv,kg m-2,137
+Vorticity (relative),vo,s-1,138
+Soil temperature level 1,stl1,K,139
+Soil wetness level 1,swl1,m,140
+Snow depth,sd,m,141
+Large-scale precipitation,lsp,m,142
+Convective precipitation,cp,m,143
+Snowfall,sf,m,144
+Boundary layer dissipation,bld,J m-2,145
+Surface sensible heat flux,sshf,J m-2,146
+Surface latent heat flux,slhf,J m-2,147
+Charnock,chnk,1,148
+Surface net radiation,snr,J m-2,149
+Top net radiation,tnr,J m-2,150
+Mean sea level pressure,msl,Pa,151
+Logarithm of surface pressure,lnsp,1,152
+Short-wave heating rate,swhr,K,153
+Long-wave heating rate,lwhr,K,154
+Divergence,d,s-1,155
+Geopotential Height,gh,gpm,156
+Relative humidity,r,1,157
+Tendency of surface pressure,tsp,Pa s-1,158
+Boundary layer height,blh,m,159
+Standard deviation of orography,sdor,m,160
+Anisotropy of sub-gridscale orography,isor,1,161
+Angle of sub-gridscale orography,anor,radians,162
+Slope of sub-gridscale orography,slor,1,163
+Total cloud cover,tcc,1,164
+10 metre U wind component,10u,m s-1,165
+10 metre V wind component,10v,m s-1,166
+2 metre temperature,2t,K,167
+2 metre dewpoint temperature,2d,K,168
+Surface solar radiation downwards,ssrd,J m-2,169
+Soil temperature level 2,stl2,K,170
+Soil wetness level 2,swl2,m,171
+Land-sea mask,lsm,1,172
+Surface roughness,sr,m,173
+Albedo,al,1,174
+Surface thermal radiation downwards,strd,J m-2,175
+Surface net solar radiation,ssr,J m-2,176
+Surface net thermal radiation,str,J m-2,177
+Top net solar radiation,tsr,J m-2,178
+Top net thermal radiation,ttr,J m-2,179
+Eastward turbulent surface stress,ewss,N m-2 s,180
+Northward turbulent surface stress,nsss,N m-2 s,181
+Evaporation,e,m,182
+Soil temperature level 3,stl3,K,183
+Soil wetness level 3,swl3,m,184
+Convective cloud cover,ccc,1,185
+Low cloud cover,lcc,1,186
+Medium cloud cover,mcc,1,187
+High cloud cover,hcc,1,188
+Sunshine duration,sund,s,189
+East-West component of sub-gridscale orographic variance,ewov,m2,190
+North-South component of sub-gridscale orographic variance,nsov,m2,191
+North-West/South-East component of sub-gridscale orographic variance,nwov,m2,192
+North-East/South-West component of sub-gridscale orographic variance,neov,m2,193
+Brightness temperature,btmp,K,194
+Eastward gravity wave surface stress,lgws,N m-2 s,195
+Northward gravity wave surface stress,mgws,N m-2 s,196
+Gravity wave dissipation,gwd,J m-2,197
+Skin reservoir content,src,m,198
+Vegetation fraction,veg,1,199
+Variance of sub-gridscale orography,vso,m2,200
+Maximum temperature at 2 metres since previous post-processing,mx2t,K,201
+Minimum temperature at 2 metres since previous post-processing,mn2t,K,202
+Ozone mass mixing ratio,o3,kg kg-1,203
+Precipitation analysis weights,paw,1,204
+Runoff,ro,m,205
+Total column ozone,tco3,kg m-2,206
+10 metre wind speed,10si,m s-1,207
+Top net solar radiation (clear sky),tsrc,J m-2,208
+Top net thermal radiation (clear sky),ttrc,J m-2,209
+Surface net solar radiation (clear sky),ssrc,J m-2,210
+Surface net thermal radiation (clear sky),strc,J m-2,211
+TOA incident solar radiation,tisr,J m-2,212
+Vertically integrated moisture divergence,vimd,kg m-2,213
+Diabatic heating by radiation,dhr,K,214
+Diabatic heating by vertical diffusion,dhvd,K,215
+Diabatic heating by cumulus convection,dhcc,K,216
+Diabatic heating large-scale condensation,dhlc,K,217
+Vertical diffusion of zonal wind,vdzw,m s-1,218
+Vertical diffusion of meridional wind,vdmw,m s-1,219
+East-West gravity wave drag tendency,ewgd,m s-1,220
+North-South gravity wave drag tendency,nsgd,m s-1,221
+Convective tendency of zonal wind,ctzw,m s-1,222
+Convective tendency of meridional wind,ctmw,m s-1,223
+Vertical diffusion of humidity,vdh,kg kg-1,224
+Humidity tendency by cumulus convection,htcc,kg kg-1,225
+Humidity tendency by large-scale condensation,htlc,kg kg-1,226
+Tendency due to removal of negative humidity,crnh,kg kg-1,227
+Total precipitation,tp,m,228
+Instantaneous eastward turbulent surface stress,iews,N m-2,229
+Instantaneous northward turbulent surface stress,inss,N m-2,230
+Instantaneous surface sensible heat flux,ishf,W m-2,231
+Instantaneous moisture flux,ie,kg m-2 s-1,232
+Apparent surface humidity,asq,kg kg-1,233
+Logarithm of surface roughness length for heat,lsrh,1,234
+Skin temperature,skt,K,235
+Soil temperature level 4,stl4,K,236
+Soil wetness level 4,swl4,m,237
+Temperature of snow layer,tsn,K,238
+Convective snowfall,csf,m,239
+Large-scale snowfall,lsf,m,240
+Accumulated cloud fraction tendency,acf,1,241
+Accumulated liquid water tendency,alw,1,242
+Forecast albedo,fal,1,243
+Forecast surface roughness,fsr,m,244
+Forecast logarithm of surface roughness for heat,flsr,1,245
+Specific cloud liquid water content,clwc,kg kg-1,246
+Specific cloud ice water content,ciwc,kg kg-1,247
+Fraction of cloud cover,cc,1,248
+Accumulated ice water tendency,aiw,1,249
+Ice age,ice,1,250
+Adiabatic tendency of temperature,atte,K,251
+Adiabatic tendency of humidity,athe,kg kg-1,252
+Adiabatic tendency of zonal wind,atze,m s-1,253
+Adiabatic tendency of meridional wind,atmw,m s-1,254
+Indicates a missing value,~,~,255

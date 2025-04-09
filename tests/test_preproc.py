@@ -1,8 +1,10 @@
 import pytest
 
+import pandas as pd
 import pyremo as pr
-from pyremo.preproc import gfile, remap
+from pyremo.preproc import get_gcm_dataset, remap
 from pyremo.tutorial import load_dataset, mpi_esm, mpi_esm_tos
+from pyremo.preproc.utils import get_filename
 
 from . import requires_pyintorg
 
@@ -14,7 +16,9 @@ def ds():
 
 # @pytest.fixture
 def gcm_ds1():
-    return gfile(mpi_esm(use_cftime=True), tos=mpi_esm_tos(use_cftime=True).tos)
+    return get_gcm_dataset(
+        mpi_esm(use_cftime=True), tos=mpi_esm_tos(use_cftime=True).tos
+    )
 
 
 # @pytest.fixture
@@ -30,7 +34,7 @@ def gcm_ds2():
     }
 
     file_dict = {k: load_dataset(f).encoding["source"] for k, f in files.items()}
-    return gfile(file_dict, tos=mpi_esm_tos(use_cftime=True).tos)
+    return get_gcm_dataset(file_dict, tos=mpi_esm_tos(use_cftime=True).tos)
 
 
 # @requires_pyintorg
@@ -52,3 +56,10 @@ def test_cf_preproc(gcm_ds):
     vc = pr.vc.tables["vc_27lev"]
     ads = remap(gcm_ds, domain_info, vc, surflib)
     assert "T" in ads
+
+
+def test_filename():
+    assert (
+        get_filename(expid="000000", date=pd.Timestamp("1979-01-01"))
+        == "a000000a1979010100.nc"
+    )

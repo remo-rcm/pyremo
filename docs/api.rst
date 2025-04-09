@@ -75,6 +75,10 @@ REMO preprocessor
    preproc.remap_remo
    preproc.ERA5
    preproc.ERA5.gfile
+   preproc.ERA5Preprocessor
+   preproc.CFPreprocessor
+   preproc.RemoPreprocessor
+   preproc.CloudPreprocessor
 
 
 Tutorial

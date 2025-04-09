@@ -106,7 +106,7 @@ def broadcast_coords(ds, coords=("lon", "lat")):
     return lam, phi
 
 
-def remap(gds, domain_info, vc, surflib, initial=False):
+def remap(ds, domain_info, vc, surflib, initial=False):
     """remapping workflow
 
     This function should be similar to the ones in the
@@ -114,7 +114,7 @@ def remap(gds, domain_info, vc, surflib, initial=False):
 
     Parameters
     ----------
-    gds : xarray.Dataset
+    ds : xarray.Dataset
         Input model dataset containing atmospheric variables for
         downscaling, including SST. The dataset must fullfil CF conventions
         containing: `ta`, `ua`, `va`, `ps`, `tos`, `orog` and `sftlf`.
@@ -138,7 +138,7 @@ def remap(gds, domain_info, vc, surflib, initial=False):
 
     """
     # rename vertical coordinate of input to avoid conflict with output lev
-    gds = gds.copy()
+    gds = ds.copy()
     gds = gds.rename({gds.ta.cf["vertical"].name: lev_input})
 
     # remove time dimension if there is one
@@ -310,14 +310,14 @@ def remap(gds, domain_info, vc, surflib, initial=False):
 
 
 def remap_remo(
-    tds,
-    domain_info_em,
-    domain_info_hm,
+    ds,
+    domain_info,
     vc,
     surflib,
     initial=False,
-    lice=None,
+    lice=True,
     uvcor=True,
+    domain_info_em=None,
 ):
     """remapping workflow for double nesting
 
@@ -326,9 +326,9 @@ def remap_remo(
 
     Parameters
     ----------
-    tds : xarray.Dataset
+    ds : xarray.Dataset
         REMO output t-file containing 3D atmospheric and 2D soil fields.
-    domain_info_hm : dict
+    domain_info : dict
         A dictionary containing the domain information of the target domain.
     vc : pandas.DataFrame
         A table with the vertical coordinate coefficients ``ak`` and ``bk``.
@@ -348,14 +348,19 @@ def remap_remo(
         ``QW``, ``QDBL``, ``TSW``, ``TSI`` and ``SEAICE``.
 
     """
+    tds = ds.copy()
+
+    domain_info_hm = domain_info
+    domain_info_em = domain_info_em or tds.cx.info()
+
     # check if we have to derive seaice from tsw
     has_seaice = "SEAICE" in tds
     if has_seaice is True:
         tds["SEAICE"] = tds.SEAICE.fillna(0.0)
     if lice is None:
         lice = "SEAICE" not in tds
+
     # rename coords so they dont conflict with hm coords
-    # tds = tds.copy().rename({"rlon": "rlon_em", "rlat": "rlat_em", "lev": lev_input})
     tds = tds.rename({"rlon": "rlon_em", "rlat": "rlat_em", "lev": lev_input})
     grid = get_grid(domain_info_hm)
 
@@ -370,25 +375,19 @@ def remap_remo(
     lamem = tds.RLA.squeeze(drop=True)
 
     lamhm, phihm = geo_coords(domain_info_hm, fibhm.rlon, fibhm.rlat)
-    # lamhm = lamhm.isel(pos=0).squeeze(drop=True)
-    # phihm = phihm.isel(pos=0).squeeze(drop=True)
-    # return lamhm, phihm
+
     indemi, indemj, dxemhm, dyemhm = intersect_regional(domain_info_em, domain_info_hm)
     indemi = indemi.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     indemj = indemj.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     dxemhm = dxemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
     dyemhm = dyemhm.assign_coords(rlon=surflib.rlon, rlat=surflib.rlat)
-    # return indemi, indemj, dxemhm, dyemhm
 
     # horizontal interpolation
     teh = interpolate_horizontal_remo(tds.T, indemi, indemj, dxemhm, dyemhm, "T")
     pseh = interpolate_horizontal_remo(tds.PS, indemi, indemj, dxemhm, dyemhm, "PS")
     pseh.name = "PSEH"
     ueh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 1)
-    # uveh = interpolate_horizontal_remo(tds.U, indemi, indemj, dxemhm, dyemhm, "U", 2)
     veh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 4)
-    # vueh = interpolate_horizontal_remo(tds.V, indemi, indemj, dxemhm, dyemhm, "V", 3)
-    # qdeh = interpolate_horizontal_remo(tds.QD, indemi, indemj, dxemhm, dyemhm, "QD")
     fibeh = interpolate_horizontal_remo(tds.FIB, indemi, indemj, dxemhm, dyemhm, "FIB")
 
     if has_seaice is True and lice is False:
@@ -471,11 +470,7 @@ def remap_remo(
     else:
         soil = xr.Dataset()
 
-    # return pseh
-    # return ueh
-    ficem = geopotential(
-        tds.FIB, tds.T, tds.QD, tds.PS, tds.hyai, tds.hybi
-    )  # .squeeze(drop=True)
+    ficem = geopotential(tds.FIB, tds.T, tds.QD, tds.PS, tds.hyai, tds.hybi)
 
     ficeh = interpolate_horizontal_remo(ficem, indemi, indemj, dxemhm, dyemhm, "FIC")
 
@@ -491,21 +486,16 @@ def remap_remo(
         pseh, teh, arfeh, fibeh, fibhm, tds.hyai, tds.hybi, kpbl
     )
     ps1hm.name = "PS1HM"
-    # return pseh, teh, arfeh, fibeh, fibhm
+
     # vertical interpolation
     akhem = tds.hyam
     bkhem = tds.hybm
-    # dakem = tds.hyai[1:] - tds.hyai[:-1]
-    # dbkem = tds.hybi[1:] - tds.hybi[:-1]
     akbkhm = get_akbkem(vc)
     ptop = akbkhm.ak[0]
 
     thm = interpolate_vertical(
         teh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "T", kpbl, ptop=ptop
     )
-    # return thm
-    # return teh,thm, pseh, ps1hm
-    # return akhem, bkhem, akbkhm.akh, akbkhm.bkh
 
     arfhm = interpolate_vertical(
         arfeh, pseh, ps1hm, akhem, bkhem, akbkhm.akh, akbkhm.bkh, "RF", kpbl, ptop=ptop
@@ -514,12 +504,7 @@ def remap_remo(
     # second pressure correction and vertical interpolation of wind
     pshm = pressure_correction_ge(ps1hm, thm, arfhm, ficeh, fibhm, akbkhm.ak, akbkhm.bk)
     pshm.name = "PS"
-    # return ps1hm, pshm, thm, arfhm, ficeh, fibeh
-    # return pseh, pshm
-    # pseh_u = pseh.interp(rlon=pseh.rlon+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
-    # pshm_u = pshm.interp(rlon=pshm.rlon+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
-    # pseh_u[:,-1,:] = pseh[:,-1,:]
-    # pshm_u[:,-1,:] = pshm[:,-1,:]
+
     uhm = interpolate_vertical(
         ueh,
         pseh.interp(
@@ -542,10 +527,7 @@ def remap_remo(
         kpbl,
         ptop=ptop,
     )
-    # pseh_v = pseh.interp(rlat=pseh.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
-    # pshm_v = pshm.interp(rlat=pshm.rlat+0.5*0.0275, method='linear', kwargs={"fill_value": "extrapolate"})
-    # pseh_v[:,:,-1] = pseh[:,:,-1]
-    # pshm_v[:,:,-1] = pshm[:,:,-1]
+
     vhm = interpolate_vertical(
         veh,
         pseh.interp(
@@ -582,7 +564,6 @@ def remap_remo(
         vhm_corr = vhm
 
     water_content = physics.water_content(thm, arfhm, pshm, akbkhm.akh, akbkhm.bkh)
-    # tsi = physics.tsi(tsw)
 
     blaem = (np.around(tds.BLA),)
     blahm = surflib.BLA.squeeze(drop=True)
@@ -622,7 +603,6 @@ def remap_remo(
 
     ads = update_attrs(ads)
 
-    # ads = update_meta_info(ads)
     # set global attributes
     ads.attrs = tds.attrs
 
@@ -630,9 +610,6 @@ def remap_remo(
 
     # transpose to remo convention
     return ads.transpose(..., "lev", "rlat", "rlon")
-
-    # return uhm_corr
-    # return xr.merge([thm, pshm, uhm_corr, vhm_corr, qdhm, fibeh, ficeh, arfeh, ps1hm])
 
 
 def remap_soil(

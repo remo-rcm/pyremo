@@ -5,10 +5,10 @@ import dask
 import xarray as xr
 
 import pyremo as pr
-from ..remo_ds import update_meta_info
+from ..remo_ds import update_meta_info, parse_dates
 from .era5 import era5_gfile_from_dkrz
 from .utils import datelist, ensure_dir, write_forcing_file
-from .remapping import remap
+from .remapping import remap, remap_remo
 from .cf import get_gcm_dataset, get_gcm_gfile
 
 
@@ -192,7 +192,7 @@ def prepare_surflib(surflib):
     xarray.Dataset
         Prepared surface library dataset.
     """
-    return update_meta_info(xr.open_dataset(surflib).load()).squeeze(drop=True)
+    return update_meta_info(xr.open_dataset(surflib).squeeze(drop=True).load())
 
 
 class Preprocessor:
@@ -229,6 +229,7 @@ class Preprocessor:
         self.expid = expid
         self.surflib = prepare_surflib(surflib)
         self.outpath = outpath
+        self.remap = remap
         self._init_domain_info(domain)
 
     def _clean(self):
@@ -270,7 +271,7 @@ class Preprocessor:
         return write_forcing_file(ds, path=outpath, expid=self.expid)
 
     @dask.delayed
-    def preprocess(self, date=None, ds=None, outpath=None):
+    def preprocess(self, date=None, ds=None, outpath=None, **kwargs):
         """
         Preprocess the dataset for a given date.
 
@@ -288,12 +289,27 @@ class Preprocessor:
         """
         if ds is None:
             ds = self.get_input_dataset(date=date)
-        ads = remap(ds, self.domain_info, self.vc, self.surflib)
+        ads = self.remap(
+            ds,
+            domain_info=self.domain_info,
+            vc=self.vc,
+            surflib=self.surflib,
+            **kwargs,
+        )
         if outpath is None:
             return ads
         return self.write(ads, outpath)
 
-    def run(self, start, end=None, freq="6h", outpath=None, compute=False, write=True):
+    def run(
+        self,
+        start,
+        end=None,
+        freq="6h",
+        outpath=None,
+        compute=False,
+        write=True,
+        **kwargs,
+    ):
         """
         Run the preprocessing for a given date range.
 
@@ -327,7 +343,9 @@ class Preprocessor:
             ensure_dir(outpath)
         print(f"writing to {outpath}")
         result = [
-            self.preprocess(date=date, outpath=outpath if write is True else None)
+            self.preprocess(
+                date=date, outpath=outpath if write is True else None, **kwargs
+            )
             for date in dates
         ]
         if compute:
@@ -386,9 +404,9 @@ class CFPreprocessor(Preprocessor):
         return self.gfile.gfile(date).load()
 
 
-class ERA5Preprocessor(Preprocessor):
+class RemoPreprocessor(Preprocessor):
     """
-    ERA5Preprocessor class for preparing input data from ERA5 datasets.
+    RemoPreprocessor class for prepraring double nesting input data.
 
     Parameters
     ----------
@@ -401,13 +419,47 @@ class ERA5Preprocessor(Preprocessor):
     """
 
     def __init__(
-        self, expid, surflib, domain=None, vc="vc_49lev", outpath=None, scratch=None
+        self,
+        expid,
+        surflib,
+        domain=None,
+        vc="vc_49lev_nh_pt2000",
+        outpath=None,
+        scratch=None,
+        input_data=None,
     ):
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
+        self.input_data = input_data
+        self.remap = remap_remo
+        self.inpath = input_data["path"]
+        self.inexp = input_data["expid"]
+        self.filename_pattern = "e{expid}t{date:%Y%m%d%H}.nc"
 
-    def get_input_dataset(self, date=None, filename=None):
+    def get_filename(self, date):
+        """
+        Get the filename for a given date.
+
+        Parameters
+        ----------
+        date : datetime-like
+            Date for the filename.
+
+        Returns
+        -------
+        str
+            Formatted filename.
+        """
+        return os.path.join(
+            self.inpath,
+            self.filename_pattern.format(expid=self.inexp, date=date),
+        )
+
+    def open_remo_dataset(self, filename):
+        return parse_dates(xr.open_dataset(filename), use_cftime=True)
+
+    def get_input_dataset(self, date):
         """
         Get the input dataset for a given date.
 
@@ -421,15 +473,11 @@ class ERA5Preprocessor(Preprocessor):
         xarray.Dataset
             Input dataset.
         """
-        if filename is None:
-            filename = era5_gfile_from_dkrz(date, self.scratch.name)
-            print(f"created: {filename}")
-        # logger.debug(f"created: {filename}")
-        ds = xr.open_dataset(filename).load()
-        return get_gcm_dataset(ds)
+        filename = self.get_filename(date)
+        return self.open_remo_dataset(filename)
 
 
-class ERA5GCPreprocessor(Preprocessor):
+class ERA5Preprocessor(Preprocessor):
     """
     ERA5Preprocessor class for preparing input data from ERA5 datasets.
 

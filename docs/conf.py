@@ -20,7 +20,7 @@
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
-import sphinx_autosummary_accessors
+# import sphinx_autosummary_accessors
 
 from pyremo import __version__
 
@@ -43,7 +43,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinxcontrib.mockautodoc",
     "numpydoc",
-    "sphinx_autosummary_accessors",
+    # "sphinx_autosummary_accessors",
     "nbsphinx",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
@@ -71,7 +71,7 @@ numpydoc_class_members_toctree = True
 numpydoc_show_class_members = False
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ["_templates"]
-templates_path = ["_templates", sphinx_autosummary_accessors.templates_path]
+templates_path = ["_templates"]  # , sphinx_autosummary_accessors.templates_path]
 
 # The suffix(es) of source filenames.
 # You can specify multiple suffix as a list of string:

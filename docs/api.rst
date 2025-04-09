@@ -66,6 +66,20 @@ Pressure interpolation
 REMO preprocessor
 =================
 
+Preconfigures preprocessors
+---------------------------
+
+.. autosummary::
+   :toctree: generated/
+
+   preproc.Preprocessor
+   preproc.ERA5Preprocessor
+   preproc.CFPreprocessor
+   preproc.RemoPreprocessor
+
+Preprocessing functions
+-----------------------
+
 .. autosummary::
    :toctree: generated/
 
@@ -75,11 +89,6 @@ REMO preprocessor
    preproc.remap_remo
    preproc.ERA5
    preproc.ERA5.gfile
-   preproc.ERA5Preprocessor
-   preproc.CFPreprocessor
-   preproc.RemoPreprocessor
-   preproc.CloudPreprocessor
-
 
 Tutorial
 ========

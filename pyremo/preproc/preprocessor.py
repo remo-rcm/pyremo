@@ -271,7 +271,7 @@ class Preprocessor:
         return write_forcing_file(ds, path=outpath, expid=self.expid)
 
     @dask.delayed
-    def preprocess(self, date=None, ds=None, outpath=None, **kwargs):
+    def preprocess(self, date=None, ds=None, outpath=None, initial=False, **kwargs):
         """
         Preprocess the dataset for a given date.
 
@@ -294,6 +294,7 @@ class Preprocessor:
             domain_info=self.domain_info,
             vc=self.vc,
             surflib=self.surflib,
+            initial=initial,
             **kwargs,
         )
         if outpath is None:
@@ -308,6 +309,7 @@ class Preprocessor:
         outpath=None,
         compute=False,
         write=True,
+        initial=None,
         **kwargs,
     ):
         """
@@ -344,9 +346,12 @@ class Preprocessor:
         print(f"writing to {outpath}")
         result = [
             self.preprocess(
-                date=date, outpath=outpath if write is True else None, **kwargs
+                date=date,
+                outpath=outpath if write is True else None,
+                initial=initial or (initial is None and i == 0),
+                **kwargs,
             )
-            for date in dates
+            for i, date in enumerate(dates)
         ]
         if compute:
             result = dask.compute(*result)

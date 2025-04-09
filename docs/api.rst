@@ -77,6 +77,7 @@ REMO preprocessor
    preproc.ERA5.gfile
    preproc.ERA5Preprocessor
    preproc.CFPreprocessor
+   preproc.RemoPreprocessor
    preproc.CloudPreprocessor
 
 

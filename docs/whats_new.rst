@@ -8,8 +8,8 @@ What's New
 
     import pyremo
 
-v0.8.0 (UNRELEASED)
--------------------
+v0.8.0 (9 April 2025)
+---------------------
 
 This release introduces a new API for the preprocessing module and better documentation. It also introduces new classes
 for preconfigure preprocessing of ERA5, CMIP and REMO data (:py:meth:`pyremo.preproc.ERA5Preprocessor`, :py:meth:`pyremo.preproc.CFPreprocessor`, :py:meth:`pyremo.preproc.RemoPreprocessor`).

@@ -406,16 +406,24 @@ class CFPreprocessor(Preprocessor):
 
 class RemoPreprocessor(Preprocessor):
     """
-    RemoPreprocessor class for prepraring double nesting input data.
+    RemoPreprocessor class for preparing double nesting input data.
 
     Parameters
     ----------
-    input_data : dict
-        Input data information.
-    *args : tuple
-        Additional arguments.
-    **kwargs : dict
-        Additional keyword arguments.
+    expid : str
+        Experiment ID.
+    surflib : str
+        Path to the surface library.
+    domain : dict or str, optional
+        Domain information, by default None.
+    vc : str or dict, optional
+        Vertical coordinate information, by default "vc_49lev_nh_pt2000".
+    outpath : str, optional
+        Output path, by default None.
+    scratch : str, optional
+        Scratch directory, by default None.
+    input_data : dict, optional
+        Input data information, by default None.
     """
 
     def __init__(
@@ -439,17 +447,17 @@ class RemoPreprocessor(Preprocessor):
 
     def get_filename(self, date):
         """
-        Get the filename for a given date.
+        Open a REMO dataset and parse its dates.
 
         Parameters
         ----------
-        date : datetime-like
-            Date for the filename.
+        filename : str
+            Path to the REMO dataset file.
 
         Returns
         -------
-        str
-            Formatted filename.
+        xarray.Dataset
+            Parsed REMO dataset.
         """
         return os.path.join(
             self.inpath,
@@ -457,6 +465,19 @@ class RemoPreprocessor(Preprocessor):
         )
 
     def open_remo_dataset(self, filename):
+        """
+        Open a REMO dataset and parse its dates.
+
+        Parameters
+        ----------
+        filename : str
+            Path to the REMO dataset file.
+
+        Returns
+        -------
+        xarray.Dataset
+            Parsed REMO dataset.
+        """
         return parse_dates(xr.open_dataset(filename), use_cftime=True)
 
     def get_input_dataset(self, date):

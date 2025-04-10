@@ -8,6 +8,15 @@ What's New
 
     import pyremo
 
+
+v0.8.1 (10 April 2025)
+----------------------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Use ERA5 data instead of ERA5.1 if it is missing (:pull:`230`).
+
 v0.8.0 (9 April 2025)
 ---------------------
 

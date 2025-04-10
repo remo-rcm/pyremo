@@ -12,6 +12,7 @@ from os import path as op
 from pprint import pprint
 from warnings import warn
 from importlib.resources import files
+import copy
 
 import pandas as pd
 import xarray as xr
@@ -144,7 +145,10 @@ def get_file_from_template(
         date = "INVARIANT"
     else:
         date = pd.to_datetime(date).strftime("%Y-%m-%d")
-    return op.join(path_template, file_template).format(
+
+    filepath_template = op.join(path_template, file_template)
+
+    return filepath_template.format(
         date=date,
         era_id=era_id,
         frequency=frequency,
@@ -159,8 +163,10 @@ def get_files_from_template(params, date, template=None):
     files = {}
     for k, v in params.items():
         f = get_file_from_template(date=date, template=template, **v)
-        if not f:
-            warn(f"no result for {k} --> params: {v}")
+        if not op.isfile(f) and v.get("era_id") == "E1":
+            warn(f"file not found: {f}, will try E5")
+            v["era_id"] = "E5"
+            f = get_file_from_template(date=date, template=template, **v)
         files[k] = f
     return files
 
@@ -529,11 +535,12 @@ def era5_gfile_from_dkrz(date, path, expid="000000"):
     str
         The path to the computed gfile.
     """
-    global era5_params
+    params = copy.deepcopy(era5_params)
 
-    params = era5_params.copy()
     if date.year in range(2000, 2007):
         for k, v in params.items():
+            # if v["level_type"] == "model_level":
             v["era_id"] = "E1"
+
     era5 = ERA5(params, gridfile=era5_grid_file)
     return era5.gfile(date.strftime("%Y-%m-%dT%H:%M:%S"), path, expid)

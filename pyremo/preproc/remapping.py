@@ -841,14 +841,19 @@ def addem_remo(tds):
 
 
 def add_surflib(ads, surflib):
-    # surflib = surflib.copy().sel(
-    #     rlon=slice(ads.rlon.min(), ads.rlon.max()),
-    #     rlat=slice(ads.rlat.min(), ads.rlat.max()),
-    # )
-    surflib = surflib.copy().isel(
-        rlon=slice(1, -1),
-        rlat=slice(1, -1),
+    rlon_start = surflib.rlon.sel(rlon=ads.rlon.min(), method="nearest").item()
+    rlon_end = surflib.rlon.sel(rlon=ads.rlon.max(), method="nearest").item()
+    rlat_start = surflib.rlat.sel(rlat=ads.rlat.min(), method="nearest").item()
+    rlat_end = surflib.rlat.sel(rlat=ads.rlat.max(), method="nearest").item()
+    print(rlat_start, rlat_end, rlon_start, rlon_end)
+    surflib = surflib.copy().sel(
+        rlon=slice(rlon_start, rlon_end),
+        rlat=slice(rlat_start, rlat_end),
     )
+    # surflib = surflib.copy().isel(
+    #     rlon=slice(1, -1),
+    #     rlat=slice(1, -1),
+    # )
     if "rotated_pole" in surflib:
         surflib = surflib.drop_vars("rotated_pole")
     return xr.merge(

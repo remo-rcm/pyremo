@@ -517,7 +517,7 @@ def era5_from_gcloud(time=None, chunks="auto", hfreq=6):
     return ds
 
 
-def era5_gfile_from_dkrz(date, path, expid="000000"):
+def era5_gfile_from_dkrz(date, path, expid="000000", add_soil=False):
     """
     Compute the gfile for a given date.
 
@@ -543,4 +543,6 @@ def era5_gfile_from_dkrz(date, path, expid="000000"):
             v["era_id"] = "E1"
 
     era5 = ERA5(params, gridfile=era5_grid_file)
-    return era5.gfile(date.strftime("%Y-%m-%dT%H:%M:%S"), path, expid)
+    return era5.gfile(
+        date.strftime("%Y-%m-%dT%H:%M:%S"), path, expid, add_soil=add_soil
+    )

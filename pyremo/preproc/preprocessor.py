@@ -288,7 +288,7 @@ class Preprocessor:
             Preprocessed dataset or path to the written file.
         """
         if ds is None:
-            ds = self.get_input_dataset(date=date)
+            ds = self.get_input_dataset(date=date, initial=initial)
         ads = self.remap(
             ds,
             domain_info=self.domain_info,
@@ -392,7 +392,7 @@ class CFPreprocessor(Preprocessor):
         self.gfile = get_gcm_gfile(self.scratch.name, **self.input_data)
         self.remap = remap
 
-    def get_input_dataset(self, date):
+    def get_input_dataset(self, date, initial=False, **kwargs):
         """
         Get the input dataset for a given date.
 
@@ -406,7 +406,7 @@ class CFPreprocessor(Preprocessor):
         xarray.Dataset
             Input dataset.
         """
-        return self.gfile.gfile(date).load()
+        return self.gfile.gfile(date, **kwargs).load()
 
 
 class RemoPreprocessor(Preprocessor):
@@ -485,7 +485,7 @@ class RemoPreprocessor(Preprocessor):
         """
         return parse_dates(xr.open_dataset(filename), use_cftime=True)
 
-    def get_input_dataset(self, date):
+    def get_input_dataset(self, date, initial=False):
         """
         Get the input dataset for a given date.
 
@@ -524,7 +524,7 @@ class ERA5Preprocessor(Preprocessor):
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
 
-    def get_input_dataset(self, date=None, filename=None):
+    def get_input_dataset(self, date=None, filename=None, initial=False):
         """
         Get the input dataset for a given date.
 
@@ -539,7 +539,7 @@ class ERA5Preprocessor(Preprocessor):
             Input dataset.
         """
         if filename is None:
-            filename = era5_gfile_from_dkrz(date, self.scratch.name)
+            filename = era5_gfile_from_dkrz(date, self.scratch.name, add_soil=initial)
             print(f"created: {filename}")
         # logger.debug(f"created: {filename}")
         ds = xr.open_dataset(filename).load()
@@ -594,7 +594,7 @@ class CloudPreprocessor(Preprocessor):
         self.gcm = gcm
         self.gfile = get_gcm_dataset(gcm, tos=tos)
 
-    def get_input_dataset(self, date):
+    def get_input_dataset(self, date, initial=False):
         """
         Get the input dataset for a given date.
 

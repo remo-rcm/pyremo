@@ -171,7 +171,8 @@ def check_lev(ds, invert=None):
             vertical = ds.cf["vertical"].name
         except KeyError:
             vertical = "lev"
-        if vertical in ds:
+        print(f"checking vertical axis: {vertical}")
+        if vertical in ds.coords:
             invert = ds[vertical].attrs.get("positive") == "down"
         else:
             invert = False

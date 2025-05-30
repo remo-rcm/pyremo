@@ -8,6 +8,15 @@ What's New
 
     import pyremo
 
+v0.8.2 (30 May 2025)
+--------------------
+
+Bugfix release.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Fix bug for initial preprocessing flag (:pull:`237`).
 
 v0.8.1 (11 April 2025)
 ----------------------

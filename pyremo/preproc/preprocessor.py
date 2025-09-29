@@ -5,11 +5,13 @@ import dask
 import xarray as xr
 
 import pyremo as pr
+from warnings import warn
 from ..remo_ds import update_meta_info, parse_dates
 from .era5 import era5_gfile_from_dkrz
 from .utils import datelist, ensure_dir, write_forcing_file
 from .remapping import remap, remap_remo
 from .cf import get_gcm_dataset, get_gcm_gfile
+from ..tables import domains
 
 
 dkrz_template = {
@@ -242,9 +244,10 @@ class Preprocessor:
     def _init_domain_info(self, domain=None):
         if isinstance(domain, dict):
             self.domain_info = domain
-        elif isinstance(domain, str):
+        elif isinstance(domain, str) and domain in domains.table:
             self.domain_info = pr.domain_info(domain)
         else:
+            warn("domain_id not registered, taking grid from surflib...")
             domain_info = self.surflib.cx.info()
             domain_info["nlon"] -= 2
             domain_info["nlat"] -= 2

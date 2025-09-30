@@ -107,35 +107,60 @@ def broadcast_coords(ds, coords=("lon", "lat")):
 
 
 def remap(ds, domain_info, vc, surflib, initial=False):
-    """remapping workflow
+    """Remap CF-compliant GCM/analysis data to a REMO target domain.
 
-    This function should be similar to the ones in the
-    legacy fortran preprocessor intorg.
+    The workflow mirrors the legacy FORTRAN preprocessor (``intorg``):
+    1. Horizontal interpolation of 3‑D and 2‑D fields from the input (global) grid
+       to the rotated REMO grid using great‑circle search indices.
+    2. First pressure adjustment using a planetary boundary layer (PBL) estimate.
+    3. Vertical interpolation from input hybrid coefficients (``akgm``, ``bkgm``)
+       to the requested target vertical coordinate ``vc`` (``ak``, ``bk``).
+    4. Second pressure adjustment including hydrostatic consistency with geopotential.
+    5. Wind rotation and divergence correction.
+    6. Surface field remapping (SST, sea-ice) and optional initial-field enrichment.
 
     Parameters
     ----------
     ds : xarray.Dataset
-        Input model dataset containing atmospheric variables for
-        downscaling, including SST. The dataset must fullfil CF conventions
-        containing: `ta`, `ua`, `va`, `ps`, `tos`, `orog` and `sftlf`.
-
+        CF-compliant dataset holding at least the variables
+        ``ta`` (air temperature), ``ua``/``va`` (winds), ``hus`` (specific humidity),
+        ``ps`` (surface pressure), ``tos`` (sea surface temperature),
+        ``orog`` (orography), ``sftlf`` (land fraction). Optionally ``clw`` for
+        cloud liquid water content. Must also contain hybrid coordinate
+        coefficients ``akgm`` and ``bkgm`` (full level) required for vertical interpolation.
     domain_info : dict
-        A dictionary containing the domain information of the target domain.
-
-    domain_info : pandas.DataFrame
-        A table with the vertical coordinate coefficients `ak` and `bk`.
-
+        Dictionary describing the target rotated domain. Required keys typically are
+        ``ll_lon``, ``ll_lat`` (lower-left corner), ``dlon``, ``dlat`` (increment),
+        ``nlon``, ``nlat`` (grid dimensions), ``pollon`` and ``pollat`` (rotated pole),
+        plus optional metadata such as ``CORDEX_domain`` or ``domain_id``.
+    vc : pandas.DataFrame
+        Vertical coordinate definition with columns ``ak`` and ``bk`` (half levels)
+        and ``akh`` / ``bkh`` (mid levels) as produced by ``pr.vc.tables``.
     surflib : xarray.Dataset
-        The surface library containing the target grid land sea mask `BLA` and
-        orography `FIB`.
+        Surface library on the target grid providing (at least) ``BLA`` (land/sea mask)
+        and ``FIB`` (surface geopotential / orography divided by gravity). Additional
+        static fields will be passed through if present.
+    initial : bool, default: False
+        If ``True`` add static/dynamic fields needed for initial condition creation
+        (soil moisture/temperature etc.).
 
     Returns
     -------
-    Forcing Data : xarray.core.Dataset
-        Dataset containing the atmospheric and surface forcing data interpolated to the
-        target domain. The dynamic fields are `T`, `U`, `V`, `QD`, `QW`, `PS`, `QDBL`,
-        `TSW`, `TSI` and `SEAICE`.
+    xarray.Dataset
+        Forcing dataset on the target domain with rotated coordinates (``rlon``, ``rlat``)
+        and vertical dimension ``lev``. Includes at least
+        ``T`` (temperature), ``U`` / ``V`` (winds), ``PS`` (surface pressure),
+        ``QD`` (specific humidity), ``QW`` (total water), ``QDBL`` (boundary layer
+        humidity if produced), ``TSW`` (surface temperature over water), ``TSI`` (surface
+        temperature over ice), ``SEAICE`` (fractional sea ice), vertical coordinate
+        coefficients (``hyai``, ``hybi``, ``hyam``, ``hybm``) and auxiliary diagnostic
+        attributes.
 
+    Notes
+    -----
+    The function performs nearest-neighbour selection for final grid alignment after
+    interpolation to ensure exact coordinate matching with ``surflib``. Calendar and
+    time metadata are preserved from the input dataset where possible.
     """
     # rename vertical coordinate of input to avoid conflict with output lev
     gds = ds.copy()
@@ -283,7 +308,8 @@ def remap(ds, domain_info, vc, surflib, initial=False):
     ads.attrs = gds.attrs
 
     ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
-    ads.attrs["CORDEX_domain"] = domain_info.get("domain_id", "no name")
+    ads.attrs["CORDEX_domain"] = domain_info.get("CORDEX_domain", "custom")
+    ads.attrs["domain_id"] = domain_info.get("domain_id", "custom")
 
     # transpose to remo convention
     ads = ads.transpose(..., "lev", "rlat", "rlon")
@@ -319,34 +345,54 @@ def remap_remo(
     uvcor=True,
     domain_info_em=None,
 ):
-    """remapping workflow for double nesting
+    """Remap nested REMO (external model) output to a higher-resolution REMO domain.
 
-    This function should be similar to the ones in the
-    legacy fortran preprocessor intorg.
+    This is the double-nesting analogue of :func:`remap` operating on an *existing*
+    REMO atmospheric forcing / restart (``t`` file) instead of CF GCM data. It reprojects
+    the coarse external model (EM) REMO grid to a higher-resolution host model (HM) grid
+    and optionally augments fields required for initial conditions.
 
     Parameters
     ----------
     ds : xarray.Dataset
-        REMO output t-file containing 3D atmospheric and 2D soil fields.
+        REMO external / driving model dataset containing at minimum 3‑D atmospheric
+        fields (``T``, ``U``, ``V``, ``QD`` (specific humidity), ``QW`` (total water),
+        ``PS``) and 2‑D surface fields (``TSW``, ``TSI``, ``FIB``, ``BLA``). May include
+        ``SEAICE``; if absent and ``lice`` is True it will be diagnosed from ``TSW``.
     domain_info : dict
-        A dictionary containing the domain information of the target domain.
+        Target (high-resolution) REMO domain description (see :func:`remap`).
     vc : pandas.DataFrame
-        A table with the vertical coordinate coefficients ``ak`` and ``bk``.
+        Target vertical coordinate definition with ``ak`` / ``bk`` (half) and
+        ``akh`` / ``bkh`` (mid) coefficients.
     surflib : xarray.Dataset
-        The surface library containing the target grid land sea mask ``BLA`` and
-        orography ``FIB``.
-    initial:
-        If ``True``, add static and dynamic fields for initial conditions.
-    uvcor: bool
-        Do the u,v correction.
+        Surface library on the target domain providing at least ``BLA`` and ``FIB``.
+    initial : bool, default: False
+        If True, include soil fields and perform additional adjustments required
+        for model cold / warm starts (e.g. soil moisture normalization, glacier mask).
+    lice : bool or None, default: True
+        If True, (re)compute sea ice fraction from surface temperature; if False, keep
+        provided ``SEAICE`` values; if ``None`` auto-detect (derive when ``SEAICE`` missing).
+    uvcor : bool, default: True
+        Apply wind vector correction / rotation to remove artificial divergence and
+        conform to the rotated pole geometry.
+    domain_info_em : dict, optional
+        Domain description of the external (coarser) REMO grid. If not supplied it is
+        inferred from ``ds.cx.info()``.
 
     Returns
     -------
-    Forcing Dataset : xarray.Dataset
-        Dataset containing the forcing data interpolated to the
-        target domain. The dynamic variables include at least: ``T``, ``U``, ``V``, ``PS``, ``QD``,
-        ``QW``, ``QDBL``, ``TSW``, ``TSI`` and ``SEAICE``.
+    xarray.Dataset
+        Nested-domain forcing dataset on (``rlon``, ``rlat``) with vertical ``lev`` plus
+        surface and (optionally) soil fields. Contains the transformed dynamic fields
+        (``T``, ``U``, ``V``, ``PS``, humidity diagnostics, ``TSW``, ``TSI``, ``SEAICE``),
+        vertical coordinate coefficients (``hyai``, ``hybi``, ``hyam``, ``hybm``) and
+        any soil variables added for initialisation when ``initial`` is True.
 
+    Notes
+    -----
+    The function performs two-stage pressure correction analogous to the global remap,
+    but uses REMO-native hybrid coefficients from the external model (EM) as source.
+    Wind fields are interpolated on staggered points and then re-centred / rotated.
     """
     tds = ds.copy()
 
@@ -607,6 +653,8 @@ def remap_remo(
     ads.attrs = tds.attrs
 
     ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
+    ads.attrs["CORDEX_domain"] = domain_info.get("CORDEX_domain", "custom")
+    ads.attrs["domain_id"] = domain_info.get("domain_id", "custom")
 
     # transpose to remo convention
     return ads.transpose(..., "lev", "rlat", "rlon")

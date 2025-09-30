@@ -253,6 +253,7 @@ class Preprocessor:
             domain_info["nlat"] -= 2
             domain_info["ll_lon"] += domain_info["dlon"]
             domain_info["ll_lat"] += domain_info["dlat"]
+            domain_info["domain_id"] = domain or "custom"
             self.domain_info = domain_info
 
     def write(self, ds, outpath):

@@ -12,6 +12,7 @@ dependencies:
   - dask
   - cf_xarray>=0.8.1
   - xesmf>=0.7.0
+  - esmf<8.9
   - netCDF4
 # for testing
   - pytest

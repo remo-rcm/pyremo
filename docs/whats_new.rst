@@ -8,6 +8,13 @@ What's New
 
     import pyremo
 
+v0.8.3 (22 October 2025)
+------------------------
+
+Bugfix release.
+
+- Fix fetching of vertical coordinates from CF models (:pull:`255`)
+
 v0.8.2 (30 May 2025)
 --------------------
 

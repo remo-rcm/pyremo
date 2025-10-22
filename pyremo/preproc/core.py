@@ -106,8 +106,8 @@ def get_vc(ds, invert=None):
         bk = np.flip(bk)
     ak = xr.DataArray(ak, dims="nyhi")
     bk = xr.DataArray(bk, dims="nyhi")
-    # ak.name = "akgm"
-    # bk.name = "bkgm"
+    ak.name = "akgm"
+    bk.name = "bkgm"
     return ak, bk
 
 

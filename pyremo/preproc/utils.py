@@ -335,9 +335,7 @@ def datelist(startdate, enddate, freq, inclusive="both", **kwargs):
 
 
 def ensure_dir(path):
-    if not os.path.exists(path):
-        # logger.debug(f"Creating directory {path}")
-        try:
-            os.makedirs(path)
-        except Exception as e:
-            warn(e)
+    try:
+        os.makedirs(path, exist_ok=True)
+    except Exception as e:
+        warn(e)

@@ -222,56 +222,56 @@ def open_datasets(datasets, ref_ds=None, time_range=None):
     return output
 
 
-def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
-    """Creates a global dataset ready for preprocessing.
+# def gfile(ds, ref_ds=None, tos=None, time_range=None, attrs=None):
+#     """Creates a global dataset ready for preprocessing.
 
-    This function creates a homogenized global dataset. If neccessary,
-    units are converted and the sea surface temperature ``tos`` is
-    interpolated spatially and temporally to the atmospheric grid.
+#     This function creates a homogenized global dataset. If neccessary,
+#     units are converted and the sea surface temperature ``tos`` is
+#     interpolated spatially and temporally to the atmospheric grid.
 
-    Parameters
-    ----------
-    ds : xarray.Dataset or dict of filenames
-        Input dataset from a global model according to CF conventions.
+#     Parameters
+#     ----------
+#     ds : xarray.Dataset or dict of filenames
+#         Input dataset from a global model according to CF conventions.
 
-    ref_ds : xarray.Dataset
-        Reference datasets that is used for determining the grid and vertical
-        coordinates and the global attributes. If ``ref_ds=None``, ``ta`` from
-        the input dataset is used as a reference.
+#     ref_ds : xarray.Dataset
+#         Reference datasets that is used for determining the grid and vertical
+#         coordinates and the global attributes. If ``ref_ds=None``, ``ta`` from
+#         the input dataset is used as a reference.
 
-    tos : xarray.Dataset
-        Sea surface dataset.
+#     tos : xarray.Dataset
+#         Sea surface dataset.
 
-    time_range :
-        The common time range from the input and sst that should be used.
+#     time_range :
+#         The common time range from the input and sst that should be used.
 
-    attrs:
-        Global attributes for the output dataset. If ``attrs=None``, the global
-        attributes from ``ref_ds`` are used.
+#     attrs:
+#         Global attributes for the output dataset. If ``attrs=None``, the global
+#         attributes from ``ref_ds`` are used.
 
-    Returns
-    -------
-    gfile : xarray.Dataset
-        Global dataset ready for preprocessing.
+#     Returns
+#     -------
+#     gfile : xarray.Dataset
+#         Global dataset ready for preprocessing.
 
-    """
-    if isinstance(ds, dict):
-        ds = open_datasets(ds, ref_ds, time_range)
-    else:
-        ds = ds.copy()
-        ds["akgm"], ds["bkgm"] = get_vc(ds)
-        ds = check_lev(ds)
+#     """
+#     if isinstance(ds, dict):
+#         ds = open_datasets(ds, ref_ds, time_range)
+#     else:
+#         ds = ds.copy()
+#         ds["akgm"], ds["bkgm"] = get_vc(ds)
+#         ds = check_lev(ds)
 
-    if time_range is None:
-        time_range = ds.time
-        ds = ds.sel(time=time_range)
+#     if time_range is None:
+#         time_range = ds.time
+#         ds = ds.sel(time=time_range)
 
-    if tos is not None:
-        ds["tos"] = map_sst(tos, ds.sel(time=time_range))
-    # ds = ds.rename({"lev": lev_gm})
-    ds = convert_units(ds)
-    # if "sftlf" in ds:
-    #    ds["sftlf"] = np.around(ds.sftlf)
-    if attrs is None:
-        attrs = ds.attrs
-    return ds
+#     if tos is not None:
+#         ds["tos"] = map_sst(tos, ds.sel(time=time_range))
+#     # ds = ds.rename({"lev": lev_gm})
+#     ds = convert_units(ds)
+#     # if "sftlf" in ds:
+#     #    ds["sftlf"] = np.around(ds.sftlf)
+#     if attrs is None:
+#         attrs = ds.attrs
+#     return ds

@@ -1,5 +1,3 @@
-import os
-
 import cf_xarray as cfxr  # noqa
 import cordex as cx
 import numpy as np
@@ -8,7 +6,7 @@ import xarray as xr
 import pyremo as pr
 
 from . import physics
-from .constants import fillvars, lev_input
+from .constants import lev_input
 from .core import const, get_akbkem
 from .utils import update_attrs
 from .xpyintorg import (
@@ -38,65 +36,6 @@ from .xpyintorg import (
 #  'FOREST', 'FAO', 'WSMX', 'BETA', 'WMINLOK', 'WMAXLOK', 'TSLEH', 'GLAC']
 
 xr.set_options(keep_attrs=True)
-
-
-def get_filename(date, expid="000000", template=None):
-    if template is None:
-        template = "x{}x{}.nc"
-    return template.format(expid, date.strftime(format="%Y%m%d%H"))
-
-
-def to_netcdf(
-    ads,
-    path="",
-    expid="000000",
-    template=None,
-    tempfiles=None,
-    missval=1.0e20,
-    **kwargs,
-):
-    """write dataset to netcdf
-
-    by default, each timestep goes into a separate output file
-
-    """
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    expand_time = [var for var, da in ads.items() if "time" in da.dims]
-    if template is None:
-        template = "a{}a{}.nc"
-    dates, datasets = zip(*ads.groupby("time"))
-    paths = [os.path.join(path, get_filename(date, expid, template)) for date in dates]
-    dsets = []
-    # expand time dimension only for variables not coordinates.
-    for ds in datasets:
-        for var, da in ds.items():
-            if var in expand_time:
-                ds[var] = da.expand_dims("time")
-            if var in fillvars:
-                ds[var].encoding["_FillValue"] = missval
-            else:
-                ds[var].encoding["_FillValue"] = None
-        dsets.append(ds)
-    # dsets = [dset.expand_dims('time') for dset in datasets]
-    return xr.save_mfdataset(dsets, paths, **kwargs)
-
-
-def to_tar(files, tar_file, mode="w"):
-    import tarfile
-
-    try:
-        from tqdm import tqdm
-    except Exception:
-
-        def tqdm(x):
-            return x
-
-    tf = tarfile.open(tar_file, mode=mode)
-    for f in tqdm(files, desc="creating tarfile"):
-        tf.add(f, arcname=os.path.basename(f), recursive=False)
-    tf.close()
-    return tar_file
 
 
 def broadcast_coords(ds, coords=("lon", "lat")):

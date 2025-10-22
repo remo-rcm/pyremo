@@ -207,7 +207,6 @@ def to_netcdf(
     path="",
     expid="000000",
     template=None,
-    tempfiles=None,
     missval=1.0e20,
     **kwargs,
 ):
@@ -242,11 +241,10 @@ def to_netcdf(
         DeprecationWarning,
         stacklevel=2,
     )
-    if not os.path.isdir(path):
-        os.makedirs(path)
-    expand_time = [var for var, da in ads.items() if "time" in da.dims]
-    if template is None:
-        template = "a{}a{}.nc"
+    os.makedirs(path, exist_ok=True)
+    expand_time = [
+        var for var, da in ads.items() if "time" in da.dims and "time" not in da.coords
+    ]
     dates, datasets = zip(*ads.groupby("time"))
     paths = [os.path.join(path, get_filename(date, expid, template)) for date in dates]
     dsets = []
@@ -262,9 +260,6 @@ def to_netcdf(
         dsets.append(ds)
     # dsets = [dset.expand_dims('time') for dset in datasets]
     xr.save_mfdataset(dsets, paths, **kwargs)
-    if tempfiles is not None:
-        for f in tempfiles:
-            os.remove(f)
     return paths
 
 

@@ -9,7 +9,8 @@ from .preprocessor import (
     CFPreprocessor,
     RemoPreprocessor,
 )
-from .remapping import remap, remap_remo, to_netcdf, to_tar
+from .remapping import remap, remap_remo
+from .utils import to_netcdf, to_tar
 
 # from .remap_new import Remapper
 from .utils import write_forcing_file

@@ -11,7 +11,15 @@ What's New
 v0.8.3 (22 October 2025)
 ------------------------
 
-Bugfix release.
+Maintenance and bugfix release.
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Cleaning of unused imports (:pull:`256`)
+
+Bugfixes
+~~~~~~~~
 
 - Fix fetching of vertical coordinates from CF models (:pull:`255`)
 

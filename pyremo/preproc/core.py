@@ -6,7 +6,6 @@ This module wraps the pyintorg interfaces into xr.apply_ufunc.
 
 import warnings
 
-import cf_xarray as cfxr
 import numpy as np
 import xarray as xr
 
@@ -91,16 +90,22 @@ def get_vc(ds, invert=None):
     if ds.ta.cf["vertical"].attrs.get("positive") == "down" and invert is None:
         invert = True
     ak_bnds, bk_bnds = get_ab_bnds(ds)
+    # return ak_bnds, bk_bnds
     if ak_bnds.ndim > 1:
-        ak = cfxr.bounds_to_vertices(ak_bnds, bounds_dim="bnds")
-        bk = cfxr.bounds_to_vertices(bk_bnds, bounds_dim="bnds")
+        # ak = cfxr.bounds_to_vertices(ak_bnds, bounds_dim="bnds")
+        # bk = cfxr.bounds_to_vertices(bk_bnds, bounds_dim="bnds")
+        ak = np.concatenate(([ak_bnds[0, 0]], ak_bnds[:, 1]))
+        bk = np.concatenate(([bk_bnds[0, 0]], bk_bnds[:, 1]))
     else:
-        ak = ak_bnds
-        bk = bk_bnds
+        ak = ak_bnds  # .to_numpy()
+        bk = bk_bnds  # .to_numpy()
+    # return ak, bk
     if invert is True:
         print("inverting vertical coordinates")
         ak = np.flip(ak)
         bk = np.flip(bk)
+    ak = xr.DataArray(ak, dims="nyhi")
+    bk = xr.DataArray(bk, dims="nyhi")
     ak.name = "akgm"
     bk.name = "bkgm"
     return ak, bk

@@ -222,6 +222,8 @@ class Preprocessor:
     ):
         if scratch is None:
             scratch = os.environ["SCRATCH"]
+        else:
+            os.makedirs(scratch, exist_ok=True)
         self.scratch = tempfile.TemporaryDirectory(dir=scratch)
         # logger.debug(f"scratch: {self.scratch.name}")
         if isinstance(vc, str):

@@ -218,14 +218,17 @@ class Preprocessor:
     """
 
     def __init__(
-        self, expid, surflib, domain=None, vc="vc_49lev", outpath=None, scratch=None
+        self, expid, surflib, domain=None, vc=None, outpath=None, scratch=None
     ):
         if scratch is None:
             scratch = os.environ["SCRATCH"]
         else:
             os.makedirs(scratch, exist_ok=True)
         self.scratch = tempfile.TemporaryDirectory(dir=scratch)
+        print(f"Preprocessor scratch: {self.scratch.name}")
         # logger.debug(f"scratch: {self.scratch.name}")
+        if vc is None:
+            vc = "vc_49lev"
         if isinstance(vc, str):
             self.vc = pr.vc.tables[vc]
         else:
@@ -246,7 +249,7 @@ class Preprocessor:
     def _init_domain_info(self, domain=None):
         if isinstance(domain, dict):
             self.domain_info = domain
-        elif isinstance(domain, str) and domain in domains.table:
+        elif isinstance(domain, str) and domain in domains.table.index:
             self.domain_info = pr.domain_info(domain)
         else:
             warn("domain_id not registered, taking grid from surflib...")

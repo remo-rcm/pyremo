@@ -442,7 +442,10 @@ class GFile:
             ).load()
             for t, f in files.items()
         ]
-        sst_da = xr.merge(sst_extract)[self.sst]
+        print("sst times found:", [da.time.values for da in sst_extract])
+        sst_da = xr.concat(
+            sst_extract, dim="time", data_vars="minimal", coords="minimal"
+        )[self.sst]
         if len(sst_da.time) > 1:
             sst_da = sst_da.interp(
                 time=datetime.strftime(cdo_datetime_format),

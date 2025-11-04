@@ -123,7 +123,7 @@ def geopotential(fibgm, tgm, qdgm, psgm, akgm, bkgm):
 
 def compute_relative_pol(polphihm, pollamhm, polphiem, pollamem):
     """python implementation of pol calculation in readni"""
-    import intorg
+    from pyintorg import intorg
     import numpy as np
 
     if polphihm == polphiem and pollamhm == pollamem:

@@ -1,4 +1,4 @@
-# Access to Fortran extensions in DKRZ gitlab is managed via deploy tokens: https://docs.gitlab.com/user/project/deploy_tokens 
+# Access to Fortran extensions in DKRZ gitlab is managed via deploy tokens: https://docs.gitlab.com/user/project/deploy_tokens
 
 name: CI with extensions
 on:

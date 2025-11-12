@@ -442,7 +442,7 @@ class GFile:
             ).load()
             for t, f in files.items()
         ]
-        print("sst times found:", [da.time.values for da in sst_extract])
+        # print("sst times found:", [da.time.values for da in sst_extract])
         sst_da = xr.concat(
             sst_extract, dim="time", data_vars="minimal", coords="minimal"
         )[self.sst]

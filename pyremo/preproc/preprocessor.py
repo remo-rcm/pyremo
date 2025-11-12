@@ -198,23 +198,54 @@ def prepare_surflib(surflib):
 
 
 class Preprocessor:
-    """
-    Preprocessor class for preparing input data.
+    """Generic preprocessing pipeline for preparing forcing input data.
+
+    This base class encapsulates common logic for:
+
+    * Managing a temporary scratch directory.
+    * Loading / preparing a surface library (``surflib``).
+    * Initializing domain metadata (either from a registry or inferred).
+    * Remapping / transforming raw input datasets into model forcing.
+    * Writing forcing files for a sequence of timesteps.
+
+    Subclasses override :meth:`get_input_dataset` and optionally ``self.remap``
+    to adapt to different upstream data sources (CF-compliant, REMO, ERA5, cloud).
 
     Parameters
     ----------
     expid : str
-        Experiment ID.
-    domain : dict or str
-        Domain information.
-    vc : str or dict
-        Vertical coordinate information.
+        Experiment identifier used in output naming.
     surflib : str
-        Path to the surface library.
+        Path to surface library NetCDF file.
+    domain : dict or str, optional
+        Domain metadata dictionary or a registered domain id. If ``None`` the
+        domain is inferred from ``surflib`` with a 1-grid-cell interior crop.
+    vc : str or dict, optional
+        Vertical coordinate table key (looked up in ``pr.vc.tables``) or an
+        explicit vertical coordinate mapping. Defaults to ``"vc_49lev"``.
     outpath : str, optional
-        Output path, by default None.
+        Output path template (e.g. ``"/data/run/{date:%Y%m%d}"``). If set, it
+        is used by :meth:`run` when writing forcing files.
     scratch : str, optional
-        Scratch directory, by default None.
+        Parent directory for an auto-created temporary working directory. If
+        ``None`` uses the ``SCRATCH`` environment variable.
+
+    Attributes
+    ----------
+    expid : str
+        Experiment identifier.
+    surflib : xarray.Dataset
+        Prepared surface library dataset.
+    domain_info : dict
+        Domain metadata used during remapping.
+    vc : dict
+        Vertical coordinate mapping / table.
+    outpath : str or None
+        Output path template.
+    scratch : tempfile.TemporaryDirectory
+        Temporary working directory context.
+    remap : callable
+        Function applied to raw datasets producing forcing variables.
     """
 
     def __init__(
@@ -240,13 +271,27 @@ class Preprocessor:
         self._init_domain_info(domain)
 
     def _clean(self):
-        """
-        Clean up the scratch directory.
+        """Remove the temporary scratch directory.
+
+        Called automatically at the end of :meth:`run` when results have been
+        computed and written to disk.
         """
         # logger.debug(f"cleaning up: {self.scratch.name}")
         self.scratch.cleanup()
 
     def _init_domain_info(self, domain=None):
+        """Initialize domain metadata used for horizontal remapping.
+
+        Domain information can be provided explicitly as a dict, referenced by
+        a registered domain id, or inferred from the ``surflib`` dataset. When
+        inferring, one grid cell is cropped from each outer boundary and the
+        lower-left corner adjusted accordingly.
+
+        Parameters
+        ----------
+        domain : dict or str or None, optional
+            Domain metadata or domain id. If ``None`` infer from ``surflib``.
+        """
         if isinstance(domain, dict):
             self.domain_info = domain
         elif isinstance(domain, str) and domain in domains.table.index:
@@ -262,39 +307,49 @@ class Preprocessor:
             self.domain_info = domain_info
 
     def write(self, ds, outpath):
-        """
-        Write the dataset to a forcing file.
+        """Write a forcing dataset to NetCDF.
 
         Parameters
         ----------
         ds : xarray.Dataset
-            Dataset to write.
+            Dataset containing all required forcing variables.
         outpath : str
-            Output path.
+            Directory path where the file will be created.
 
         Returns
         -------
         str
-            Path to the written file.
+            Absolute path to the written forcing file.
         """
         return write_forcing_file(ds, path=outpath, expid=self.expid)
 
     @dask.delayed
-    def preprocess(self, date=None, ds=None, outpath=None, initial=False, **kwargs):
-        """
-        Preprocess the dataset for a given date.
+    def preprocess(self, date=None, ds=None, outpath=None, initial=None, **kwargs):
+        """Transform raw input data into forcing variables for one timestep.
 
         Parameters
         ----------
-        date : datetime-like
-            Date for preprocessing.
+        date : datetime-like, optional
+            Target date/time used when loading the input dataset if ``ds`` is
+            not provided.
+        ds : xarray.Dataset, optional
+            Already opened input dataset. If ``None`` it is loaded via
+            :meth:`get_input_dataset`.
         outpath : str, optional
-            Output path, by default None.
+            Directory where output should be written. If ``None`` the
+            preprocessed dataset is returned instead of writing.
+        initial : bool or None, optional
+            Flag passed through to remapping indicating initial-condition
+            specific processing. If ``None`` subclasses may infer for first
+            timestep.
+        **kwargs
+            Additional keyword arguments forwarded to the ``remap`` function.
 
         Returns
         -------
         xarray.Dataset or str
-            Preprocessed dataset or path to the written file.
+            In-memory forcing dataset (if ``outpath`` is ``None``) or path to
+            the written file.
         """
         if ds is None:
             ds = self.get_input_dataset(date=date, initial=initial)
@@ -321,28 +376,35 @@ class Preprocessor:
         initial=None,
         **kwargs,
     ):
-        """
-        Run the preprocessing for a given date range.
+        """Batch preprocess a sequence of timesteps.
 
         Parameters
         ----------
         start : str or datetime-like
-            Start date.
+            Start date/time.
         end : str or datetime-like, optional
-            End date, by default None.
+            Inclusive end date/time. If ``None`` only ``start`` is processed.
         freq : str, optional
-            Frequency, by default "6h".
+            Timestep frequency passed to :func:`datelist` (default ``"6h"``).
         outpath : str, optional
-            Output path, by default None.
+            Output path template. Falls back to ``self.outpath`` if ``None``.
         compute : bool, optional
-            Whether to compute the results, by default False.
+            If ``True`` triggers immediate Dask computation; otherwise delayed
+            objects are returned.
         write : bool, optional
-            Whether to write the results, by default True.
+            If ``True`` datasets are written to disk; otherwise returned in
+            memory.
+        initial : bool or None, optional
+            Explicit initial-condition flag. If ``None`` the first timestep is
+            marked initial.
+        **kwargs
+            Extra keyword arguments forwarded to :meth:`preprocess` / ``remap``.
 
         Returns
         -------
         list
-            List of preprocessed datasets or paths to the written files.
+            List of ``xarray.Dataset`` objects or file paths depending on
+            ``write`` / ``compute`` flags.
         """
         if outpath is None:
             outpath = self.outpath
@@ -370,17 +432,30 @@ class Preprocessor:
 
 
 class CFPreprocessor(Preprocessor):
-    """
-    CFPreprocessor class for preparing input data from CF-compliant datasets.
+    """Preprocessor for CF-compliant GCM input datasets.
+
+    Extends :class:`Preprocessor` by constructing a CF-style multi-variable
+    input accessor (``gfile``) used to retrieve the raw dataset for each
+    timestep.
 
     Parameters
     ----------
-    input_data : dict
-        Input data information.
-    *args : tuple
-        Additional arguments.
-    **kwargs : dict
-        Additional keyword arguments.
+    expid : str
+        Experiment identifier.
+    surflib : str
+        Path to surface library file.
+    domain, vc, outpath, scratch : See :class:`Preprocessor`.
+    input_data : dict, optional
+        Specification of variables / paths needed by :func:`get_gcm_gfile`.
+    **kwargs
+        Additional keyword arguments passed through (reserved for future use).
+
+    Attributes
+    ----------
+    gfile : object
+        Accessor providing ``gfile(date)`` to obtain the raw input dataset.
+    input_data : dict or None
+        Original input specification.
     """
 
     def __init__(
@@ -419,25 +494,29 @@ class CFPreprocessor(Preprocessor):
 
 
 class RemoPreprocessor(Preprocessor):
-    """
-    RemoPreprocessor class for preparing double nesting input data.
+    """Preprocessor for REMO model output used as nesting input.
+
+    Provides logic to locate existing REMO NetCDF files and remap them for a
+    subsequent nested run.
 
     Parameters
     ----------
     expid : str
-        Experiment ID.
+        Target experiment identifier for new forcing.
     surflib : str
-        Path to the surface library.
-    domain : dict or str, optional
-        Domain information, by default None.
-    vc : str or dict, optional
-        Vertical coordinate information, by default "vc_49lev_nh_pt2000".
-    outpath : str, optional
-        Output path, by default None.
-    scratch : str, optional
-        Scratch directory, by default None.
+        Path to surface library file.
+    domain, vc, outpath, scratch : See :class:`Preprocessor`.
     input_data : dict, optional
-        Input data information, by default None.
+        Dictionary containing at least ``{"path": <input_dir>, "expid": <source_expid>}``.
+
+    Attributes
+    ----------
+    inpath : str
+        Directory containing source REMO files.
+    inexp : str
+        Source experiment id inside filenames.
+    filename_pattern : str
+        Python format string used to construct input filenames.
     """
 
     def __init__(
@@ -460,18 +539,17 @@ class RemoPreprocessor(Preprocessor):
         self.filename_pattern = "e{expid}t{date:%Y%m%d%H}.nc"
 
     def get_filename(self, date):
-        """
-        Open a REMO dataset and parse its dates.
+        """Construct the path of the source REMO file for a given date.
 
         Parameters
         ----------
-        filename : str
-            Path to the REMO dataset file.
+        date : datetime-like
+            Timestep whose file should be referenced.
 
         Returns
         -------
-        xarray.Dataset
-            Parsed REMO dataset.
+        str
+            Absolute path to the expected REMO input file.
         """
         return os.path.join(
             self.inpath,
@@ -513,25 +591,41 @@ class RemoPreprocessor(Preprocessor):
 
 
 class ERA5Preprocessor(Preprocessor):
-    """
-    ERA5Preprocessor class for preparing input data from ERA5 datasets.
+    """Preprocessor for ERA5 reanalysis data.
+
+    Downloads / constructs hourly ERA5 forcing files locally via
+    :func:`era5_gfile_from_dkrz` and remaps them onto the target domain.
 
     Parameters
     ----------
-    input_data : dict
-        Input data information.
-    *args : tuple
-        Additional arguments.
-    **kwargs : dict
-        Additional keyword arguments.
+    expid : str
+        Experiment identifier.
+    surflib : str
+        Path to surface library file.
+    domain, vc, outpath, scratch : See :class:`Preprocessor`.
+    input_data : dict, optional
+        Reserved for future configuration hooks (currently unused).
+
+    Attributes
+    ----------
+    input_data : dict or None
+        Configuration passed by caller.
     """
 
     def __init__(
-        self, expid, surflib, domain=None, vc="vc_49lev", outpath=None, scratch=None
+        self,
+        expid,
+        surflib,
+        domain=None,
+        vc="vc_49lev",
+        outpath=None,
+        scratch=None,
+        input_data=None,
     ):
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
+        self.input_data = input_data
 
     def get_input_dataset(self, date=None, filename=None, initial=False):
         """
@@ -556,6 +650,37 @@ class ERA5Preprocessor(Preprocessor):
 
 
 class CloudPreprocessor(Preprocessor):
+    """Preprocessor sourcing CMIP6-like input from public cloud catalogs.
+
+    Uses an intake-esm catalog to assemble required atmospheric and oceanic
+    variables stored in cloud object storage and merges them into a single
+    dataset used for forcing generation.
+
+    Parameters
+    ----------
+    expid : str
+        Experiment identifier.
+    surflib : str
+        Path to surface library file.
+    domain, vc, outpath, scratch : See :class:`Preprocessor`.
+    input_data : dict, optional
+        Search parameters overriding catalog defaults (e.g. ``{"source_id": "MPI-ESM1-2-HR"}``).
+    url : str, optional
+        Shortcut key (``"gc"`` / ``"aws"``) or full URL to pangeo CMIP6 JSON catalog.
+
+    Attributes
+    ----------
+    cat : intake.catalog
+        Filtered intake-esm catalog.
+    dsets : dict[str, xarray.Dataset]
+        Individual variable datasets prior to merge.
+    gcm : xarray.Dataset
+        Merged multi-variable atmospheric dataset.
+    tos : xarray.Dataset
+        Sea surface temperature dataset.
+    gfile : xarray.Dataset
+        Convenience merged dataset providing ``sel(time=...)`` access.
+    """
 
     atm = ["ta", "ua", "va", "hus", "sftlf", "orog"]
     ocn = ["tos"]

@@ -8,6 +8,15 @@ What's New
 
     import pyremo
 
+UNRELEASED
+----------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Fix ``pyproject.toml`` (:pull:`263`)
+- Preprocessor updates (:pull:`261`)
+
 v0.8.3 (22 October 2025)
 ------------------------
 

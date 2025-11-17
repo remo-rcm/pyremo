@@ -353,6 +353,8 @@ class Preprocessor:
         """
         if ds is None:
             ds = self.get_input_dataset(date=date, initial=initial)
+            if ds is None:
+                warn(f"No input dataset available for date {date}")
         ads = self.remap(
             ds,
             domain_info=self.domain_info,
@@ -587,6 +589,9 @@ class RemoPreprocessor(Preprocessor):
             Input dataset.
         """
         filename = self.get_filename(date)
+        if not os.path.isfile(filename):
+            warn(f"Expected input file not found: {filename}")
+            return None
         return self.open_remo_dataset(filename)
 
 

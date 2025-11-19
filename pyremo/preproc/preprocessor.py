@@ -465,12 +465,14 @@ class CFPreprocessor(Preprocessor):
         expid,
         surflib,
         domain=None,
-        vc="vc_49lev",
+        vc=None,
         outpath=None,
         scratch=None,
         input_data=None,
         **kwargs,
     ):
+        if vc is None:
+            vc = ("vc_49lev",)
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
@@ -526,11 +528,13 @@ class RemoPreprocessor(Preprocessor):
         expid,
         surflib,
         domain=None,
-        vc="vc_49lev_nh_pt2000",
+        vc=None,
         outpath=None,
         scratch=None,
         input_data=None,
     ):
+        if vc is None:
+            vc = "vc_49lev_nh_pt2000"
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
@@ -622,11 +626,13 @@ class ERA5Preprocessor(Preprocessor):
         expid,
         surflib,
         domain=None,
-        vc="vc_49lev",
+        vc=None,
         outpath=None,
         scratch=None,
         input_data=None,
     ):
+        if vc is None:
+            vc = "vc_49lev"
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )

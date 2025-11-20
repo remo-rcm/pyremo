@@ -8,8 +8,10 @@ What's New
 
     import pyremo
 
-UNRELEASED
-----------
+v0.8.4 (20 November 2025)
+-------------------------
+
+Maintenance and bugfix release.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

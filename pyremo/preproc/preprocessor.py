@@ -353,6 +353,8 @@ class Preprocessor:
         """
         if ds is None:
             ds = self.get_input_dataset(date=date, initial=initial)
+            if ds is None:
+                warn(f"No input dataset available for date {date}")
         ads = self.remap(
             ds,
             domain_info=self.domain_info,
@@ -463,12 +465,14 @@ class CFPreprocessor(Preprocessor):
         expid,
         surflib,
         domain=None,
-        vc="vc_49lev",
+        vc=None,
         outpath=None,
         scratch=None,
         input_data=None,
         **kwargs,
     ):
+        if vc is None:
+            vc = ("vc_49lev",)
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
@@ -524,11 +528,13 @@ class RemoPreprocessor(Preprocessor):
         expid,
         surflib,
         domain=None,
-        vc="vc_49lev_nh_pt2000",
+        vc=None,
         outpath=None,
         scratch=None,
         input_data=None,
     ):
+        if vc is None:
+            vc = "vc_49lev_nh_pt2000"
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
@@ -587,6 +593,9 @@ class RemoPreprocessor(Preprocessor):
             Input dataset.
         """
         filename = self.get_filename(date)
+        if not os.path.isfile(filename):
+            warn(f"Expected input file not found: {filename}")
+            return None
         return self.open_remo_dataset(filename)
 
 
@@ -617,11 +626,13 @@ class ERA5Preprocessor(Preprocessor):
         expid,
         surflib,
         domain=None,
-        vc="vc_49lev",
+        vc=None,
         outpath=None,
         scratch=None,
         input_data=None,
     ):
+        if vc is None:
+            vc = "vc_49lev"
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )

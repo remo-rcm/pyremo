@@ -8,12 +8,15 @@ What's New
 
     import pyremo
 
-UNRELEASED
-----------
+v0.8.4 (20 November 2025)
+-------------------------
+
+Maintenance and bugfix release.
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Added file not found warning for preprocessor (:pull:`265`)
 - Fix ``pyproject.toml`` (:pull:`263`)
 - Preprocessor updates (:pull:`261`)
 

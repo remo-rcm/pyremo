@@ -44,18 +44,41 @@ def get_times_from_files(files):
     return {f: get_min_max_time(f) for f in files}
 
 
-def get_files(dirs):
-    """Get files from a list of directories"""
-    if not isinstance(dirs, list):
-        dirs = [dirs]
+def get_files(patterns):
+    """
+    Resolve one or more filesystem patterns to a sorted list of files.
+
+    This accepts shell-style glob patterns (including recursive '**'). If a plain
+    directory path is provided (without glob metacharacters), it is treated as
+    '<dir>/*.nc' for backward compatibility.
+
+    Parameters
+    ----------
+    patterns : str or sequence of str
+        Glob pattern(s) or directory path(s). Examples:
+        - "/data/*.nc"
+        - "/data/**/ta_*.nc"  (recursive)
+        - "/data/run1"        (treated as '/data/run1/*.nc')
+
+    Returns
+    -------
+    list of str
+        Sorted, absolute file paths matching the input patterns.
+    """
+    if not isinstance(patterns, (list, tuple, set)):
+        patterns = [patterns]
+
     files = []
-    for d in dirs:
-        d = Path(d).resolve()
-        if d.is_dir():
-            files += glob.glob(str(d / "*.nc"))
-        else:
-            files += glob.glob(str(d))
-    files.sort()
+    for pat in patterns:
+        pat = os.path.expanduser(os.path.expandvars(str(pat)))
+        p = Path(pat)
+        # Backward compatibility: plain directory -> '*.nc'
+        if p.is_dir() and not any(ch in pat for ch in "*?[]"):
+            pat = str(p / "*.nc")
+        files.extend(glob.glob(pat, recursive=True))
+
+    # Deduplicate, resolve to absolute, and sort
+    files = sorted({str(Path(f).resolve()) for f in files})
     return files
 
 

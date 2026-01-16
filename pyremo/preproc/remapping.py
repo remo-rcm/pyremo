@@ -840,8 +840,7 @@ def remap_era_soil(ds, domain_info, surflib):
 
     Examples
     --------
-
-    Remap one ERA5 soil time step to the CORDEX EUR-11 domain:
+    Remap one ERA5 soil time step to the CORDEX EUR-11 domain::
 
         from pyremo.preproc import ERA5, remap_era_soil
         import pyremo as pr

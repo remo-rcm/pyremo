@@ -14,7 +14,8 @@ UNRELEASED
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
--  update file search pattern for CF preprocessing (:pull:`271`)
+- Update soil interpolation for ERA data (:pull:`273`)
+- Update file search pattern for CF preprocessing (:pull:`271`)
 
 v0.8.4 (20 November 2025)
 -------------------------

@@ -9,7 +9,7 @@ from .preprocessor import (
     CFPreprocessor,
     RemoPreprocessor,
 )
-from .remapping import remap, remap_remo
+from .remapping import remap, remap_remo, remap_era_soil
 from .utils import to_netcdf, to_tar
 
 # from .remap_new import Remapper

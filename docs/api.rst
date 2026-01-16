@@ -87,6 +87,7 @@ Preprocessing functions
    preproc.get_gcm_gfile
    preproc.remap
    preproc.remap_remo
+   preproc.remap_era_soil
    preproc.ERA5
    preproc.ERA5.gfile
 

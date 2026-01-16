@@ -21,7 +21,7 @@ vcs = [
     "bk",
     "rotated_latitude_longitude",
 ]
-static = vcs + ["rotated_latitude_longitude"]
+static_variables = vcs + ["rotated_latitude_longitude"]
 
 
 def horizontal_dims(da):
@@ -195,7 +195,7 @@ def write_forcing_file(
         else:
             var.encoding = {"_FillValue": None}
         # expand time dim is necessary for REMO input forcing
-        if v not in static and "time" not in var.dims:
+        if v not in static_variables and "time" not in var.dims:
             ds[v] = var.expand_dims("time")
     ds.to_netcdf(fname, **kwargs)
     ds.close()

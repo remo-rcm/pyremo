@@ -801,7 +801,58 @@ def _remap_era_soil(
 
 
 def remap_era_soil(ds, domain_info, surflib):
-    """Create initial soil dataset from atmospheric dataset."""
+    """Create an initial soil dataset from ERA/analysis inputs on a REMO domain.
+
+    This function remaps soil-related variables (moisture, temperatures, snow,
+    water layer) from an ERA-like source dataset to the target REMO grid and
+    initializes near-surface temperatures using the preprocessor logic. It uses
+    the surface library for land/sea mask (``BLA``), surface geopotential
+    (``FIB``) and maximum soil moisture (``WSMX``), and diagnoses SST on the
+    target grid for temperature adaptation.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        ERA/analysis dataset with soil variables, e.g. ``swvl1``, ``swvl2``,
+        ``swvl3`` (soil water), ``tsl1``..``tsl4`` (soil temperature layers),
+        ``snd`` (snow depth), ``src`` (water layer), ``skt`` (skin temperature),
+        ``tos`` (sea surface temperature), ``orog`` (orography).
+    domain_info : dict
+        REMO rotated-pole domain description; see ``pr.domain_info()``.
+    surflib : xarray.Dataset
+        Surface library on the target grid containing at least ``BLA``, ``FIB``
+        and ``WSMX``.
+
+    Returns
+    -------
+    xarray.Dataset
+        Soil fields on the target grid (``rlat``, ``rlon``), including adapted
+        temperatures (``TSL``, ``TSW``, ``TSN``, ``TD3``, ``TD4``, ``TD5``, ``TD``,
+        ``TDCL``), snow depth (``SN``), relative water layer (``WL``), and soil
+        moisture (``WS``). Attributes are updated for REMO preprocessing.
+
+    Notes
+    -----
+    - The routine applies horizontal remapping and temperature adaptation using
+      SST and geopotential differences following the REMO preprocessor.
+    - Input time coordinates are not required; if present, the function selects
+      appropriate slices internally.
+
+    Examples
+    --------
+    Remap one ERA5 soil time step to the CORDEX EUR-11 domain:
+
+    ```
+    from pyremo.preproc import ERA5, remap_era_soil
+    import pyremo as pr
+    import xarray as xr
+
+    surflib = xr.open_dataset("/work/ch0636/remo/surflibs/cordex/lib_EUR-11_frac.nc").squeeze(drop=True)
+    filename = ERA5().get_soil("1979-01-01T00:00:00")
+    era5_soil = xr.open_dataset(filename)
+    soil = remap_era_soil(era5_soil, pr.domain_info("EUR-11"), surflib)
+    ```
+    """
     # rename vertical coordinate of input to avoid conflict with output lev
     ds = ds.copy()
 

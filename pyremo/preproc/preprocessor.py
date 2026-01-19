@@ -3,13 +3,14 @@ import tempfile
 
 import dask
 import xarray as xr
+import pandas as pd
 
 import pyremo as pr
 from warnings import warn
 from ..remo_ds import update_meta_info, parse_dates
-from .era5 import era5_gfile_from_dkrz
+from .era5 import era5_gfile_from_dkrz, ERA5
 from .utils import datelist, ensure_dir, write_forcing_file
-from .remapping import remap, remap_remo
+from .remapping import remap, remap_era_soil, remap_remo
 from .cf import get_gcm_dataset, get_gcm_gfile
 from ..tables import domains
 
@@ -197,6 +198,14 @@ def prepare_surflib(surflib):
     return update_meta_info(xr.open_dataset(surflib).squeeze(drop=True).load())
 
 
+def add_era_soil(ds, domain_info, surflib, filename=None):
+    date = ds.time.isel(time=0).item()
+    soilfile = ERA5().get_soil(date, filename=filename)
+    era5_soil = xr.open_dataset(soilfile)
+    soil = remap_era_soil(era5_soil, domain_info, surflib)
+    return ds.merge(soil)
+
+
 class Preprocessor:
     """Generic preprocessing pipeline for preparing forcing input data.
 
@@ -269,6 +278,7 @@ class Preprocessor:
         self.outpath = outpath
         self.remap = remap
         self._init_domain_info(domain)
+        self.soil_in_input = False
 
     def _clean(self):
         """Remove the temporary scratch directory.
@@ -323,8 +333,17 @@ class Preprocessor:
         """
         return write_forcing_file(ds, path=outpath, expid=self.expid)
 
+    def add_soil(self, ds, domain_info, surflib, filename=None):
+        date = ds.time.isel(time=0).item()
+        soilfile = ERA5().get_soil(date, filename=filename)
+        era5_soil = xr.open_dataset(soilfile, use_cftime=True).load()
+        soil = remap_era_soil(era5_soil, domain_info, surflib)
+        return ds.merge(soil)
+
     @dask.delayed
-    def preprocess(self, date=None, ds=None, outpath=None, initial=None, **kwargs):
+    def preprocess(
+        self, date=None, ds=None, outpath=None, initial=None, static=False, **kwargs
+    ):
         """Transform raw input data into forcing variables for one timestep.
 
         Parameters
@@ -360,9 +379,17 @@ class Preprocessor:
             domain_info=self.domain_info,
             vc=self.vc,
             surflib=self.surflib,
-            initial=initial,
+            initial=initial and self.soil_in_input,
+            static=static,
             **kwargs,
         )
+        if initial is True and self.soil_in_input is False:
+            ads = self.add_soil(
+                ads,
+                self.domain_info,
+                self.surflib,
+                filename=os.path.join(self.scratch.name, "era5_soil_data.nc"),
+            )
         if outpath is None:
             return ads
         return self.write(ads, outpath)
@@ -376,6 +403,7 @@ class Preprocessor:
         compute=False,
         write=True,
         initial=None,
+        static=None,
         **kwargs,
     ):
         """Batch preprocess a sequence of timesteps.
@@ -416,18 +444,22 @@ class Preprocessor:
         if outpath is not None:
             outpath = outpath.format(date=dates[0])
             ensure_dir(outpath)
+
         print(f"writing to {outpath}")
         result = [
             self.preprocess(
                 date=date,
                 outpath=outpath if write is True else None,
                 initial=initial or (initial is None and i == 0),
+                static=static or (static is None and i == 0),
                 **kwargs,
             )
             for i, date in enumerate(dates)
         ]
+
         if compute:
             result = dask.compute(*result)
+
         if write is True and compute is True:
             self._clean()
         return result
@@ -479,6 +511,7 @@ class CFPreprocessor(Preprocessor):
         self.input_data = input_data
         self.gfile = get_gcm_gfile(self.scratch.name, **self.input_data)
         self.remap = remap
+        self.soil_in_input = False
 
     def get_input_dataset(self, date, initial=False, **kwargs):
         """
@@ -543,6 +576,7 @@ class RemoPreprocessor(Preprocessor):
         self.inpath = input_data["path"]
         self.inexp = input_data["expid"]
         self.filename_pattern = "e{expid}t{date:%Y%m%d%H}.nc"
+        self.soil_in_input = True
 
     def get_filename(self, date):
         """Construct the path of the source REMO file for a given date.
@@ -637,6 +671,7 @@ class ERA5Preprocessor(Preprocessor):
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
         self.input_data = input_data
+        self.soil_in_input = True
 
     def get_input_dataset(self, date=None, filename=None, initial=False):
         """
@@ -652,6 +687,8 @@ class ERA5Preprocessor(Preprocessor):
         xarray.Dataset
             Input dataset.
         """
+        if isinstance(date, str):
+            date = pd.to_datetime(date)
         if filename is None:
             filename = era5_gfile_from_dkrz(date, self.scratch.name, add_soil=initial)
             print(f"created: {filename}")

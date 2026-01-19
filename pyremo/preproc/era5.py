@@ -396,10 +396,11 @@ class ERA5:
 
         return filename
 
-    def get_soil(self, date, path=None, expid=None, filename=None):
+    def get_soil(self, date, filename=None):
+        if not isinstance(date, str):
+            date = date.strftime("%Y-%m-%dT%H:%M:%S")
         if filename is None:
-            pddate = pd.to_datetime(date)
-            filename = op.join(self.scratch, f"era5_soil_{pddate:%Y%m%d%H}.nc")
+            filename = op.join(self.scratch, "era5_soil_data.nc")
         files = self._get_files(date, self.soil_vars + self.fx)
         gridtypes = self._get_gridtypes(files)
         seldates = self._seldates(files, date)

@@ -306,10 +306,11 @@ def remap(ds, domain_info, vc, surflib, initial=False, static=False):
         ads["WS"] = np.minimum(ads.WSMX, ads.WS * ads.WSMX)
         ads["GLAC"] = xr.where(ads.SN > 9.5, 1.0, 0.0)
 
+    # crop to exact grid points
     grid = get_grid(domain_info)
-
     ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
     ads = ads.assign_coords(rlon=grid.rlon, rlat=grid.rlat)
+
     # ads = xr.merge([ads, grid])
     ads = update_attrs(ads)
 
@@ -322,6 +323,7 @@ def remap_remo(
     vc,
     surflib,
     initial=False,
+    static=False,
     lice=True,
     uvcor=True,
     domain_info_em=None,
@@ -377,6 +379,11 @@ def remap_remo(
     """
     tds = ds.copy()
 
+    # check if we have to add static variables
+    if initial is True:
+        static = True
+
+    # get domain infos
     domain_info_hm = domain_info
     domain_info_em = domain_info_em or tds.cx.info()
 
@@ -623,8 +630,9 @@ def remap_remo(
     # rename for remo to recognize
     ads = ads.rename({"ak": "hyai", "bk": "hybi", "akh": "hyam", "bkh": "hybm"})
 
-    if initial is True:
+    if static is True:
         ads = add_surflib(ads, surflib)
+    if initial is True:
         ads = update_remo_soil_temperatures(ads)
         ads["GLAC"] = xr.where(ads.SN > 9.1, 1.0, 0.0)
 
@@ -883,6 +891,11 @@ def remap_era_soil(ds, domain_info, surflib):
 
     soil["GLAC"] = xr.where(soil.SN > 9.5, 1.0, 0.0)
     soil = update_attrs(soil)
+
+    # crop to exact grid points
+    grid = get_grid(domain_info)
+    soil = soil.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
+    soil = soil.assign_coords(rlon=grid.rlon, rlat=grid.rlat)
 
     # transpose to remo convention
     return soil.transpose(..., "rlat", "rlon")

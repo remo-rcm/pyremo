@@ -625,7 +625,7 @@ def remap_remo(
 
     if initial is True:
         ads = add_surflib(ads, surflib)
-        ads = update_soil_temperatures(ads)
+        ads = update_remo_soil_temperatures(ads)
         ads["GLAC"] = xr.where(ads.SN > 9.1, 1.0, 0.0)
 
     ads = update_attrs(ads)
@@ -694,7 +694,7 @@ def remap_remo_soil(
     return xr.merge([remap_var(var) for var in remap_vars])
 
 
-def update_soil_temperatures(ds):
+def update_remo_soil_temperatures(ds):
     """Update land and soil temperatures in the input dataset.
 
     Parameters
@@ -789,15 +789,11 @@ def _remap_era_soil(
     wsem.name = "WS"
 
     # Initialize temperatures
-    tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem = (
-        physics.adapt_soil_temperatures(
-            tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
-        )
+    tslem, tsnem, td3em, td4em, td5em, tdem, tdclem = physics.adapt_soil_temperatures(
+        tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
     )
 
-    return xr.merge(
-        [tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem, wlem, snem, wsem]
-    )
+    return xr.merge([tslem, tsnem, td3em, td4em, td5em, tdem, tdclem, wlem, snem, wsem])
 
 
 def remap_era_soil(ds, domain_info, surflib):
@@ -885,34 +881,11 @@ def remap_era_soil(ds, domain_info, surflib):
         ds, tswge, wsmx, fibem, blaem, lamem, phiem, lamgm, phigm, indii, indjj
     )
 
-    # soil.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
-    # soil.attrs["domain_id"] = domain_info.get("domain_id", "UNKNOWNs")
-
+    soil["GLAC"] = xr.where(soil.SN > 9.5, 1.0, 0.0)
     soil = update_attrs(soil)
 
     # transpose to remo convention
     return soil.transpose(..., "rlat", "rlon")
-
-
-#  dpeh(ij) = pseh(ij) - GETP(akem(KEEM),bkem(KEEM),pseh(ij),akem(1))
-#  dphm(ij) = pshm(ij) - GETP(akhm(KEHM),bkhm(KEHM),pshm(ij),akhm(1))
-
-
-# DO ij = 1 , IJ2HM
-#   tswhm(ij) = tsweh(ij)
-#   tsihm(ij) = tsieh(ij)
-#   tslhm(ij) = thm(ij,KEHM) - dtpbeh(ij)*dphm(ij)/dpeh(ij)
-# ENDDO
-# !
-# DO ij = 1 , IJ2HM
-#   zdts(ij) = tslhm(ij) - tsleh(ij)
-#   tsnhm(ij) = tsneh(ij) + zdts(ij)
-#   td3hm(ij) = td3eh(ij) + zdts(ij)
-#   td4hm(ij) = td4eh(ij) + zdts(ij)
-#   td5hm(ij) = td5eh(ij) + zdts(ij)
-#   tdhm(ij) = tdeh(ij) + zdts(ij)
-#   tdclhm(ij) = tdcleh(ij) + zdts(ij)
-# ENDDO
 
 
 def addem_remo(tds):

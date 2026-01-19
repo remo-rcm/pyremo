@@ -239,8 +239,6 @@ def adapt_soil_temperatures(
     zdts = calculate_zdts(fibem, fibge)
     tslem = xr.where(iland == 0, tswge, tslge - zdts)
     tslem.name = "TSL"
-    tswem = tswge.copy()
-    tswem.name = "TSW"
     tsnem = xr.where(iland == 0, tswge, tslem)
     tsnem.name = "TSN"
     td3em = xr.where(iland == 0, tswge, tslge - ((tslge - td3ge) * zds3) - zdts)
@@ -253,7 +251,7 @@ def adapt_soil_temperatures(
     tdem.name = "TD"
     tdclem = td5em.copy()
     tdclem.name = "TDCL"
-    return tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem
+    return tslem, tsnem, td3em, td4em, td5em, tdem, tdclem
 
 
 def calculate_seaice(tswem):

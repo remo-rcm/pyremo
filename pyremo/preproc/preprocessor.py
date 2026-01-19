@@ -13,7 +13,6 @@ from .remapping import remap, remap_remo
 from .cf import get_gcm_dataset, get_gcm_gfile
 from ..tables import domains
 
-
 dkrz_template = {
     "path_template": "/pool/data/ERA5/{era_id}/{level_type}/{dataType}/{frequency}/{code:03d}",
     "file_template": "{era_id}{level_type}{typeid}_{frequency}_{date}_{code:03d}.grb",

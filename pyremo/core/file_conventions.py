@@ -10,7 +10,6 @@ store and retrieve REMO data from the archive or the filesystem.
 
 """
 
-
 import os
 
 FILE_FREQS = ["1h", "6h", "day", "mon"]

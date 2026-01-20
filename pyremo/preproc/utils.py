@@ -21,7 +21,7 @@ vcs = [
     "bk",
     "rotated_latitude_longitude",
 ]
-static = vcs + ["rotated_latitude_longitude"]
+static_variables = vcs + ["rotated_latitude_longitude"]
 
 
 def horizontal_dims(da):
@@ -108,7 +108,7 @@ def encode_missval(da, missval=None):
         return {"_FillValue": None}
 
 
-def update_attrs(ds):
+def update_attrs(ds, grid_mapping_name="rotated_latitude_longitude"):
     """
     Update attributes of all variables for CF compliance.
 
@@ -130,7 +130,7 @@ def update_attrs(ds):
                 if value is not None:
                     da.attrs[attr] = value
 
-            da.attrs["grid_mapping"] = "rotated_latitude_longitude"
+            da.attrs["grid_mapping"] = grid_mapping_name
             da.attrs["coordinates"] = "lon lat"
 
         except Exception:
@@ -195,7 +195,7 @@ def write_forcing_file(
         else:
             var.encoding = {"_FillValue": None}
         # expand time dim is necessary for REMO input forcing
-        if v not in static and "time" not in var.dims:
+        if v not in static_variables and "time" not in var.dims:
             ds[v] = var.expand_dims("time")
     ds.to_netcdf(fname, **kwargs)
     ds.close()

@@ -1,5 +1,17 @@
+"""REMO remapping utilities
+
+This module remaps CF-compliant GCM/analysis data and nested REMO outputs
+to a target REMO domain. It mirrors the legacy FORTRAN preprocessor (intorg)
+with horizontal/vertical interpolation, pressure corrections, wind rotation,
+and surface/soil field handling.
+
+Key entry points
+----------------
+- remap: CF GCM/analysis to REMO target domain
+- remap_remo: nested REMO (external model) to higher-resolution REMO domain
+"""
+
 import cf_xarray as cfxr  # noqa
-import cordex as cx
 import numpy as np
 import xarray as xr
 
@@ -8,7 +20,7 @@ import pyremo as pr
 from . import physics
 from .constants import lev_input
 from .core import const, get_akbkem
-from .utils import update_attrs
+from .utils import update_attrs, get_grid
 from .xpyintorg import (
     correct_uv,
     geo_coords,
@@ -45,62 +57,77 @@ def broadcast_coords(ds, coords=("lon", "lat")):
     return lam, phi
 
 
-def remap(ds, domain_info, vc, surflib, initial=False):
+def remap(ds, domain_info, vc, surflib, initial=False, static=False):
     """Remap CF-compliant GCM/analysis data to a REMO target domain.
 
-    The workflow mirrors the legacy FORTRAN preprocessor (``intorg``):
-    1. Horizontal interpolation of 3‑D and 2‑D fields from the input (global) grid
-       to the rotated REMO grid using great‑circle search indices.
-    2. First pressure adjustment using a planetary boundary layer (PBL) estimate.
-    3. Vertical interpolation from input hybrid coefficients (``akgm``, ``bkgm``)
-       to the requested target vertical coordinate ``vc`` (``ak``, ``bk``).
-    4. Second pressure adjustment including hydrostatic consistency with geopotential.
-    5. Wind rotation and divergence correction.
-    6. Surface field remapping (SST, sea-ice) and optional initial-field enrichment.
+    This performs the REMO preprocessing chain analogous to the legacy FORTRAN
+    "intorg" tool:
+    1) horizontal interpolation of 3‑D and 2‑D fields to the rotated target grid,
+    2) first pressure correction using a PBL estimate,
+    3) vertical interpolation from input hybrid coefficients (``akgm``, ``bkgm``)
+       to the requested vertical coordinate ``vc`` (``ak``, ``bk``),
+    4) second pressure correction with hydrostatic consistency,
+    5) wind rotation and divergence correction,
+    6) surface field remapping (SST, sea ice) and optional initial fields.
 
     Parameters
     ----------
     ds : xarray.Dataset
-        CF-compliant dataset holding at least the variables
-        ``ta`` (air temperature), ``ua``/``va`` (winds), ``hus`` (specific humidity),
-        ``ps`` (surface pressure), ``tos`` (sea surface temperature),
-        ``orog`` (orography), ``sftlf`` (land fraction). Optionally ``clw`` for
-        cloud liquid water content. Must also contain hybrid coordinate
-        coefficients ``akgm`` and ``bkgm`` (full level) required for vertical interpolation.
+        CF-compliant dataset holding at least ``ta`` (air temperature), ``ua``/``va``
+        (winds), ``hus`` (specific humidity), ``ps`` (surface pressure), ``tos`` (SST),
+        ``orog`` (orography), ``sftlf`` (land fraction). Optionally ``clw`` for cloud
+        liquid water content. Must also contain hybrid coordinate coefficients
+        ``akgm`` and ``bkgm`` (full levels) needed for vertical interpolation.
     domain_info : dict
-        Dictionary describing the target rotated domain. Required keys typically are
-        ``ll_lon``, ``ll_lat`` (lower-left corner), ``dlon``, ``dlat`` (increment),
-        ``nlon``, ``nlat`` (grid dimensions), ``pollon`` and ``pollat`` (rotated pole),
-        plus optional metadata such as ``CORDEX_domain`` or ``domain_id``.
+        Description of the target rotated domain with keys such as ``ll_lon``,
+        ``ll_lat``, ``dlon``, ``dlat``, ``nlon``, ``nlat``, ``pollon``, ``pollat``.
+        Optional metadata like ``CORDEX_domain`` or ``domain_id`` is preserved.
     vc : pandas.DataFrame
         Vertical coordinate definition with columns ``ak`` and ``bk`` (half levels)
-        and ``akh`` / ``bkh`` (mid levels) as produced by ``pr.vc.tables``.
+        and ``akh``/``bkh`` (mid levels); typically produced via pyremo tables.
     surflib : xarray.Dataset
-        Surface library on the target grid providing (at least) ``BLA`` (land/sea mask)
-        and ``FIB`` (surface geopotential / orography divided by gravity). Additional
-        static fields will be passed through if present.
+        Surface library on the target grid providing at least ``BLA`` (land/sea mask)
+        and ``FIB`` (surface geopotential/orography divided by gravity). When
+        ``initial`` or ``static`` is True, additional static fields (e.g. ``WSMX``)
+        are merged if available.
     initial : bool, default: False
-        If ``True`` add static/dynamic fields needed for initial condition creation
-        (soil moisture/temperature etc.).
+        If True, add dynamic/static fields required for model initial conditions
+        (soil moisture/temperature, glacier mask, etc.). Implies ``static=True``.
+    static : bool, default: False
+        If True, merge static fields from ``surflib`` (e.g. land/sea mask, orography)
+        into the returned dataset.
 
     Returns
     -------
     xarray.Dataset
-        Forcing dataset on the target domain with rotated coordinates (``rlon``, ``rlat``)
-        and vertical dimension ``lev``. Includes at least
-        ``T`` (temperature), ``U`` / ``V`` (winds), ``PS`` (surface pressure),
-        ``QD`` (specific humidity), ``QW`` (total water), ``QDBL`` (boundary layer
-        humidity if produced), ``TSW`` (surface temperature over water), ``TSI`` (surface
-        temperature over ice), ``SEAICE`` (fractional sea ice), vertical coordinate
-        coefficients (``hyai``, ``hybi``, ``hyam``, ``hybm``) and auxiliary diagnostic
-        attributes.
+        Forcing dataset on the target domain with rotated coordinates (``rlon``,
+        ``rlat``) and vertical dimension ``lev``. Includes at least ``T``, ``U``,
+        ``V``, ``PS``, humidity diagnostics (``QD``, ``QW``, ``QDBL`` when available),
+        ``TSW``, ``TSI``, optional ``SEAICE``, and vertical coordinate coefficients
+        (``hyai``, ``hybi``, ``hyam``, ``hybm``). Global attributes and domain
+        identifiers are propagated.
+
+    Raises
+    ------
+    KeyError
+        If required variables (e.g. ``ta``, ``ua``, ``va``, ``hus``, ``ps``,
+        ``tos``, ``orog``, ``sftlf``) or hybrid coefficients (``akgm``, ``bkgm``)
+        are missing from ``ds``.
+    ValueError
+        If ``domain_info`` is inconsistent or the vertical coordinate ``vc`` lacks
+        the expected ``ak``/``bk`` columns.
 
     Notes
     -----
-    The function performs nearest-neighbour selection for final grid alignment after
-    interpolation to ensure exact coordinate matching with ``surflib``. Calendar and
-    time metadata are preserved from the input dataset where possible.
+    After interpolation, a nearest-neighbour selection aligns the result to the
+    exact target grid points from ``surflib`` to ensure coordinate identity. Time
+    and calendar metadata are preserved when present.
+
     """
+    # check if we have to add static variables
+    if initial is True:
+        static = True
+
     # rename vertical coordinate of input to avoid conflict with output lev
     gds = ds.copy()
     gds = gds.rename({gds.ta.cf["vertical"].name: lev_input})
@@ -253,23 +280,45 @@ def remap(ds, domain_info, vc, surflib, initial=False):
     # transpose to remo convention
     ads = ads.transpose(..., "lev", "rlat", "rlon")
 
-    if initial is True:
+    if static is True:
         ads = add_surflib(ads, surflib)
-        soil = _remap_era_soil(
-            gds, tsw, fibem, blaem, lamem, phiem, lamgm, phigm, indii, indjj
-        ).transpose("rlat", "rlon")
+
+    if initial is True:
+        soil = (
+            _remap_era_soil(
+                gds,
+                tsw,
+                surflib.WSMX,
+                fibem,
+                blaem,
+                lamem,
+                phiem,
+                lamgm,
+                phigm,
+                indii,
+                indjj,
+            )
+            .squeeze(drop=True)
+            .transpose("rlat", "rlon")
+        )
         # ads = xr.merge([ads, soil])
         ads = ads.merge(soil, join="override")
         ads["WS"] = np.minimum(ads.WSMX, ads.WS * ads.WSMX)
         ads["GLAC"] = xr.where(ads.SN > 9.5, 1.0, 0.0)
 
+    # crop to exact grid points
     grid = get_grid(domain_info)
-
     ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
-    ads["rlon"] = grid.rlon
-    ads["rlat"] = grid.rlat
-    ads = xr.merge([ads, grid])
-    ads = update_attrs(ads)
+    ads = ads.assign_coords(
+        rlon=grid.rlon,
+        rlat=grid.rlat,
+        lon=grid.lon,
+        lat=grid.lat,
+        rotated_latitude_longitude=grid.cf["grid_mapping"],
+    )
+
+    # ads = xr.merge([ads, grid])
+    ads = update_attrs(ads, grid_mapping_name="rotated_latitude_longitude")
 
     return ads
 
@@ -280,6 +329,7 @@ def remap_remo(
     vc,
     surflib,
     initial=False,
+    static=False,
     lice=True,
     uvcor=True,
     domain_info_em=None,
@@ -335,6 +385,11 @@ def remap_remo(
     """
     tds = ds.copy()
 
+    # check if we have to add static variables
+    if initial is True:
+        static = True
+
+    # get domain infos
     domain_info_hm = domain_info
     domain_info_em = domain_info_em or tds.cx.info()
 
@@ -439,7 +494,7 @@ def remap_remo(
 
     if initial is True:
         tds = addem_remo(tds)
-        soil = remap_soil(
+        soil = remap_remo_soil(
             tds,
             indemi,
             indemj,
@@ -581,9 +636,10 @@ def remap_remo(
     # rename for remo to recognize
     ads = ads.rename({"ak": "hyai", "bk": "hybi", "akh": "hyam", "bkh": "hybm"})
 
-    if initial is True:
+    if static is True:
         ads = add_surflib(ads, surflib)
-        ads = update_soil_temperatures(ads)
+    if initial is True:
+        ads = update_remo_soil_temperatures(ads)
         ads["GLAC"] = xr.where(ads.SN > 9.1, 1.0, 0.0)
 
     ads = update_attrs(ads)
@@ -599,9 +655,32 @@ def remap_remo(
     return ads.transpose(..., "lev", "rlat", "rlon")
 
 
-def remap_soil(
+def remap_remo_soil(
     tds, indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm
 ):
+    """Remap soil and near-surface fields from EM to HM grid.
+
+    Parameters
+    ----------
+    tds : xarray.Dataset
+        External-model REMO dataset with soil/surface variables (e.g., ``TSW``,
+        ``TSI``, ``TSL``, ``WS``, ``WL``, ``SN``).
+    indemi, indemj : xarray.DataArray
+        Integer index maps from EM grid points to HM grid points.
+    dxemhm, dyemhm : xarray.DataArray
+        Fractional distances for bilinear interpolation between EM and HM.
+    blaem, blahm : xarray.DataArray
+        Masks on EM and HM grids used during interpolation.
+    phiem, lamem : xarray.DataArray
+        EM geographical coordinates.
+    phihm, lamhm : xarray.DataArray
+        HM geographical coordinates.
+
+    Returns
+    -------
+    xarray.Dataset
+        Remapped soil/surface fields on the HM grid.
+    """
     args = (indemi, indemj, dxemhm, dyemhm, blaem, blahm, phiem, lamem, phihm, lamhm)
 
     remap_vars = [
@@ -629,7 +708,7 @@ def remap_soil(
     return xr.merge([remap_var(var) for var in remap_vars])
 
 
-def update_soil_temperatures(ds):
+def update_remo_soil_temperatures(ds):
     """Update land and soil temperatures in the input dataset.
 
     Parameters
@@ -655,7 +734,33 @@ def update_soil_temperatures(ds):
     return ds
 
 
-def _remap_era_soil(ds, tswge, fibem, blaem, lamem, phiem, lamgm, phigm, indii, indjj):
+def _remap_era_soil(
+    ds, tswge, wsmx, fibem, blaem, lamem, phiem, lamgm, phigm, indii, indjj
+):
+    """Internal helper to remap ERA soil variables and initialize temperatures.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        ERA dataset with soil moisture/temperature layers and auxiliaries.
+    tswge : xarray.DataArray
+        Remapped SST used for soil temperature adaptation.
+    fibem : xarray.DataArray
+        Surface geopotential on the EM grid (m2 s-2).
+    blaem : xarray.DataArray
+        Land/sea mask on the EM grid.
+    lamem, phiem : xarray.DataArray
+        Target longitudes/latitudes for horizontal interpolation.
+    lamgm, phigm : xarray.DataArray
+        Source longitudes/latitudes for horizontal interpolation.
+    indii, indjj : xarray.DataArray
+        Intersect indices mapping source to target grid points.
+
+    Returns
+    -------
+    xarray.Dataset
+        Soil state fields (temperatures, snow, soil moisture) on EM grid.
+    """
 
     # based on https://gitlab.dkrz.de/remo/RemapToRemo/-/blob/master/setups/era_interim/bodfld.f90
     fak1 = 0.07
@@ -693,35 +798,77 @@ def _remap_era_soil(ds, tswge, fibem, blaem, lamem, phiem, lamgm, phigm, indii, 
         ds.skt, lamem, phiem, lamgm, phigm, "TSL", indii=indii, indjj=indjj
     )
 
-    # wsmxem = surflib.WSMX.squeeze(drop=True)
-    # wsem = np.minimum(wsmxem, wsge * wsmxem)
+    wsmxem = wsmx.squeeze(drop=True)
+    wsem = np.minimum(wsmxem, wsge * wsmxem)
+    wsem.name = "WS"
 
     # Initialize temperatures
-    tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem = (
-        physics.adapt_soil_temperatures(
-            tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
-        )
+    tslem, tsnem, td3em, td4em, td5em, tdem, tdclem = physics.adapt_soil_temperatures(
+        tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
     )
 
-    return xr.merge(
-        [tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem, wlem, snem, wsge]
-    ).squeeze(drop=True)
+    return xr.merge([tslem, tsnem, td3em, td4em, td5em, tdem, tdclem, wlem, snem, wsem])
 
 
 def remap_era_soil(ds, domain_info, surflib):
-    """Create initial soil dataset from atmospheric dataset."""
+    """Create an initial soil dataset from ERA/analysis inputs on a REMO domain.
+
+    This function remaps soil-related variables (moisture, temperatures, snow,
+    water layer) from an ERA-like source dataset to the target REMO grid and
+    initializes near-surface temperatures using the preprocessor logic. It uses
+    the surface library for land/sea mask (``BLA``), surface geopotential
+    (``FIB``) and maximum soil moisture (``WSMX``), and diagnoses SST on the
+    target grid for temperature adaptation.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        ERA/analysis dataset with soil variables, e.g. ``swvl1``, ``swvl2``,
+        ``swvl3`` (soil water), ``tsl1`` .. ``tsl4`` (soil temperature layers),
+        ``snd`` (snow depth), ``src`` (water layer), ``skt`` (skin temperature),
+        ``tos`` (sea surface temperature), ``orog`` (orography).
+    domain_info : dict
+        REMO rotated-pole domain description; see ``pr.domain_info()``.
+    surflib : xarray.Dataset
+        Surface library on the target grid containing at least ``BLA``, ``FIB``
+        and ``WSMX``.
+
+    Returns
+    -------
+    xarray.Dataset
+        Soil fields on the target grid (``rlat``, ``rlon``), including adapted
+        temperatures (``TSL``, ``TSW``, ``TSN``, ``TD3``, ``TD4``, ``TD5``, ``TD``,
+        ``TDCL``), snow depth (``SN``), relative water layer (``WL``), and soil
+        moisture (``WS``). Attributes are updated for REMO preprocessing.
+
+    Notes
+    -----
+    - The routine applies horizontal remapping and temperature adaptation using
+      SST and geopotential differences following the REMO preprocessor.
+    - Input time coordinates are not required; if present, the function selects
+      appropriate slices internally.
+
+    Examples
+    --------
+    Remap one ERA5 soil time step to the CORDEX EUR-11 domain::
+
+        from pyremo.preproc import ERA5, remap_era_soil
+        import pyremo as pr
+        import xarray as xr
+
+        surflib = xr.open_dataset("/work/ch0636/remo/surflibs/cordex/lib_EUR-11_frac.nc").squeeze(drop=True)
+        filename = ERA5().get_soil("1979-01-01T00:00:00")
+        era5_soil = xr.open_dataset(filename)
+        soil = remap_era_soil(era5_soil, pr.domain_info("EUR-11"), surflib)
+
+    """
     # rename vertical coordinate of input to avoid conflict with output lev
     ds = ds.copy()
-
-    fak1 = 0.07
-    fak2 = 0.21
-    fak3 = 0.72
-    # WSGm(ij) = (fak1*zwb1(ij)) + (fak2*zwb2(ij)) + (fak3*zwb3(ij))
-    wsgm = fak1 * ds.swvl1 + fak2 * ds.swvl2 + fak3 * ds.swvl3
 
     # remove time dimension if there is one
     fibem = surflib.FIB.squeeze(drop=True) * const.grav_const
     blaem = surflib.BLA.squeeze(drop=True)
+    wsmx = surflib.WSMX.squeeze(drop=True)
 
     lamem, phiem = geo_coords(domain_info, fibem.rlon, fibem.rlat)
 
@@ -731,37 +878,6 @@ def remap_era_soil(ds, domain_info, surflib):
     print("getting matrix")
     # compute remap matrix
     indii, indjj = intersect(lamgm, phigm, lamem, phiem)  # .compute()
-
-    print("remapping")
-    # horizontal interpolation
-    wsge = interpolate_horizontal(
-        wsgm, lamem, phiem, lamgm, phigm, "WS", indii=indii, indjj=indjj
-    )
-
-    td3ge = interpolate_horizontal(
-        ds.tsl1, lamem, phiem, lamgm, phigm, "TD3", indii=indii, indjj=indjj
-    )
-    td4ge = interpolate_horizontal(
-        ds.tsl2, lamem, phiem, lamgm, phigm, "TD4", indii=indii, indjj=indjj
-    )
-    td5ge = interpolate_horizontal(
-        ds.tsl3, lamem, phiem, lamgm, phigm, "TD5", indii=indii, indjj=indjj
-    )
-    tdge = interpolate_horizontal(
-        ds.tsl4, lamem, phiem, lamgm, phigm, "TD", indii=indii, indjj=indjj
-    )
-    snem = interpolate_horizontal(
-        ds.snd, lamem, phiem, lamgm, phigm, "SN", indii=indii, indjj=indjj
-    )
-    wlem = interpolate_horizontal(
-        ds.src, lamem, phiem, lamgm, phigm, "WL", indii=indii, indjj=indjj
-    )
-    fibge = interpolate_horizontal(
-        ds.orog, lamem, phiem, lamgm, phigm, "FIB", indii=indii, indjj=indjj
-    )
-    tslge = interpolate_horizontal(
-        ds.skt, lamem, phiem, lamgm, phigm, "TSL", indii=indii, indjj=indjj
-    )
 
     tswge = remap_sst(
         ds.tos,
@@ -775,50 +891,39 @@ def remap_era_soil(ds, domain_info, surflib):
         blaem=blaem,
     )
 
-    wsmxem = surflib.WSMX.squeeze(drop=True)
-    wsem = np.minimum(wsmxem, wsge * wsmxem)
-
-    # Initialize temperatures
-    tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem = (
-        physics.adapt_soil_temperatures(
-            tdge, tswge, tslge, td3ge, td4ge, td5ge, fibem, fibge, blaem
-        )
+    soil = _remap_era_soil(
+        ds, tswge, wsmx, fibem, blaem, lamem, phiem, lamgm, phigm, indii, indjj
     )
 
-    soil = xr.merge(
-        [tslem, tswem, tsnem, td3em, td4em, td5em, tdem, tdclem, wlem, snem, wsem]
-    )
-    soil.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
-    soil.attrs["domain_id"] = domain_info.get("domain_id", "UNKNOWNs")
-
+    soil["GLAC"] = xr.where(soil.SN > 9.5, 1.0, 0.0)
     soil = update_attrs(soil)
+
+    # crop to exact grid points
+    grid = get_grid(domain_info)
+    soil = soil.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
+    soil = soil.assign_coords(rlon=grid.rlon, rlat=grid.rlat)
 
     # transpose to remo convention
     return soil.transpose(..., "rlat", "rlon")
 
 
-#  dpeh(ij) = pseh(ij) - GETP(akem(KEEM),bkem(KEEM),pseh(ij),akem(1))
-#  dphm(ij) = pshm(ij) - GETP(akhm(KEHM),bkhm(KEHM),pshm(ij),akhm(1))
-
-
-# DO ij = 1 , IJ2HM
-#   tswhm(ij) = tsweh(ij)
-#   tsihm(ij) = tsieh(ij)
-#   tslhm(ij) = thm(ij,KEHM) - dtpbeh(ij)*dphm(ij)/dpeh(ij)
-# ENDDO
-# !
-# DO ij = 1 , IJ2HM
-#   zdts(ij) = tslhm(ij) - tsleh(ij)
-#   tsnhm(ij) = tsneh(ij) + zdts(ij)
-#   td3hm(ij) = td3eh(ij) + zdts(ij)
-#   td4hm(ij) = td4eh(ij) + zdts(ij)
-#   td5hm(ij) = td5eh(ij) + zdts(ij)
-#   tdhm(ij) = tdeh(ij) + zdts(ij)
-#   tdclhm(ij) = tdcleh(ij) + zdts(ij)
-# ENDDO
-
-
 def addem_remo(tds):
+    """Normalize EM soil fields and derive diagnostics for remapping.
+
+    Converts absolute soil moisture ``WS`` to relative values using ``WSMX`` and
+    computes ``DTPB`` as the difference between lowest model level temperature
+    and surface layer temperature ``TSL``.
+
+    Parameters
+    ----------
+    tds : xarray.Dataset
+        External-model REMO dataset with ``WS``, ``WSMX``, ``T`` and ``TSL``.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset with updated ``WS`` and added ``DTPB``.
+    """
     # ws auf relative bodenfeucht umrechnen
     tds = tds.copy()
     tds["WS"] = tds.WS.where(tds.WS < 1.0e9, 0.0) / tds.WSMX
@@ -828,6 +933,23 @@ def addem_remo(tds):
 
 
 def add_surflib(ads, surflib):
+    """Merge static surface library fields into the output dataset.
+
+    Ensures overlap with the output grid and drops ``rotated_pole`` if present
+    to avoid coordinate conflicts.
+
+    Parameters
+    ----------
+    ads : xarray.Dataset
+        Atmospheric dataset on the target REMO grid.
+    surflib : xarray.Dataset
+        Surface library containing fields like ``BLA``, ``FIB``, ``WSMX``.
+
+    Returns
+    -------
+    xarray.Dataset
+        Merged dataset with static surface fields.
+    """
     rlon_start = surflib.rlon.sel(rlon=ads.rlon.min(), method="nearest").item()
     rlon_end = surflib.rlon.sel(rlon=ads.rlon.max(), method="nearest").item()
     rlat_start = surflib.rlat.sel(rlat=ads.rlat.min(), method="nearest").item()
@@ -837,10 +959,6 @@ def add_surflib(ads, surflib):
         rlon=slice(rlon_start, rlon_end),
         rlat=slice(rlat_start, rlat_end),
     )
-    # surflib = surflib.copy().isel(
-    #     rlon=slice(1, -1),
-    #     rlat=slice(1, -1),
-    # )
     if "rotated_pole" in surflib:
         surflib = surflib.drop_vars("rotated_pole")
     return xr.merge(
@@ -849,12 +967,48 @@ def add_surflib(ads, surflib):
 
 
 def remap_sst(tos, lamem, phiem, lamgm, phigm, blagm, blaem):
+    """Remap sea surface temperature to the target grid.
+
+    Parameters
+    ----------
+    tos : xarray.DataArray
+        Source sea surface temperature.
+    lamem, phiem : xarray.DataArray
+        Target longitudes/latitudes.
+    lamgm, phigm : xarray.DataArray
+        Source longitudes/latitudes.
+    blagm, blaem : xarray.DataArray
+        Source and target masks used during interpolation.
+
+    Returns
+    -------
+    xarray.DataArray
+        Remapped SST on the target grid.
+    """
     return interpolate_horizontal(
         tos, lamem, phiem, lamgm, phigm, "TSW", blagm=blagm, blaem=blaem
     )
 
 
 def remap_seaice(sic, lamem, phiem, lamgm, phigm, blagm, blaem):
+    """Remap sea-ice concentration to the target grid and clip negatives.
+
+    Parameters
+    ----------
+    sic : xarray.DataArray
+        Source sea-ice concentration (fraction).
+    lamem, phiem : xarray.DataArray
+        Target longitudes/latitudes.
+    lamgm, phigm : xarray.DataArray
+        Source longitudes/latitudes.
+    blagm, blaem : xarray.DataArray
+        Source and target masks used during interpolation.
+
+    Returns
+    -------
+    xarray.DataArray
+        Remapped sea-ice fraction on the target grid.
+    """
     seaice = interpolate_horizontal(
         sic, lamem, phiem, lamgm, phigm, "SEAICE", blagm=blagm, blaem=blaem
     )
@@ -862,11 +1016,21 @@ def remap_seaice(sic, lamem, phiem, lamgm, phigm, blagm, blaem):
     return seaice
 
 
-def get_grid(domain_info):
-    return cx.create_dataset(**domain_info)
-
-
 def encoding(da, missval):
+    """Return NetCDF encoding dict based on presence of NaNs.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        DataArray to inspect for missing values.
+    missval : float
+        Fill value to use when missing values are present.
+
+    Returns
+    -------
+    dict
+        Encoding dictionary suitable for xarray ``to_netcdf``.
+    """
     if np.isnan(da.values).any():
         return {"_FillValue": missval}
     else:

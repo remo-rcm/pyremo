@@ -8,13 +8,21 @@ What's New
 
     import pyremo
 
-UNRELEASED
-----------
+v0.9.0 (UNRELEASED)
+-------------------
+
+This release updates the preprocessing module to allow easy interpolation of ERA5 soil
+data for initial REMO starts. It includes a new function :py:meth:`pyremo.preproc.remap_era_soil` that
+is also used by the preconfigured preprocessors.
+
+New Features
+~~~~~~~~~~~~
+
+- Added :py:meth:`pyremo.preproc.remap_era_soil` that is used for soil interpolation of ERA5 data (:pull:`273`).
 
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
-- Update soil interpolation for ERA data (:pull:`273`)
 - Update file search pattern for CF preprocessing (:pull:`271`)
 
 v0.8.4 (20 November 2025)

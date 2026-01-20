@@ -309,10 +309,16 @@ def remap(ds, domain_info, vc, surflib, initial=False, static=False):
     # crop to exact grid points
     grid = get_grid(domain_info)
     ads = ads.sel(rlon=grid.rlon, rlat=grid.rlat, method="nearest")
-    ads = ads.assign_coords(rlon=grid.rlon, rlat=grid.rlat)
+    ads = ads.assign_coords(
+        rlon=grid.rlon,
+        rlat=grid.rlat,
+        lon=grid.lon,
+        lat=grid.lat,
+        rotated_latitude_longitude=grid.cf["grid_mapping"],
+    )
 
     # ads = xr.merge([ads, grid])
-    ads = update_attrs(ads)
+    ads = update_attrs(ads, grid_mapping_name="rotated_latitude_longitude")
 
     return ads
 

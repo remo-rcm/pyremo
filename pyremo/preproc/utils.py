@@ -108,7 +108,7 @@ def encode_missval(da, missval=None):
         return {"_FillValue": None}
 
 
-def update_attrs(ds):
+def update_attrs(ds, grid_mapping_name="rotated_latitude_longitude"):
     """
     Update attributes of all variables for CF compliance.
 
@@ -130,7 +130,7 @@ def update_attrs(ds):
                 if value is not None:
                     da.attrs[attr] = value
 
-            da.attrs["grid_mapping"] = "rotated_latitude_longitude"
+            da.attrs["grid_mapping"] = grid_mapping_name
             da.attrs["coordinates"] = "lon lat"
 
         except Exception:

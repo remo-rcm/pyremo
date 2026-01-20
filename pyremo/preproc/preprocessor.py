@@ -1,3 +1,18 @@
+"""Preprocessor workflows for generating REMO forcing datasets
+
+This module provides reusable preprocessing classes and helpers to construct
+REMO forcing inputs from various sources:
+
+- CF-compliant GCM datasets (local files)
+- REMO model outputs used for nested runs
+- ERA5 reanalysis data (downloaded/assembled locally)
+- CMIP6-like datasets from public cloud catalogs
+
+Each preprocessor encapsulates common steps: preparing the surface library,
+initialising domain metadata, remapping raw inputs to the target grid/vertical
+coordinate, and writing output files over sequences of timesteps.
+"""
+
 import os
 import tempfile
 
@@ -199,6 +214,29 @@ def prepare_surflib(surflib):
 
 
 def add_era_soil(ds, domain_info, surflib, filename=None):
+    """Add remapped ERA5 soil fields to a forcing dataset.
+
+    For the time of ``ds``, downloads/locates the corresponding ERA5 soil file,
+    remaps soil variables to the target domain using ``surflib``, and merges
+    the result into the provided forcing dataset.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Atmospheric forcing dataset containing a ``time`` coordinate.
+    domain_info : dict
+        Target REMO domain description used for remapping.
+    surflib : xarray.Dataset
+        Surface library on the target grid (requires at least ``BLA``, ``FIB``,
+        and ``WSMX``).
+    filename : str, optional
+        Optional path to store or locate the intermediate ERA5 soil file.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset with ERA5 soil fields merged in.
+    """
     date = ds.time.isel(time=0).item()
     soilfile = ERA5().get_soil(date, filename=filename)
     era5_soil = xr.open_dataset(soilfile)
@@ -334,11 +372,30 @@ class Preprocessor:
         return write_forcing_file(ds, path=outpath, expid=self.expid)
 
     def add_soil(self, ds, domain_info, surflib, filename=None):
+        """Merge ERA5 soil fields for the given timestep into ``ds``.
+
+        Parameters
+        ----------
+        ds : xarray.Dataset
+            Forcing dataset with a single timestep (first element of ``time``).
+        domain_info : dict
+            REMO domain description used for remapping.
+        surflib : xarray.Dataset
+            Surface library with static fields required during soil remap.
+        filename : str, optional
+            File path for the temporary ERA5 soil data; created if missing.
+
+        Returns
+        -------
+        xarray.Dataset
+            Dataset with soil variables merged using ``join='override'``.
+        """
         date = ds.time.isel(time=0).item()
         soilfile = ERA5().get_soil(date, filename=filename)
         era5_soil = xr.open_dataset(soilfile, use_cftime=True).load()
         soil = remap_era_soil(era5_soil, domain_info, surflib)
-        return ds.merge(soil)
+        soil = soil.squeeze(drop=True)
+        return ds.merge(soil, join="override")
 
     @dask.delayed
     def preprocess(

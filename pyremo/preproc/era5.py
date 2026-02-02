@@ -43,6 +43,22 @@ ecmwf_params = pd.read_csv(ecmwf_params_file)
 
 
 def get_output_filename(date, expid, path=None):
+    """Build standard REMO gfile output filename.
+
+    Parameters
+    ----------
+    date : str or datetime-like
+        Datetime used in the filename; formatted as ``YYYYMMDDHH``.
+    expid : str
+        Experiment identifier to include in the filename (e.g., ``"000000"``).
+    path : str, optional
+        Directory where the file will be written. Defaults to current directory.
+
+    Returns
+    -------
+    str
+        Full path to the output file in the form ``g{expid}a{YYYYMMDDHH}.nc``.
+    """
     if path is None:
         path = "./"
     date = pd.to_datetime(date).strftime("%Y%m%d%H")
@@ -50,6 +66,21 @@ def get_output_filename(date, expid, path=None):
 
 
 def params_by_code(params, code):
+    """Return parameter configuration matching a GRIB code.
+
+    Parameters
+    ----------
+    params : dict
+        Mapping of variable name to parameter configuration dictionaries.
+    code : int
+        GRIB parameter code to search for.
+
+    Returns
+    -------
+    dict or None
+        The matching parameter configuration merged with ``{"rename": varname}``,
+        or ``None`` if no match is found.
+    """
     for k, v in params.items():
         c = v.get("code", -999)
         if code == c:
@@ -58,6 +89,20 @@ def params_by_code(params, code):
 
 
 def renames_by_code(ds, params):
+    """Build a rename mapping based on GRIB codes in a dataset.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Dataset whose variables include a ``code`` attribute.
+    params : dict
+        Parameter configuration used to map GRIB codes to target names.
+
+    Returns
+    -------
+    dict
+        Mapping from original variable names to target names.
+    """
     renames = {}
     for var in ds.data_vars:
         code = ds[var].attrs.get("code", -999)
@@ -68,11 +113,35 @@ def renames_by_code(ds, params):
 
 
 def get_params(config):
+    """Expand parameter configuration with defaults.
+
+    Parameters
+    ----------
+    config : dict
+        Configuration containing a ``defaults`` dict and a ``parameters`` mapping.
+
+    Returns
+    -------
+    dict
+        Mapping of parameter keys to dictionaries with defaults applied.
+    """
     defaults = config.get("defaults", {})
     return {k: defaults | v for k, v in config["parameters"].items()}
 
 
 def check_search(result):
+    """Validate an intake search result and return a single path.
+
+    Parameters
+    ----------
+    result : pandas.DataFrame
+        DataFrame returned by ``catalog.search(...).df``.
+
+    Returns
+    -------
+    str or None
+        The selected path if a unique result exists, otherwise ``None``.
+    """
     if len(result) == 0:
         warn(f"nothing found: {len(result)}")
         return None
@@ -83,7 +152,23 @@ def check_search(result):
 
 
 def get_file_from_intake(cat, params, date=None):
-    """get filename entry from intake catalog"""
+    """Query an intake catalog for a single parameter entry.
+
+    Parameters
+    ----------
+    cat : intake.esm.EsmDatastore
+        Intake catalog to query.
+    params : dict
+        Search parameters describing the ERA5 entry (e.g., code, level_type).
+    date : str or datetime-like, optional
+        Date used to filter entries; coerced to ``YYYY-MM-DD``. If the
+        parameter frequency is invariant, ``INVARIANT`` is used.
+
+    Returns
+    -------
+    intake.catalog.local.LocalCatalogEntry
+        The search result object; call ``.df`` to access the underlying table.
+    """
     if date is not None:
         date = pd.to_datetime(date).strftime("%Y-%m-%d")
     freq = params.get("frequency", None)
@@ -93,6 +178,22 @@ def get_file_from_intake(cat, params, date=None):
 
 
 def get_files_from_intake(cat, params, date=None):
+    """Collect file paths from an intake catalog for multiple variables.
+
+    Parameters
+    ----------
+    cat : intake.esm.EsmDatastore
+        Intake catalog to query.
+    params : dict
+        Mapping from variable name to search parameters.
+    date : str or datetime-like, optional
+        Date used to filter entries.
+
+    Returns
+    -------
+    dict
+        Mapping from variable name to resolved file path (or ``None`` if not found).
+    """
     files = {}
     for k, v in params.items():
         f = check_search(get_file_from_intake(cat, params=v, date=date).df)
@@ -112,10 +213,30 @@ def get_file_from_template(
     template=None,
     **kwargs,
 ):
-    """Derive filename from filename template
+    """Derive a filename from the DKRZ template.
 
-    Derives filename according to https://docs.dkrz.de/doc/dataservices/finding_and_accessing_data/era_data/#file-and-directory-names
+    Parameters
+    ----------
+    date : str or datetime-like
+        Date to include in the path/filename; becomes ``YYYY-MM-DD`` unless invariant.
+    era_id : str
+        ERA dataset identifier (e.g., ``"E5"`` or ``"E1"``).
+    frequency : {"hourly", "daily", "monthly", "invariant"}
+        Data frequency.
+    dataType : {"an", "fc"}
+        Data type used to derive the type id in the filename.
+    code : int
+        GRIB parameter code.
+    level_type : {"model_level", "surface"}
+        Level type selector.
+    template : dict, optional
+        Template dictionary with ``path_template`` and ``file_template``. Defaults to
+        the built-in DKRZ template.
 
+    Returns
+    -------
+    str
+        Absolute template-expanded path to the GRIB file.
     """
     if template is None:
         template = dkrz_template
@@ -160,6 +281,23 @@ def get_file_from_template(
 
 
 def get_files_from_template(params, date, template=None):
+    """Resolve GRIB file paths for multiple variables from a template.
+
+    Parameters
+    ----------
+    params : dict
+        Mapping from variable name to template fields (see
+        ``get_file_from_template``).
+    date : str or datetime-like
+        Desired date.
+    template : dict, optional
+        Template dictionary with ``path_template`` and ``file_template``.
+
+    Returns
+    -------
+    dict
+        Mapping from variable name to file path.
+    """
     files = {}
     for k, v in params.items():
         f = get_file_from_template(date=date, template=template, **v)
@@ -212,6 +350,21 @@ class ERA5:
     def __init__(
         self, params=None, cat=None, gridfile=None, scratch=None, template=None
     ):
+        """Create a new ERA5 cmorizer instance.
+
+        Parameters
+        ----------
+        params : dict, optional
+            Parameter configuration mapping (defaults to built-in ERA5 parameters).
+        cat : intake.esm.EsmDatastore or str, optional
+            Intake catalog or path/URL to an ESM datastore.
+        gridfile : str, optional
+            Path to CDO grid description file. Defaults to package resource.
+        scratch : str, optional
+            Temporary directory for CDO operations. Defaults to ``$SCRATCH`` or ``."``.
+        template : dict, optional
+            File path template mapping. Defaults to the DKRZ template.
+        """
         if isinstance(cat, str):
             import intake
 
@@ -233,6 +386,20 @@ class ERA5:
         self.cdo = Cdo(tempdir=scratch)
 
     def _get_files(self, date, variables=None):
+        """Resolve input files for a set of variables and a given date.
+
+        Parameters
+        ----------
+        date : str or datetime-like
+            Target date for selection.
+        variables : list of str, optional
+            Variable names to include. Defaults to dynamic, fx, and wind variables.
+
+        Returns
+        -------
+        dict
+            Mapping from variable name to file path.
+        """
         if variables is None:
             variables = self.dynamic + self.fx + self.wind
         if self.cat:
@@ -249,10 +416,12 @@ class ERA5:
             )
 
     def _seldate(self, filename, date):
+        """Build a CDO command to select a single date from a file."""
         return f"-seldate,{date} {filename}"
         # return self.cdo.seldate(date, input=filename)
 
     def _seldates(self, filenames, date):
+        """Apply ``_seldate`` to all non-invariant files in a mapping."""
         return {
             v: (
                 self._seldate(f, date)
@@ -263,6 +432,7 @@ class ERA5:
         }
 
     def _to_regulars(self, filenames, gridtypes):
+        """Convert multiple inputs to regular Gaussian grid commands."""
         return {
             v: self._to_regular(f, gridtype=gridtypes[v], setname=v)
             for v, f in filenames.items()
@@ -270,9 +440,11 @@ class ERA5:
         }
 
     def _get_gridtypes(self, filenames):
+        """Determine grid types for all input files using CDO griddes."""
         return {v: self._gridtype(f) for v, f in filenames.items()}
 
     def _open_dsets(self, filenames):
+        """Open a mapping of files as chunked ``xarray.Dataset`` objects."""
         dsets = {}
         for v, f in filenames.items():
             ds = xr.open_dataset(f, chunks=self.chunks)
@@ -283,6 +455,7 @@ class ERA5:
         return dsets
 
     def _griddes(self, filename):
+        """Return parsed CDO griddes information as a dictionary."""
         griddes = self.cdo.griddes(input=filename)
         return {
             entry.split("=")[0].strip(): entry.split("=")[1].strip()
@@ -291,18 +464,19 @@ class ERA5:
         }
 
     def _gridtype(self, filename):
+        """Extract grid type from CDO griddes output."""
         return self._griddes(filename)["gridtype"]
 
     def _to_regular(self, filename, gridtype=None, setname="", table="ecmwf"):
-        """converts ecmwf spectral grib data to regular gaussian netcdf.
+        """Convert ECMWF GRIB to regular Gaussian NetCDF (CDO command).
 
-        cdo is used to convert ecmwf grid data to netcdf depending on the gridtype:
-        For 'gaussian_reduced': cdo setgridtype,regular
-            'spectral'        : cdo sp2gpl
+        CDO is used depending on the detected ``gridtype``:
 
-        This follows the recommendation from the ECMWF Era5 Documentation.
-        We also invert the latitudes to stick with cmor standard.
+        - ``gaussian_reduced`` → ``setgridtype,regular``
+        - ``spectral`` → ``sp2gpl``
+        - ``gaussian`` → passthrough
 
+        This follows the ECMWF ERA5 recommendation.
         """
         if table is None:
             table = ""
@@ -327,33 +501,33 @@ class ERA5:
         return command
 
     def _compute_wind(self, vort, div):
-        """compute wind from vorticity and divergence"""
+        """Compute wind from vorticity and divergence (CDO command)."""
         return f"-chname,u,ua,v,va -dv2uvl -merge [ {vort} {div} ]"
 
     def gfile(self, date, path=None, expid=None, filename=None, add_soil=False):
-        """Create an ERA5 gfile dataset.
+        """Create an ERA5 gfile NetCDF containing required variables.
 
-        Main function to convert ERA5 grib data to a regular gaussian Dataset
-        containing all variables required for REMO preprocessing.
+        Converts ERA5 GRIB inputs to a regular Gaussian grid and merges all
+        required variables into a single file for REMO preprocessing.
 
         Parameters
         ----------
-        date : date in ISO 8601 format.
-            Date for which the variables should be converted.
-        output: str
-            Name of output file.
-        path: str
-            Output path for the gfile.
-        expid: str
-            Experiment id for the filenaming template.
-        filename: str
-            Filename including path for the output filename. If not provided,
-            the filename will be created automatically from path and expid.
+        date : str or datetime-like
+            Date (ISO 8601) for which variables should be converted.
+        path : str, optional
+            Output directory for the gfile.
+        expid : str, optional
+            Experiment id for filename templating. Defaults to ``"000000"``.
+        filename : str, optional
+            Full output filename. If omitted, it is composed from ``path`` and
+            ``expid``.
+        add_soil : bool, optional
+            If True, include additional soil variables.
 
         Returns
         -------
-        Output filename.
-
+        str
+            The output filename.
         """
         if expid is None:
             expid = "000000"
@@ -397,6 +571,20 @@ class ERA5:
         return filename
 
     def get_soil(self, date, filename=None):
+        """Create a NetCDF with ERA5 soil-related variables.
+
+        Parameters
+        ----------
+        date : str or datetime-like
+            Target date.
+        filename : str, optional
+            Output filename. Defaults to ``$SCRATCH/era5_soil_data.nc``.
+
+        Returns
+        -------
+        str
+            The output filename.
+        """
         if not isinstance(date, str):
             date = date.strftime("%Y-%m-%dT%H:%M:%S")
         if filename is None:

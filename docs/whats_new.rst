@@ -23,6 +23,7 @@ New Features
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Update docstrings (:pull:`277`)
 - Update file search pattern for CF preprocessing (:pull:`271`)
 
 v0.8.4 (20 November 2025)

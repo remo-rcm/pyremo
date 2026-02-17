@@ -23,8 +23,9 @@ New Features
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
-- Update docstrings (:pull:`277`)
-- Update file search pattern for CF preprocessing (:pull:`271`)
+- Update docstring (:pull:`280`).
+- Update docstrings (:pull:`277`).
+- Update file search pattern for CF preprocessing (:pull:`271`).
 
 v0.8.4 (20 November 2025)
 -------------------------
@@ -34,9 +35,9 @@ Maintenance and bugfix release.
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
-- Added file not found warning for preprocessor (:pull:`265`)
-- Fix ``pyproject.toml`` (:pull:`263`)
-- Preprocessor updates (:pull:`261`)
+- Added file not found warning for preprocessor (:pull:`265`).
+- Fix ``pyproject.toml`` (:pull:`263`).
+- Preprocessor updates (:pull:`261`).
 
 v0.8.3 (22 October 2025)
 ------------------------
@@ -46,12 +47,12 @@ Maintenance and bugfix release.
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
-- Cleaning of unused imports (:pull:`256`)
+- Cleaning of unused imports (:pull:`256`).
 
 Bugfixes
 ~~~~~~~~
 
-- Fix fetching of vertical coordinates from CF models (:pull:`255`)
+- Fix fetching of vertical coordinates from CF models (:pull:`255`).
 
 v0.8.2 (30 May 2025)
 --------------------

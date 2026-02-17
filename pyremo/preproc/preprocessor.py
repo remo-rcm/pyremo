@@ -266,9 +266,10 @@ class Preprocessor:
     domain : dict or str, optional
         Domain metadata dictionary or a registered domain id. If ``None`` the
         domain is inferred from ``surflib`` with a 1-grid-cell interior crop.
-    vc : str or dict, optional
-        Vertical coordinate table key (looked up in ``pr.vc.tables``) or an
-        explicit vertical coordinate mapping. Defaults to ``"vc_49lev"``.
+    vc : str or pandas.DataFrame, optional
+        Vertical coordinate table key (looked up in ``pr.vc.tables``) or a
+        pandas DataFrame defining the vertical coordinate (columns ``ak``, ``bk``,
+        and optionally ``akh``/``bkh``). Defaults to ``"vc_49lev"``.
     outpath : str, optional
         Output path template (e.g. ``"/data/run/{date:%Y%m%d}"``). If set, it
         is used by :meth:`run` when writing forcing files.
@@ -284,8 +285,8 @@ class Preprocessor:
         Prepared surface library dataset.
     domain_info : dict
         Domain metadata used during remapping.
-    vc : dict
-        Vertical coordinate mapping / table.
+    vc : pandas.DataFrame
+        Vertical coordinate table used for interpolation.
     outpath : str or None
         Output path template.
     scratch : tempfile.TemporaryDirectory
@@ -524,21 +525,29 @@ class Preprocessor:
 class CFPreprocessor(Preprocessor):
     """Preprocessor for CF-compliant GCM input datasets.
 
-    Extends :class:`Preprocessor` by constructing a CF-style multi-variable
-    input accessor (``gfile``) used to retrieve the raw dataset for each
-    timestep.
+    Constructs a CF-style multi-variable input accessor (``gfile``) used to
+    retrieve the raw dataset for each timestep.
 
     Parameters
     ----------
     expid : str
-        Experiment identifier.
+        Experiment identifier used in output naming.
     surflib : str
-        Path to surface library file.
-    domain, vc, outpath, scratch : See :class:`Preprocessor`.
+        Path to the surface library NetCDF file.
+    domain : dict or str, optional
+        Target REMO domain metadata or a registered domain id. If ``None``,
+        the domain is inferred from ``surflib`` with a 1-cell interior crop.
+    vc : str or pandas.DataFrame, optional
+        Vertical coordinate table key or a pandas DataFrame definition. Defaults to
+        ``'vc_49lev'`` for this preprocessor.
+    outpath : str, optional
+        Output path template used when writing forcing files.
+    scratch : str, optional
+        Parent directory where a temporary working directory is created.
     input_data : dict, optional
-        Specification of variables / paths needed by :func:`get_gcm_gfile`.
+        Specification of variables/paths needed by :func:`get_gcm_gfile`.
     **kwargs
-        Additional keyword arguments passed through (reserved for future use).
+        Reserved for future configuration.
 
     Attributes
     ----------
@@ -559,8 +568,6 @@ class CFPreprocessor(Preprocessor):
         input_data=None,
         **kwargs,
     ):
-        if vc is None:
-            vc = ("vc_49lev",)
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
@@ -589,25 +596,34 @@ class CFPreprocessor(Preprocessor):
 class RemoPreprocessor(Preprocessor):
     """Preprocessor for REMO model output used as nesting input.
 
-    Provides logic to locate existing REMO NetCDF files and remap them for a
-    subsequent nested run.
+    Locates existing REMO NetCDF files and remaps them for a subsequent nested
+    run.
 
     Parameters
     ----------
     expid : str
-        Target experiment identifier for new forcing.
+        Target experiment identifier for the generated forcing.
     surflib : str
-        Path to surface library file.
-    domain, vc, outpath, scratch : See :class:`Preprocessor`.
+        Path to the surface library NetCDF file.
+    domain : dict or str, optional
+        Target REMO domain metadata or a registered domain id. If ``None``,
+        the domain is inferred from ``surflib``.
+    vc : str or pandas.DataFrame, optional
+        Vertical coordinate table key or a pandas DataFrame definition. Defaults to
+        ``"vc_49lev_nh_pt2000"``.
+    outpath : str, optional
+        Output path template used when writing forcing files.
+    scratch : str, optional
+        Parent directory where a temporary working directory is created.
     input_data : dict, optional
-        Dictionary containing at least ``{"path": <input_dir>, "expid": <source_expid>}``.
+        Must contain at least ``{"path": <input_dir>, "expid": <source_expid>}``.
 
     Attributes
     ----------
     inpath : str
         Directory containing source REMO files.
     inexp : str
-        Source experiment id inside filenames.
+        Source experiment id embedded in filenames.
     filename_pattern : str
         Python format string used to construct input filenames.
     """
@@ -692,23 +708,32 @@ class RemoPreprocessor(Preprocessor):
 class ERA5Preprocessor(Preprocessor):
     """Preprocessor for ERA5 reanalysis data.
 
-    Downloads / constructs hourly ERA5 forcing files locally via
+    Downloads/constructs hourly ERA5 forcing files via
     :func:`era5_gfile_from_dkrz` and remaps them onto the target domain.
 
     Parameters
     ----------
     expid : str
-        Experiment identifier.
+        Experiment identifier used in output naming.
     surflib : str
-        Path to surface library file.
-    domain, vc, outpath, scratch : See :class:`Preprocessor`.
+        Path to the surface library NetCDF file.
+    domain : dict or str, optional
+        Target REMO domain metadata or a registered domain id. If ``None``,
+        the domain is inferred from ``surflib``.
+    vc : str or pandas.DataFrame, optional
+        Vertical coordinate table key or a pandas DataFrame definition. Defaults to
+        ``"vc_49lev"``.
+    outpath : str, optional
+        Output path template used when writing forcing files.
+    scratch : str, optional
+        Parent directory where a temporary working directory is created.
     input_data : dict, optional
         Reserved for future configuration hooks (currently unused).
 
     Attributes
     ----------
     input_data : dict or None
-        Configuration passed by caller.
+        Configuration passed by the caller.
     """
 
     def __init__(
@@ -721,8 +746,6 @@ class ERA5Preprocessor(Preprocessor):
         scratch=None,
         input_data=None,
     ):
-        if vc is None:
-            vc = "vc_49lev"
         super().__init__(
             expid, surflib, domain=domain, vc=vc, outpath=outpath, scratch=scratch
         )
@@ -763,14 +786,23 @@ class CloudPreprocessor(Preprocessor):
     Parameters
     ----------
     expid : str
-        Experiment identifier.
+        Experiment identifier used in output naming.
     surflib : str
-        Path to surface library file.
-    domain, vc, outpath, scratch : See :class:`Preprocessor`.
+        Path to the surface library NetCDF file.
+    domain : dict or str, optional
+        Target REMO domain metadata or a registered domain id. If ``None``,
+        the domain is inferred from ``surflib``.
+    vc : str or pandas.DataFrame, optional
+        Vertical coordinate table key or a pandas DataFrame definition. Defaults to
+        ``"vc_49lev"``.
+    outpath : str, optional
+        Output path template used when writing forcing files.
+    scratch : str, optional
+        Parent directory where a temporary working directory is created.
     input_data : dict, optional
         Search parameters overriding catalog defaults (e.g. ``{"source_id": "MPI-ESM1-2-HR"}``).
     url : str, optional
-        Shortcut key (``"gc"`` / ``"aws"``) or full URL to pangeo CMIP6 JSON catalog.
+        Shortcut key (``"gc"`` / ``"aws"``) or full URL to the pangeo CMIP6 JSON catalog.
 
     Attributes
     ----------

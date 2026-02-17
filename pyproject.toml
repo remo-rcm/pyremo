@@ -22,6 +22,7 @@ dependencies = [
     "setuptools >= 40.4",  # for pkg_resources
     "xarray >= 0.15",
     "py-cordex >= 0.3.0",
+    "pandas < 3.0.0",
 ]
 dynamic = ["version"]
 

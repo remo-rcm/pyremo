@@ -40,6 +40,11 @@ fx_default = [
 def encode(ds):
     # we have to set the encoding here explicitly, otherwise xarray.to_netcdf will
     # encode missing values by NaN, which will crash REMO...
+    if "time" in ds.coords:
+        for attr in ds.time.attrs.copy():
+            if attr in ds.time.encoding:
+                del ds.time.attrs[attr]
+
     fillvars = ["TSW", "SEAICE", "TSI"]
     for var in ds.data_vars:
         if var in fillvars:
@@ -59,14 +64,16 @@ def get_output_filename(target):
 def replace_vars(target, source, vars, surflib=None, static=None, overwrite=False):
     tds = xr.open_dataset(target)
     sds = xr.open_dataset(source)
-    tds = tds.merge(sds[vars], compat="override", join="override")
+    print(f"replacing variables {vars} in {target} with data from {source}")
+    tds = tds.merge(sds[vars], overwrite_vars=vars, join="override")
     if surflib is not None:
         surflib = pr.data.surflib(surflib)
-        tds = tds.merge(surflib[static], compat="override", join="override")
+        tds = tds.merge(surflib[static], overwrite_vars=static, join="override")
     if overwrite is True:
         fname = target
     else:
         fname = get_output_filename(target)
+    # tds.time["attrs"] = sds.time.attrs  # preserve time attributes
     print(f"writing to {fname}")
     encode(tds).to_netcdf(fname)
     return fname
@@ -76,8 +83,12 @@ def replace_parser():
     parser = argparse.ArgumentParser(
         description="Replace variables in target files with data from source file. This can be used to, e.g., add soil variables from a REMO output file to a forcing file."
     )
-    parser.add_argument("target", metavar="target", help="target file")
-    parser.add_argument("source", metavar="source", help="source file")
+    parser.add_argument(
+        "target", metavar="target", help="target file from which variables are replaced"
+    )
+    parser.add_argument(
+        "source", metavar="source", help="source file from which variables are taken"
+    )
     parser.add_argument(
         "-v",
         "--variables",

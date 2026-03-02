@@ -455,7 +455,7 @@ class GFile:
                 f = self.selector.get_file(variable_id=self.sst, datetime=t)
                 files[t] = f
             except FileNotFoundError:
-                warn(f"sst not found for {datetime}, will extrapolate...")
+                warn(f"sst not found for {t}, will extrapolate...")
                 pass
 
         cdo = Cdo(tempdir=self.scratch) if self.scratch else Cdo()

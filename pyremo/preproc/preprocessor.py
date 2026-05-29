@@ -267,9 +267,10 @@ class Preprocessor:
         Domain metadata dictionary or a registered domain id. If ``None`` the
         domain is inferred from ``surflib`` with a 1-grid-cell interior crop.
     vc : str or pandas.DataFrame, optional
-        Vertical coordinate table key (looked up in ``pr.vc.tables``) or a
-        pandas DataFrame defining the vertical coordinate (columns ``ak``, ``bk``,
-        and optionally ``akh``/``bkh``). Defaults to ``"vc_49lev"``.
+        Vertical coordinate table key (looked up in ``pr.vc.tables``), a path
+        to a CSV file defining the vertical coordinate, or a pandas DataFrame
+        (columns ``ak``, ``bk``, and optionally ``akh``/``bkh``). Defaults to
+        ``"vc_49lev"``.
     outpath : str, optional
         Output path template (e.g. ``"/data/run/{date:%Y%m%d}"``). If set, it
         is used by :meth:`run` when writing forcing files.
@@ -308,7 +309,10 @@ class Preprocessor:
         if vc is None:
             vc = "vc_49lev"
         if isinstance(vc, str):
-            self.vc = pr.vc.tables[vc]
+            if os.path.isfile(vc):
+                self.vc = pd.read_csv(vc)
+            else:
+                self.vc = pr.vc.tables[vc]
         else:
             self.vc = vc
         self.expid = expid
@@ -431,6 +435,7 @@ class Preprocessor:
             ds = self.get_input_dataset(date=date, initial=initial)
             if ds is None:
                 warn(f"No input dataset available for date {date}")
+                return None
         ads = self.remap(
             ds,
             domain_info=self.domain_info,

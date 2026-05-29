@@ -23,6 +23,7 @@ New Features
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Update Python version in CI workflow (:pull:`295`).
 - Update docstring (:pull:`280`).
 - Update docstrings (:pull:`277`).
 - Update file search pattern for CF preprocessing (:pull:`271`).

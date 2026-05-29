@@ -55,7 +55,7 @@ fallback_version = "999"
 version_scheme = "no-guess-dev"
 
 [tool.ruff]
-target-version = "py38"
+target-version = "py311"
 builtins = ["ellipsis"]
 exclude = [
     ".eggs",

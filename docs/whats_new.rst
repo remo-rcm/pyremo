@@ -23,6 +23,7 @@ New Features
 Internal Changes
 ~~~~~~~~~~~~~~~~
 
+- Update vc option in preprocessor to read in csv file (:pull:`294`).
 - Update docstring (:pull:`280`).
 - Update docstrings (:pull:`277`).
 - Update file search pattern for CF preprocessing (:pull:`271`).

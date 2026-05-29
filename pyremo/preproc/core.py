@@ -54,7 +54,7 @@ def open_mfdataset(
 
 def get_akbkem(vc):
     """create vertical coordinate dataset"""
-    akbk = vc.to_xarray().drop("index")
+    akbk = vc.to_xarray().drop_vars("index", errors="ignore")
     # bkem = pr.tables.vc.tables['vc_27lev']
     akem = akbk.ak.swap_dims({"index": lev_i})
     bkem = akbk.bk.swap_dims({"index": lev_i})

@@ -78,6 +78,9 @@ def get_ab_bnds(ds):
         if ak_name in ds:
             ak_bnds = ds[ak_name]
             print("using {} for akgm".format(ak_name))
+        if ak_name == "a_bnds":
+            print("computing ak_bnds from a_bnds and p0")
+            ak_bnds *= ds.p0
     for bk_name in bk_valid:
         if bk_name in ds:
             bk_bnds = ds[bk_name]

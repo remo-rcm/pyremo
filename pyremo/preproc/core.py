@@ -1,7 +1,9 @@
-"""core module for preprocessing
+"""Core helpers for preprocessing REMO input data.
 
-This module wraps the pyintorg interfaces into xr.apply_ufunc.
-
+This module provides utilities to open and harmonize input datasets,
+derive hybrid vertical coordinate coefficients, align sea-surface temperature
+to an atmospheric reference grid, and normalize units expected by the
+preprocessing workflow.
 """
 
 import warnings
@@ -26,10 +28,34 @@ def open_mfdataset(
     drop=None,
     **kwargs,
 ):
-    """optimized function for opening CMIP6 6hrLev 3d datasets
+    """Open multiple NetCDF files with preprocessing defaults for CMIP-like data.
 
-    based on https://github.com/pydata/xarray/issues/1385#issuecomment-561920115
+    Parameters
+    ----------
+    files : str or sequence of str
+        Input file pattern or explicit list of file paths.
+    use_cftime : bool, default: True
+        Forwarded to :func:`xarray.decode_cf` for time decoding.
+    parallel : bool, default: True
+        Whether to parallelize file opening with dask.
+    data_vars : {"minimal", "different", "all"}, default: "minimal"
+        Strategy for combining data variables in :func:`xarray.open_mfdataset`.
+    chunks : dict, default: {}
+        Chunk sizes passed to :func:`xarray.open_mfdataset`.
+    coords : str, default: "minimal"
+        Coordinate merging behavior.
+    compat : str, default: "override"
+        Compatibility strategy for combining variables.
+    drop : Any, optional
+        Unused placeholder kept for backward compatibility.
+    **kwargs : dict
+        Additional keyword arguments passed to
+        :func:`xarray.open_mfdataset`.
 
+    Returns
+    -------
+    xarray.Dataset
+        Combined dataset with CF decoding applied.
     """
 
     def drop_all_coords(ds):
@@ -53,7 +79,20 @@ def open_mfdataset(
 
 
 def get_akbkem(vc):
-    """create vertical coordinate dataset"""
+    """Create REMO hybrid vertical coefficient fields from a VC table.
+
+    Parameters
+    ----------
+    vc : object
+        Vertical coordinate table object exposing ``to_xarray()`` with
+        ``ak`` and ``bk`` columns.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset containing interface (``ak``, ``bk``) and half-level
+        (``akh``, ``bkh``) coefficients with REMO level dimensions.
+    """
     akbk = vc.to_xarray().drop_vars("index", errors="ignore")
     # bkem = pr.tables.vc.tables['vc_27lev']
     akem = akbk.ak.swap_dims({"index": lev_i})
@@ -70,6 +109,21 @@ def get_akbkem(vc):
 
 
 def get_ab_bnds(ds):
+    """Extract hybrid A/B bounds arrays from a dataset.
+
+    The function searches a set of common variable names used in CMIP/CF
+    conventions and returns the first matching A and B bounds arrays.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Input dataset that may contain hybrid coordinate bounds.
+
+    Returns
+    -------
+    tuple
+        ``(ak_bnds, bk_bnds)`` as two DataArrays or ``None`` if not found.
+    """
     ak_valid = ["ap_bnds", "a_bnds", "hyai"]
     bk_valid = ["b_bnds", "hybi"]
     ak_bnds = None
@@ -78,15 +132,36 @@ def get_ab_bnds(ds):
         if ak_name in ds:
             ak_bnds = ds[ak_name]
             print("using {} for akgm".format(ak_name))
+            break
     for bk_name in bk_valid:
         if bk_name in ds:
             bk_bnds = ds[bk_name]
             print("using {} for bkgm".format(bk_name))
+            break
+
+    if ak_name == "a_bnds":
+        print("computing ak_bnds from a_bnds and p0")
+        ak_bnds *= ds.p0
+
     return ak_bnds, bk_bnds
 
 
 def get_vc(ds, invert=None):
-    """Reads the vertical hybrid coordinate from a dataset."""
+    """Read and optionally invert hybrid vertical coordinate coefficients.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Dataset containing hybrid A/B bounds variables.
+    invert : bool, optional
+        If ``True``, reverse the vertical order. If ``None``, infer the
+        orientation from the ``positive`` attribute of the vertical axis.
+
+    Returns
+    -------
+    tuple of xarray.DataArray
+        ``(akgm, bkgm)`` on the ``nyhi`` dimension.
+    """
     if ds.ta.cf["vertical"].attrs.get("positive") == "down" and invert is None:
         invert = True
     ak_bnds, bk_bnds = get_ab_bnds(ds)
@@ -112,6 +187,26 @@ def get_vc(ds, invert=None):
 
 
 def map_sst(tos, ref_ds, resample="6H", regrid=True):
+    """Map sea-surface temperature to the reference grid and timeline.
+
+    Parameters
+    ----------
+    tos : xarray.DataArray or xarray.Dataset
+        Sea-surface temperature input. If a DataArray is provided, it is
+        treated as variable ``tos``.
+    ref_ds : xarray.Dataset
+        Reference atmospheric dataset defining target grid and time axis.
+    resample : str, default: "6H"
+        Reserved argument for temporal aggregation. Currently unused.
+    regrid : bool, default: True
+        If ``True``, perform nearest-neighbor source-to-destination regridding
+        using :mod:`xesmf` before temporal interpolation.
+
+    Returns
+    -------
+    xarray.DataArray
+        Sea-surface temperature aligned to ``ref_ds`` grid and time axis.
+    """
 
     import xesmf as xe
 
@@ -138,7 +233,24 @@ def map_sst(tos, ref_ds, resample="6H", regrid=True):
 
 
 def convert_units(ds):
-    """convert units of input data for use in the preprocessor"""
+    """Convert selected input variables to units required by preprocessing.
+
+    Applied conversions:
+
+    - ``sftlf`` from percent (``%``) to fraction.
+    - ``tos`` from degrees Celsius to Kelvin.
+    - ``orog`` from meters to geopotential (``m2 s-2``).
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Dataset containing one or more of ``sftlf``, ``tos``, and ``orog``.
+
+    Returns
+    -------
+    xarray.Dataset
+        Dataset with converted variables where applicable.
+    """
     try:
         if ds.sftlf.units == "%":
             print("converting sftlf units to fractional")
@@ -170,7 +282,21 @@ def convert_units(ds):
 
 
 def check_lev(ds, invert=None):
-    """Check for order of levels and invert if neccessary"""
+    """Check vertical axis order and invert levels when needed.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset or xarray.DataArray
+        Input object with a vertical coordinate.
+    invert : bool, optional
+        If ``None``, infer from the vertical coordinate's ``positive``
+        attribute. If ``True``, reverse the vertical axis.
+
+    Returns
+    -------
+    xarray.Dataset or xarray.DataArray
+        Input object with vertical axis orientation adjusted if requested.
+    """
     if invert is None:
         try:
             vertical = ds.cf["vertical"].name
@@ -196,7 +322,26 @@ def check_lev(ds, invert=None):
 
 
 def open_datasets(datasets, ref_ds=None, time_range=None):
-    """Creates a virtual gfile"""
+    """Open and merge required variables into a preprocessing-ready dataset.
+
+    Parameters
+    ----------
+    datasets : dict
+        Mapping of variable name to file path(s). Each key is expected to be
+        present in the corresponding opened dataset.
+    ref_ds : xarray.Dataset, optional
+        Reference dataset used for grid, time range, and metadata. If omitted,
+        the dataset for ``ta`` is opened and used as reference.
+    time_range : xarray.DataArray or slice, optional
+        Target time selection. If omitted, the time coordinate from ``ref_ds``
+        is used.
+
+    Returns
+    -------
+    xarray.Dataset
+        Merged dataset including all requested variables and derived hybrid
+        coefficients (``akgm``, ``bkgm``).
+    """
     if ref_ds is None:
         try:
             ref_ds = open_mfdataset(datasets["ta"])

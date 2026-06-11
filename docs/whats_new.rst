@@ -8,6 +8,14 @@ What's New
 
     import pyremo
 
+UNRELEASED
+----------
+
+Internal Changes
+~~~~~~~~~~~~~~~~
+
+- Fix akbk coordinate for a_bnds (:pull:`298`).
+
 v0.9.0 (29 May 2026)
 --------------------
 

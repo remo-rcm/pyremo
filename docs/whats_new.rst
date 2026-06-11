@@ -8,8 +8,8 @@ What's New
 
     import pyremo
 
-UNRELEASED
-----------
+v0.9.1 (11 June 2026)
+---------------------
 
 Internal Changes
 ~~~~~~~~~~~~~~~~

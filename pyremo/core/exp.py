@@ -65,7 +65,7 @@ def move_data(sdir, tdir, **kwargs):
         try:
             os.makedirs(dir)
         except Exception:
-            print("Directory exists: {}".format(dir))
+            print(f"Directory exists: {dir}")
 
     return get_data_catalog(tdir)
 

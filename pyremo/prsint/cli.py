@@ -103,7 +103,7 @@ def prsint_parser():
         "--variables",
         dest="variables",
         nargs="+",
-        help="list of variables to interpolate (default = {})".format(dflt.variables),
+        help=f"list of variables to interpolate (default = {dflt.variables})",
         default=dflt.variables,
     )
     parser.add_argument(
@@ -112,9 +112,7 @@ def prsint_parser():
         dest="plev",
         nargs="+",
         type=int,
-        help="list of pressure levels to interpolate to (default = {})".format(
-            dflt.plevs
-        ),
+        help=f"list of pressure levels to interpolate to (default = {dflt.plevs})",
         default=dflt.plevs,
     )
     parser.add_argument(

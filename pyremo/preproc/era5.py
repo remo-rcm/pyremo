@@ -6,13 +6,13 @@ https://confluence.ecmwf.int/display/OIFS/How+to+convert+GRIB+to+netCDF
 
 """
 
+import copy
 import os
 import subprocess
+from importlib.resources import files
 from os import path as op
 from pprint import pprint
 from warnings import warn
-from importlib.resources import files
-import copy
 
 import pandas as pd
 import xarray as xr
@@ -495,7 +495,7 @@ class ERA5:
             gaussian = ""
         else:
             raise Exception(
-                "unknown grid type for conversion to regular grid: {}".format(gridtype)
+                f"unknown grid type for conversion to regular grid: {gridtype}"
             )
         command = f"{setname} {gaussian} {filename}"
         return command
@@ -673,9 +673,9 @@ def era5_from_gcloud(time=None, chunks="auto", hfreq=6):
         ar_native_vertical_grid_data = ar_native_vertical_grid_data.sel(time=time)
 
     level_vars = [
-        v for v in era5_to_cmip_cf.keys() if v in ar_native_vertical_grid_data.data_vars
+        v for v in era5_to_cmip_cf if v in ar_native_vertical_grid_data.data_vars
     ]
-    surface_vars = [v for v in era5_to_cmip_cf.keys() if v in ar_full_37_1h.data_vars]
+    surface_vars = [v for v in era5_to_cmip_cf if v in ar_full_37_1h.data_vars]
 
     ds = xr.merge(
         [

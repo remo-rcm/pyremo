@@ -131,9 +131,9 @@ def search_df(df, **kwargs):
     """
     condition_list = [
         (
-            f"(df['{key}'].isin({repr(item)}))"
+            f"(df['{key}'].isin({item!r}))"
             if isinstance(item, list)
-            else f"(df['{key}'] == {repr(item)})"
+            else f"(df['{key}'] == {item!r})"
         )
         for key, item in kwargs.items()
     ]
@@ -208,7 +208,6 @@ def cdo_call(self, options="", op="", input="", output="temp", print_command=Tru
     -------
     None
     """
-    pass
 
 
 class CFModelSelector:
@@ -456,7 +455,6 @@ class GFile:
                 files[t] = f
             except FileNotFoundError:
                 warn(f"sst not found for {t}, will extrapolate...")
-                pass
 
         cdo = Cdo(tempdir=self.scratch) if self.scratch else Cdo()
         sst_extract = [

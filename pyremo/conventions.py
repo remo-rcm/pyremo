@@ -57,15 +57,7 @@ def file_pattern(
         end = wild
     if end is None:
         end = ""
-    return "{lead}{expid}{type}{middle}{date}{end}{suffix}".format(
-        lead=lead,
-        expid=expid,
-        type=type,
-        middle=middle,
-        date=date,
-        end=end,
-        suffix=suffix,
-    )
+    return f"{lead}{expid}{type}{middle}{date}{end}{suffix}"
 
 
 def output_pattern(*args, **kwargs):

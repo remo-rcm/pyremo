@@ -1,10 +1,10 @@
+import pandas as pd
 import pytest
 
-import pandas as pd
 import pyremo as pr
 from pyremo.preproc import get_gcm_dataset, remap
-from pyremo.tutorial import load_dataset, mpi_esm, mpi_esm_tos
 from pyremo.preproc.utils import get_filename
+from pyremo.tutorial import load_dataset, mpi_esm, mpi_esm_tos
 
 from . import requires_pyintorg
 

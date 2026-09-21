@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import pyremo as pr
 
 
@@ -16,4 +14,4 @@ def test_preprocess():
     attrs = pr.codes.get_dict("T")
     for key, value in attrs.items():
         if value is not None:
-            assert ds.T.attrs[key] == attrs[key]
+            assert ds.T.attrs[key] == value

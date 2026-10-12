@@ -131,12 +131,12 @@ def get_ab_bnds(ds):
     for ak_name in ak_valid:
         if ak_name in ds:
             ak_bnds = ds[ak_name]
-            print("using {} for akgm".format(ak_name))
+            print(f"using {ak_name} for akgm")
             break
     for bk_name in bk_valid:
         if bk_name in ds:
             bk_bnds = ds[bk_name]
-            print("using {} for bkgm".format(bk_name))
+            print(f"using {bk_name} for bkgm")
             break
 
     if ak_name == "a_bnds":

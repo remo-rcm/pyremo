@@ -273,7 +273,7 @@ def remap(ds, domain_info, vc, surflib, initial=False, static=False):
     # set global attributes
     ads.attrs = gds.attrs
 
-    ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
+    ads.attrs["history"] = f"preprocessing with pyremo = {pr.__version__}"
     ads.attrs["CORDEX_domain"] = domain_info.get("CORDEX_domain", "custom")
     ads.attrs["domain_id"] = domain_info.get("domain_id", "custom")
 
@@ -647,7 +647,7 @@ def remap_remo(
     # set global attributes
     ads.attrs = tds.attrs
 
-    ads.attrs["history"] = "preprocessing with pyremo = {}".format(pr.__version__)
+    ads.attrs["history"] = f"preprocessing with pyremo = {pr.__version__}"
     ads.attrs["CORDEX_domain"] = domain_info.get("CORDEX_domain", "custom")
     ads.attrs["domain_id"] = domain_info.get("domain_id", "custom")
 

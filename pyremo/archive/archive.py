@@ -23,7 +23,7 @@ except Exception:
 
 
 def cdo_call(options="", op="", input="", output=None):
-    call = "cdo {} {} {} {}".format(options, op, input, output)
+    call = f"cdo {options} {op} {input} {output}"
     subprocess.Popen(call, shell=True, stdout=subprocess.PIPE).stdout.read()
     return output
     # return subprocess.run("cdo {} {} {} {}".format(options, op, input, output), shell=True)
@@ -229,7 +229,7 @@ class RemoArchive:
         # filepathes = extractall()
 
     def _extract_code(self, code, time_range=None, parallel=False, **kwargs):
-        pattern = "c{:03d}".format(code)
+        pattern = f"c{code:03d}"
         tars = list(self.catalog.archive("e", time_range=time_range, **kwargs).path)
         filepathes = extract_files(
             tars,

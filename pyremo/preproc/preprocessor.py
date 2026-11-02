@@ -15,19 +15,20 @@ coordinate, and writing output files over sequences of timesteps.
 
 import os
 import tempfile
+from warnings import warn
 
 import dask
-import xarray as xr
 import pandas as pd
+import xarray as xr
 
 import pyremo as pr
-from warnings import warn
-from ..remo_ds import update_meta_info, parse_dates
-from .era5 import era5_gfile_from_dkrz, ERA5
-from .utils import datelist, ensure_dir, write_forcing_file
-from .remapping import remap, remap_era_soil, remap_remo
-from .cf import get_gcm_dataset, get_gcm_gfile
+
+from ..remo_ds import parse_dates, update_meta_info
 from ..tables import domains
+from .cf import get_gcm_dataset, get_gcm_gfile
+from .era5 import ERA5, era5_gfile_from_dkrz
+from .remapping import remap, remap_era_soil, remap_remo
+from .utils import datelist, ensure_dir, write_forcing_file
 
 dkrz_template = {
     "path_template": "/pool/data/ERA5/{era_id}/{level_type}/{dataType}/{frequency}/{code:03d}",
@@ -843,7 +844,7 @@ class CloudPreprocessor(Preprocessor):
         self.input_data = input_data
         if url is None:
             url = "gc"
-        if url in cloud_urls.keys():
+        if url in cloud_urls:
             url = cloud_urls[url]
         self.url = url
 

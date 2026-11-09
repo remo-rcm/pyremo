@@ -128,7 +128,7 @@ def replace_parser():
         "--variables",
         dest="variables",
         nargs="+",
-        help="list of variables to add or replace (default = {})".format(soil_default),
+        help=f"list of variables to add or replace (default = {soil_default})",
         default=soil_default,
     )
     parser.add_argument(
@@ -143,9 +143,7 @@ def replace_parser():
         "--static",
         dest="static",
         nargs="+",
-        help="list of variables to add or replace from soil library (default = {})".format(
-            fx_default
-        ),
+        help=f"list of variables to add or replace from soil library (default = {fx_default})",
         default=fx_default,
     )
     parser.add_argument(
@@ -355,4 +353,3 @@ def main_analysis():
     )
 
     eobs_pr_season_plot.savefig(os.path.join(output_path, "PR_REMO-EOBS.png"))
-    return

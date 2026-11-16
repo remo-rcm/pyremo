@@ -1,5 +1,4 @@
 #! /usr/bin/python
-# coding: utf-8
 #
 """DataHandler
 Classes and methods in :mod:`DataHandler` should help retrieving and

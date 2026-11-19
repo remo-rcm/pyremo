@@ -13,7 +13,7 @@ def units(units):
     elif isinstance(units, str) and hasattr(ureg, units):
         return getattr(ureg, units)
     else:
-        print("Warning, unknown unit: {}".format(units))
+        print(f"Warning, unknown unit: {units}")
         return ureg.dimensionless
 
 
